@@ -1,0 +1,8 @@
+--runname ClassicTest
+--infmat_file /data/compbio/datasets/HeatKernels/IntHint/binary+complex+hi2012/inthint_inf_0.10.mat
+--infmat_name Li
+--infmat_index_file /data/compbio/datasets/HeatKernels/IntHint/binary+complex+hi2012/inthint_index_genes
+--heat_file /home/jeldridg/Dropbox/research/hotnet2/heat_file.txt
+--delta 0.001
+--min_cc_size 4
+--classic

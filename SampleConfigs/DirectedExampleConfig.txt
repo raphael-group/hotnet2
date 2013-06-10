@@ -1,0 +1,7 @@
+--runname "Test"
+--infmat_file /data/compbio/datasets/HeatKernels/pagerank/MultiNet/1.0/multinet_ppr_0.60.mat
+--infmat_name PPR
+--infmat_index_file /data/compbio/datasets/HeatKernels/pagerank/MultiNet/1.0/multinet_index_genes
+--heat_file /home/jeldridg/Dropbox/research/hotnet2/heat_file.txt
+--delta 0.0003
+--min_cc_size 4
