@@ -40,9 +40,9 @@ def heat_vec(gene2heat, gene_index):
 
 def similarity_matrix(M, heat, gene_index, directed=True):
     if directed:
-        sim = M * heat  #i don't understand this line--docs say this is "element-wise" multiplication, but M and heat are different sizes
-						#it's clearly doing the right thing, but I would prefer 'h = np.diagfloat(h)' and 'sim = M.dot(h)' to avoid confusion
+        sim = M * heat
     else:
+        M = np.minimum(M, M.transpose())            #ensure that the influence matrix is symmetric
         sim = np.empty_like(M)                      #np.maximum
         for i in range(M.shape[0]):
             for j in range(M.shape[1]):
