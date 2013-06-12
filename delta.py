@@ -52,13 +52,13 @@ def find_best_delta(permuted_sim, permuted_index, sizes, component_fn, start_qua
                 index += round( (right-index)/2. )
 
         if max_size not in size2delta:
-            raise AssertionError("NO DELTA SELECTED FOR k =" + str(max_size))
+            raise AssertionError("NO DELTA SELECTED FOR k = " + str(max_size))
             
     return size2delta
 
-def network_delta_wrapper( (network, beta, h, genes, i, sizes, component_fn) ):
-    permuted_mat_index, permuted_mat = load_permuted_pprmat( network, beta, i )
-    sim_mat, gene_index = create_permuted_sim_mat(permuted_mat, permuted_mat_index, h, genes)
+def network_delta_wrapper((network_path, infmat_name, index2gene, tested_genes, h, sizes, component_fn)):
+    permuted_mat = scipy.io.loadmat(network_path)[infmat_name]    
+    sim_mat, gene_index = create_permuted_sim_mat(permuted_mat, index2gene, tested_genes, h)
     return find_best_delta( sim_mat, gene_index, sizes, component_fn )
 
 import multiprocessing as mp
@@ -66,20 +66,19 @@ def network_delta_selection(permuted_network_paths, index2gene, infmat_name, tes
                             component_fn=strong_ccs, parallel=True):
     print "* Performing network delta selection..."
     if parallel:
-        ## Find the optimal delta for each of the given input sizes
-        #pool = mp.Pool()
-        #args = [(network, beta, h, genes, i+1, sizes, component_fn)
-                #for i in range(num_permutations)]
-        #delta_maps = pool.map( network_delta_wrapper, args )
-        #pool.close()
-        #pool.join()
+        # Find the optimal delta for each of the given input sizes
+        pool = mp.Pool()
+        args = [(network_path, infmat_name, index2gene, tested_genes, h, sizes, component_fn) for network_path in permuted_network_paths]
+        delta_maps = pool.map( network_delta_wrapper, args )
+        pool.close()
+        pool.join()
 
-        ## Parse the delta_maps into one dictionary
-        #sizes2deltas = dict([(s, []) for s in sizes])
-        #for size2delta in delta_maps:
-            #for s in sizes: sizes2deltas[s].append( size2delta[s] )
+        # Parse the delta_maps into one dictionary
+        sizes2deltas = dict([(s, []) for s in sizes])
+        for size2delta in delta_maps:
+            for s in sizes: sizes2deltas[s].append( size2delta[s] )
 
-        #return sizes2deltas
+        return sizes2deltas
 
     else:
         sizes2deltas = dict([(size, []) for size in sizes])

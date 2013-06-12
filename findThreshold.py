@@ -55,7 +55,7 @@ def run(args):
                                      h_vec, args.max_cc_sizes, component_fn, args.multithreaded)
     #def network_delta_selection(permuted_network_paths, index2gene, infmat_name, tested_genes, h, sizes, component_fn=strong_ccs, parallel=True):
     
-    #print "Deltas is: ", deltas
+    print "Deltas is: ", deltas
     #max_sizes = []
     #for delta in deltas[15]:
         #max_sizes.append( max( component_sizes( weighted_graph( sim, gene_index, delta
