@@ -56,43 +56,35 @@ def find_best_delta(permuted_sim, permuted_index, sizes, component_fn, start_qua
             
     return size2delta
 
+
 def network_delta_wrapper((network_path, infmat_name, index2gene, tested_genes, h, sizes, component_fn)):
     permuted_mat = scipy.io.loadmat(network_path)[infmat_name]    
     sim_mat, gene_index = create_permuted_sim_mat(permuted_mat, index2gene, tested_genes, h)
     return find_best_delta( sim_mat, gene_index, sizes, component_fn )
+
 
 import multiprocessing as mp
 def network_delta_selection(permuted_network_paths, index2gene, infmat_name, tested_genes, h, sizes,
                             component_fn=strong_ccs, parallel=True):
     print "* Performing network delta selection..."
     if parallel:
-        # Find the optimal delta for each of the given input sizes
         pool = mp.Pool()
-        args = [(network_path, infmat_name, index2gene, tested_genes, h, sizes, component_fn) for network_path in permuted_network_paths]
-        delta_maps = pool.map( network_delta_wrapper, args )
+        map_fn = pool.map
+    else:
+        map_fn = map
+        
+    args = [(network_path, infmat_name, index2gene, tested_genes, h, sizes, component_fn) for network_path in permuted_network_paths]
+    delta_maps = map_fn( network_delta_wrapper, args )
+    
+    if parallel:
         pool.close()
         pool.join()
-
-        # Parse the delta_maps into one dictionary
-        sizes2deltas = dict([(s, []) for s in sizes])
-        for size2delta in delta_maps:
-            for s in sizes: sizes2deltas[s].append( size2delta[s] )
-
-        return sizes2deltas
-
-    else:
-        sizes2deltas = dict([(size, []) for size in sizes])
-        for network_path in permuted_network_paths:
-            print "\t- Permutation network:", network_path
-            permuted_mat = scipy.io.loadmat(network_path)[infmat_name]
-            
-            sim_mat, gene_index = create_permuted_sim_mat(permuted_mat, index2gene, tested_genes, h)
-            size2delta = find_best_delta( sim_mat, gene_index, sizes, component_fn)
-            print "\t\t=>Best deltas:"
-            for size in sizes:
-                print "\t\t\tk=%s: %s" % (size, size2delta[size])
-                sizes2deltas[size].append( size2delta[size] )
         
+    # Parse the delta_maps into one dictionary
+    sizes2deltas = dict([(s, []) for s in sizes])
+    for size2delta in delta_maps:
+        for s in sizes: sizes2deltas[s].append( size2delta[s] )
+
     return sizes2deltas
 
 
@@ -101,6 +93,7 @@ def heat_delta_wrapper( (M, h, gene_index, component_fn, sizes) ):
     shuffle( permuted_h )
     sim_mat, _ = similarity_matrix( M, permuted_h, gene_index )
     return find_best_delta( sim_mat, gene_index, sizes, component_fn )
+
 
 from random import shuffle
 def heat_delta_selection( M, gene_index, h, num_permutations, sizes,
