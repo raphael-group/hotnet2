@@ -9,8 +9,9 @@ def parse_args(raw_args):
     
     class BetterFileArgParser(argparse.ArgumentParser):
         def convert_arg_line_to_args(self, arg_line):
-            for arg in arg_line.split():
-                yield arg
+            if not arg_line.startswith('#'):
+                for arg in arg_line.split():
+                    yield arg
             
     description = "Runs generalized HotNet2.\
                    Note that some or all parameters can be specified via a configuration\
@@ -35,14 +36,6 @@ def parse_args(raw_args):
                         help='Run classic (instead of directed) HotNet.')
     
     return parser.parse_args(raw_args)
-
-def load_index( index_file ):
-    arrs  = [l.split() for l in open(index_file)]
-    return dict([(int(arr[0]), arr[1]) for arr in arrs])
-
-def load_heat( heat_file ):
-	arrs  = [l.split() for l in open(heat_file)]
-	return dict([(arr[0], float(arr[1])) for arr in arrs])
 
 def run(args):
 	import scipy.io

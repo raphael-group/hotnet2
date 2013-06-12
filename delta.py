@@ -1,54 +1,17 @@
-#!/usr/bin/python
+# -*- coding: iso-8859-1 -*-
 
 import numpy as np, sys
-from data import load_index
+import scipy.io
 from hotnet2 import *
 
-## Data locations ##
-# Interaction network directories
-KERNEL_DIR   = "/data/compbio/datasets/HeatKernels/pagerank/permuted_networks/pprs"
-IREF_DIR     = KERNEL_DIR + "/iref/"
-HINT_DIR     = KERNEL_DIR + "/inthint/"
-MULTINET_DIR = KERNEL_DIR + "/multinet/"
-
-# influence matrix locations
-pprmats       = { IREF: {}, HINT: {}, MULTINET: {} }
-ppr_edgelists = { IREF: {}, HINT: {}, MULTINET: {} }
-ppr_indices   = { IREF: {}, HINT: {}, MULTINET: {} }
-alphas = ['%.2f' % alpha for alpha in np.arange(0.05, 0.95, 0.05)]
-for alpha in alphas:
-    for network in [IREF, HINT, MULTINET]:
-        pprmats[network][alpha], ppr_edgelists[network][alpha] = {}, {}
-        ppr_indices[network][alpha] = {}
-        
-for alpha in alphas:
-    for i in range(1, 101):
-        pprmats[IREF][alpha][i] = "%s/%s/iref_ppr_%s.mat" % (IREF_DIR, i, alpha)
-        ppr_edgelists[IREF][alpha][i] = "%s/%s/iref_edge_list" % (IREF_DIR, i)
-        ppr_indices[IREF][alpha][i] = "%s/%s/iref_index_genes" % (IREF_DIR, i)
-        pprmats[HINT][alpha][i] = "%s/%s/inthint_ppr_%s.mat" % (HINT_DIR, i, alpha)
-        ppr_edgelists[HINT][alpha][i] = "%s/%s/inthint_edge_list" % (HINT_DIR, i)
-        ppr_indices[HINT][alpha][i] = "%s/%s/inthint_index_genes" % (HINT_DIR, i)
-        pprmats[MULTINET][alpha][i] = "%s/%s/multinet_ppr_%s.mat" % (MULTINET_DIR, i, alpha)
-        ppr_edgelists[MULTINET][alpha][i] = "%s/%s/multinet_edge_list" % (MULTINET_DIR, i)
-        ppr_indices[MULTINET][alpha][i] = "%s/%s/multinet_index_genes" % (MULTINET_DIR, i)
-
-
-## Manipulate permuted infmats ##
-def load_permuted_pprmat(network, beta, num):
-    alpha = '%.2f' % (1-beta)
-    infmat = scipy.io.loadmat( pprmats[network][alpha][num] )["PPR"]
-    gene_index = load_index( ppr_indices[network][alpha][num] )
-    return gene_index, infmat
-
-def create_permuted_sim_mat( permuted_mat, permuted_mat_index, h, genes ):
-    # Create an induced similarity matrix
-    M, gene_index, _ = induce_infmat( permuted_mat, permuted_mat_index, genes )
-    sim_mat, _ = similarity_matrix( M, h, gene_index )
+def create_permuted_sim_mat(permuted_mat, permuted_mat_index, genes, h):
+    M, gene_index, _ = induce_infmat(permuted_mat, permuted_mat_index, genes)
+    sim_mat, _ = similarity_matrix(M, h, gene_index)
 
     return sim_mat, gene_index
 
-def get_component_sizes(arrs): return [len(arr) for arr in arrs]
+def get_component_sizes(arrs):
+    return [len(arr) for arr in arrs]
 
 def delta_too_small(component_sizes, max_size ):
     # print "\t\t\t", max(component_sizes)
@@ -89,8 +52,7 @@ def find_best_delta(permuted_sim, permuted_index, sizes, component_fn, start_qua
                 index += round( (right-index)/2. )
 
         if max_size not in size2delta:
-            print "NO DELTA SELECTED FOR k =", max_size
-            sys.exit()
+            raise AssertionError("NO DELTA SELECTED FOR k =" + str(max_size))
             
     return size2delta
 
@@ -100,32 +62,32 @@ def network_delta_wrapper( (network, beta, h, genes, i, sizes, component_fn) ):
     return find_best_delta( sim_mat, gene_index, sizes, component_fn )
 
 import multiprocessing as mp
-def network_delta_selection( network, beta, h, genes, num_permutations, sizes,
-                             component_fn=strong_ccs, parallel=True):
+def network_delta_selection(permuted_network_paths, index2gene, infmat_name, tested_genes, h, sizes,
+                            component_fn=strong_ccs, parallel=True):
     print "* Performing network delta selection..."
     if parallel:
-        # Find the optimal delta for each of the given input sizes
-        pool = mp.Pool()
-        args = [(network, beta, h, genes, i+1, sizes, component_fn)
-                for i in range(num_permutations)]
-        delta_maps = pool.map( network_delta_wrapper, args )
-        pool.close()
-        pool.join()
+        ## Find the optimal delta for each of the given input sizes
+        #pool = mp.Pool()
+        #args = [(network, beta, h, genes, i+1, sizes, component_fn)
+                #for i in range(num_permutations)]
+        #delta_maps = pool.map( network_delta_wrapper, args )
+        #pool.close()
+        #pool.join()
 
-        # Parse the delta_maps into one dictionary
-        sizes2deltas = dict([(s, []) for s in sizes])
-        for size2delta in delta_maps:
-            for s in sizes: sizes2deltas[s].append( size2delta[s] )
+        ## Parse the delta_maps into one dictionary
+        #sizes2deltas = dict([(s, []) for s in sizes])
+        #for size2delta in delta_maps:
+            #for s in sizes: sizes2deltas[s].append( size2delta[s] )
 
-        return sizes2deltas
+        #return sizes2deltas
 
     else:
         sizes2deltas = dict([(size, []) for size in sizes])
-        for i in range(num_permutations):
-            print "\t- Permutation", i+1
-            permuted_mat_index, permuted_mat = load_permuted_pprmat( network, beta, i+1 )
-            sim_mat, gene_index = create_permuted_sim_mat(permuted_mat, permuted_mat_index, h,
-                                                          genes)
+        for network_path in permuted_network_paths:
+            print "\t- Permutation network:", network_path
+            permuted_mat = scipy.io.loadmat(network_path)[infmat_name]
+            
+            sim_mat, gene_index = create_permuted_sim_mat(permuted_mat, index2gene, tested_genes, h)
             size2delta = find_best_delta( sim_mat, gene_index, sizes, component_fn)
             print "\t\t=>Best deltas:"
             for size in sizes:
