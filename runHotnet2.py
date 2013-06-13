@@ -58,7 +58,7 @@ def run(args):
 
     ccs = connected_components(G, args.min_cc_size)
     output_file = open(args.output_file, 'w') if args.output_file else sys.stdout
-    output = json.dump({"sizes": component_sizes(ccs), "components": ccs}, output_file, indent=4)
+    output = json.dump({"parameters": vars(args), "sizes": component_sizes(ccs), "components": ccs}, output_file, indent=4)
     if (args.output_file): output_file.close()
 
 if __name__ == "__main__": 
