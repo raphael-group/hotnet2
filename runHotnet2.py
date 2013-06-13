@@ -1,4 +1,5 @@
 # -*- coding: iso-8859-1 -*-
+import sys
 from hotnet2 import *
 
 #random note: /data/compbio/datasets/HeatKernels/IntHint/binary+complex+hi2012/inthint_inf_0.10.mat contains 2 9859x9849 matrices, L and Li
@@ -32,31 +33,33 @@ def parse_args(raw_args):
                         help='Weight threshold for edge removal')
     parser.add_argument('-ccs', '--min_cc_size', type=int, default=3,
                         help='Minimum size connected components that should be returned.')
+    parser.add_argument('-o', '--output_file',
+                        help='Output file.  If none given, output will be writte to stdout.')
     parser.add_argument('--classic', default=False, action='store_true',
                         help='Run classic (instead of directed) HotNet.')
     
     return parser.parse_args(raw_args)
 
 def run(args):
-	import scipy.io
-	infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]  
-	
-	#infmat_index is a dict from indices to gene names
-	infmat_index = load_index(args.infmat_index_file)
+    import scipy.io
+    import json
+    infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]  
+    
+    #infmat_index is a dict from indices to gene names
+    infmat_index = load_index(args.infmat_index_file)
   
-	#heat is a dict from gene names to heat scores
-	heat = load_heat(args.heat_file)
+    #heat is a dict from gene names to heat scores
+    heat = load_heat(args.heat_file)
   
-	M, gene_index, inf_score = induce_infmat(infmat, infmat_index, sorted(heat.keys()))
-	h = heat_vec(heat, gene_index)
-	sim, sim_score = similarity_matrix(M, h, gene_index, not args.classic)
-	G = weighted_graph(sim, gene_index, args.delta)
-	
-	print "* Sizes:"
-	print component_sizes(G, args.min_cc_size)
-	print "* Components:"
-	print write_components(G, args.min_cc_size)
+    M, gene_index, inf_score = induce_infmat(infmat, infmat_index, sorted(heat.keys()))
+    h = heat_vec(heat, gene_index)
+    sim, sim_score = similarity_matrix(M, h, gene_index, not args.classic)
+    G = weighted_graph(sim, gene_index, args.delta)
+
+    ccs = connected_components(G, args.min_cc_size)
+    output_file = open(args.output_file, 'w') if args.output_file else sys.stdout
+    output = json.dump({"sizes": component_sizes(ccs), "components": ccs}, output_file, indent=4)
+    if (args.output_file): output_file.close()
 
 if __name__ == "__main__": 
-	from sys import argv
-	run( parse_args(argv[1:]) )
+    run( parse_args(sys.argv[1:]) )

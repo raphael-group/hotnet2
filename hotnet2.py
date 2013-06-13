@@ -71,6 +71,11 @@ def weighted_graph(sim_mat, gene_index, delta, directed=True):
     G.add_edges_from( [(gene_index[i], gene_index[j], d) for i, j, d in edges] )
     return G
 
+def connected_components(G, min_size=1):
+    ccs = strong_ccs(G) if isinstance(G, nx.DiGraph) else nx.connected_components(G)
+    ccs = [cc for cc in ccs if len(cc) >= min_size]
+    return ccs
+
 def write_components(G, min_length=1):
     ccs = strong_ccs(G) if isinstance(G, nx.DiGraph) else nx.connected_components(G)
     return "\n".join([ " ".join(sorted(cc)) for cc in ccs
@@ -89,10 +94,18 @@ def write_components_coverage(G, gene2mutations, samples, min_length=1):
     return "\n".join(["%s\\% %s" % (cov*100, " ".join(sorted(cc)))
                       for cov, cc in sorted(zip(coverages(ccs)))])
 
-def component_sizes(G, min_length=1):
+def component_sizes_str(G, min_length=1):
     ccs = strong_ccs(G) if isinstance(G, nx.DiGraph) else nx.connected_components(G)
     return ", ".join(map(str, sorted([len(cc) for cc in ccs if len(cc) >= min_length],	#rename min_length to min_size
                                      reverse=True)))
+
+def component_sizes(ccs):
+    size_dict = dict()
+    for cc in ccs:
+        if len(cc) not in size_dict:
+            size_dict[len(cc)] = 0
+        size_dict[len(cc)] += 1
+    return size_dict
 
 def top_genes(G, gene2heat, min_length=1, num=100):
     ccs = strong_ccs(G) if isinstance(G, nx.DiGraph) else nx.connected_components(G)
