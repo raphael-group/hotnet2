@@ -26,8 +26,6 @@ import random
 from random import shuffle
 random.seed(5) #TODO: DON'T FORGET TO REMOVE THIS!!!
 import multiprocessing as mp
-#def compute_significance( DiG, infmat, infmat_index, genes, h, delta,
-#                          filtered_genes, n, sizes=range(2, 11), parallel=True):
 def calculate_permuted_cc_counts(infmat, infmat_index, genes, h, delta, filtered_genes, n,
                                  sizes=range(2, 11), directed=True, parallel=True):
     # Find indices of filtered genes in the set of all genes

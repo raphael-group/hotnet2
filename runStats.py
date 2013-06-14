@@ -59,28 +59,28 @@ def run(args):
     print "* Components:"
     print write_components( G, 4 )
 
-#     extra_genes = load_permutation_genes(args.permutation_genes_file)
+    extra_genes = load_permutation_genes(args.permutation_genes_file)
 
-#     genes_eligible_for_heat = [g for g in (set(gene_index.values()) | extra_genes) if g in infmat_index.values()]
-#     print len(genes_eligible_for_heat)
+    genes_eligible_for_heat = sorted([g for g in (set(gene_index.values()) | extra_genes) if g in infmat_index.values()])
+    print len(genes_eligible_for_heat)
 
-#     # size2stats = compute_significance( DiG, infmat, infmat_index, genes_in_network,
-#     #                                    h, DELTA, filtered_genes_in_network, 1, parallel=False )
+     # size2stats = compute_significance( DiG, infmat, infmat_index, genes_in_network,
+     #                                    h, DELTA, filtered_genes_in_network, 1, parallel=False )
 
 #     #size2counts is dict(size -> list of counts, 1 per permutation)
     
-#     sizes2counts = calculate_permuted_cc_counts(infmat, infmat_index, genes_eligible_for_heat, h, delta,
-#                                                 sorted(set(gene_index.values())), args.num_permutations,
-#                                                 sizes, not hotnet_output[PARAMETERS]["classic"],
-#                                                 args.multithreaded)
+    sizes2counts = calculate_permuted_cc_counts(infmat, infmat_index, genes_eligible_for_heat, h, delta,
+                                                sorted(set(gene_index.values())), args.num_permutations,
+                                                sizes, not hotnet_output[PARAMETERS]["classic"],
+                                                args.multithreaded)
 
 
-#     #compute_significance( DiG, infmat, infmat_index, genes_in_network,
-# #                                    h, DELTA, filtered_genes_in_network, 1, parallel=False )
-#     real_counts = num_components_min_size(G, sizes)
-#     size2real_counts = dict(zip(sizes, real_counts))
-#     sizes2stats = compute_statistics(size2real_counts, sizes2counts, args.num_permutations)
-#     print json.dumps(sizes2stats, indent=4)
+    #compute_significance( DiG, infmat, infmat_index, genes_in_network,
+#                                    h, DELTA, filtered_genes_in_network, 1, parallel=False )
+    real_counts = num_components_min_size(G, sizes)
+    size2real_counts = dict(zip(sizes, real_counts))
+    sizes2stats = compute_statistics(size2real_counts, sizes2counts, args.num_permutations)
+    print json.dumps(sizes2stats, indent=4)
 
 if __name__ == "__main__": 
     run( parse_args(argv[1:]) )
