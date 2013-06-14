@@ -1,0 +1,3 @@
+--hotnet_output_file /home/jeldridg/Dropbox/research/hotnet2-git/test/hn_output_for_significance_input.json
+--permutation_genes_file /research/compbio/users/jeldridg/expr_genes.txt
+--num_permutations 1

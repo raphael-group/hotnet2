@@ -5,13 +5,16 @@ strong_ccs = nx.strongly_connected_components
 ################################################################################
 # Data loading functions
 
-def load_index( index_file ):
+def load_index(index_file):
     arrs  = [l.split() for l in open(index_file)]
     return dict([(int(arr[0]), arr[1]) for arr in arrs])
 
-def load_heat( heat_file ):
+def load_heat(heat_file):
     arrs  = [l.split() for l in open(heat_file)]
     return dict([(arr[0], float(arr[1])) for arr in arrs])
+
+def load_permutation_genes(permutation_genes_file):
+    return set([l.strip() for l in open(permutation_genes_file)])
 
 ################################################################################
 # Influence and similarity matrix functions
