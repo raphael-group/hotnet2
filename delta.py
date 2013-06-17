@@ -94,7 +94,8 @@ def heat_delta_wrapper( (M, h, gene_index, component_fn, sizes) ):
     sim_mat, _ = similarity_matrix( M, permuted_h, gene_index )
     return find_best_delta( sim_mat, gene_index, sizes, component_fn )
 
-
+import random
+random.seed(5)
 from random import shuffle
 def heat_delta_selection( M, gene_index, h, num_permutations, sizes,
                           component_fn=strong_ccs, parallel=True):
