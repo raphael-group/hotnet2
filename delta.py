@@ -74,7 +74,7 @@ def network_delta_selection(permuted_network_paths, index2gene, infmat_name, tes
         map_fn = map
         
     args = [(network_path, infmat_name, index2gene, tested_genes, h, sizes, component_fn) for network_path in permuted_network_paths]
-    delta_maps = map_fn( network_delta_wrapper, args )
+    delta_maps = map_fn(network_delta_wrapper, args)
     
     if parallel:
         pool.close()
@@ -88,35 +88,28 @@ def network_delta_selection(permuted_network_paths, index2gene, infmat_name, tes
     return sizes2deltas
 
 
-def heat_delta_wrapper( (M, h, gene_index, component_fn, sizes) ):
+def heat_delta_wrapper( (M, h, gene_index, sizes, component_fn) ):
     permuted_h = np.array([ val for val in h] )
     shuffle( permuted_h )
     sim_mat, _ = similarity_matrix( M, permuted_h, gene_index )
     return find_best_delta( sim_mat, gene_index, sizes, component_fn )
 
-import random
-random.seed(5)
+
 from random import shuffle
 def heat_delta_selection( M, gene_index, h, num_permutations, sizes,
                           component_fn=strong_ccs, parallel=True):
     print "* Performing permuted heat delta selection..."
     if parallel:
         pool = mp.Pool()
-        args = [(M, h, gene_index, sizes, component_fn )
-                for i in range(num_permutations)]
-        deltas = pool.map( heat_delta_wrapper, args )
+        map_fn = pool.map
+    else:
+        map_fn = map
+
+    args = [(M, h, gene_index, sizes, component_fn ) for i in range(num_permutations)]
+    deltas = map_fn(heat_delta_wrapper, args)
+
+    if parallel:
         pool.close()
         pool.join()
-
-    else:
-        deltas = []
-        for i in range(1, num_permutations+1):
-            print "\t- Permutation", i
-            permuted_h = np.array([ val for val in h] )
-            shuffle( permuted_h )
-            sim_mat, _ = similarity_matrix( M, permuted_h, gene_index )
-            best_delta = find_best_delta( sim_mat, gene_index, sizes, component_fn )
-            deltas.append( best_delta )
-            print "\t\t=>Best delta:", best_delta
         
     return deltas

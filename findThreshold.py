@@ -113,6 +113,7 @@ def run_for_heat(args):
 
     component_fn = strong_ccs if not args.classic else nx.connected_components
     deltas = heat_delta_selection(M, gene_index, h, args.num_permutations, args.max_cc_sizes, component_fn, args.multithreaded)
+    print deltas
     # heat_delta_selection( M, gene_index, h, num_permutations, sizes,
     #                       component_fn=strong_ccs, parallel=True)
 
