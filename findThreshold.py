@@ -15,11 +15,6 @@ def parse_args(raw_args):
             if not arg_line.startswith('#'):
                 for arg in arg_line.split():
                     yield arg
-    
-# parser = argparse.ArgumentParser(description='Test arg parser', fromfile_prefix_chars='@')
-# subparsers = parser.add_subparsers(title='Subparsers')
-# subparser1 = subparsers.add_parser('foo', description='Foo parser')
-# subparser1.add_argument('-b', '--bar', help='Specify bar', required=True)
 
     description = "" #TODO
     parser = BetterFileArgParser(description=description, fromfile_prefix_chars='@')
@@ -84,7 +79,6 @@ def run_for_network(args):
     #TODO: at some point, pass around immutable views -- deferring for now since there's no built-in immutable dict type
     deltas = network_delta_selection(permuted_network_paths, index2gene, args.infmat_name, sorted(heat.keys()),
                                      h_vec, args.max_cc_sizes, component_fn, args.multithreaded)
-    #def network_delta_selection(permuted_network_paths, index2gene, infmat_name, tested_genes, h, sizes, component_fn=strong_ccs, parallel=True):
     
     print "Deltas is: ", deltas
     #max_sizes = []
