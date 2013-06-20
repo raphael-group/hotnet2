@@ -35,7 +35,7 @@ def induce_infmat(infmat, index2gene, genelist):
     return M, index2gene, score
 
 def heat_vec(gene2heat, gene_index):
-    v = [gene2heat[gene] for index, gene in sorted(gene_index.iteritems()) ]
+    v = [gene2heat[gene] for _, gene in sorted(gene_index.iteritems()) ]
     return np.array(v)
 
 def similarity_matrix(M, heat, gene_index, directed=True):

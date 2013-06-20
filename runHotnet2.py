@@ -1,6 +1,7 @@
 # -*- coding: iso-8859-1 -*-
-from hotnet2 import *
-from hnio import *
+import hnio
+import hotnet2 as hn
+import sys
 
 def parse_args(raw_args):  
     import argparse
@@ -43,19 +44,19 @@ def run(args):
     infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]  
     
     #infmat_index is a dict from indices to gene names
-    infmat_index = load_index(args.infmat_index_file)
+    infmat_index = hnio.load_index(args.infmat_index_file)
   
     #heat is a dict from gene names to heat scores
-    heat = load_heat(args.heat_file)
+    heat = hnio.load_heat(args.heat_file)
   
-    M, gene_index, _ = induce_infmat(infmat, infmat_index, sorted(heat.keys()))
-    h = heat_vec(heat, gene_index)
-    sim, _ = similarity_matrix(M, h, gene_index, not args.classic)
-    G = weighted_graph(sim, gene_index, args.delta, not args.classic)
-    ccs = connected_components(G, args.min_cc_size)
+    M, gene_index, _ = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
+    h = hn.heat_vec(heat, gene_index)
+    sim, _ = hn.similarity_matrix(M, h, gene_index, not args.classic)
+    G = hn.weighted_graph(sim, gene_index, args.delta, not args.classic)
+    ccs = hn.connected_components(G, args.min_cc_size)
     
     output_file = open(args.output_file, 'w') if args.output_file else sys.stdout
-    json.dump({"parameters": vars(args), "sizes": component_sizes(ccs), "components": ccs}, output_file, indent=4)
+    json.dump({"parameters": vars(args), "sizes": hn.component_sizes(ccs), "components": ccs}, output_file, indent=4)
     if (args.output_file): output_file.close()
 
 if __name__ == "__main__": 

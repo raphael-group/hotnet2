@@ -1,21 +1,19 @@
-#!/usr/bin/python
+# -*- coding: iso-8859-1 -*-
+import hotnet2 as hn
+import networkx as nx
+strong_ccs = nx.strongly_connected_components
 
-# Import required modules
-import numpy as np, sys
-from hotnet2 import *
-from networkx import strongly_connected_components as strong_ccs
 
 def num_components_min_size(G, sizes):
     ccs = strong_ccs(G) if isinstance(G, nx.DiGraph) else nx.connected_components(G)
     return [len([ cc for cc in ccs if len(cc) > s]) for s in sizes]
 
-
 def significance_wrapper( (infmat, infmat_index, genes, h, delta, filtered_indices, sizes, directed, i) ):
     # print "\t\t- Permutation", i
     permuted_genes = permute_and_filter_genes(genes, filtered_indices)
-    M, gene_index, _ = induce_infmat( infmat, infmat_index, permuted_genes)
-    sim_mat, _ = similarity_matrix(M, h, gene_index, directed)
-    G = weighted_graph(sim_mat, gene_index, delta)
+    M, gene_index, _ = hn.induce_infmat( infmat, infmat_index, permuted_genes)
+    sim_mat, _ = hn.similarity_matrix(M, h, gene_index, directed)
+    G = hn.weighted_graph(sim_mat, gene_index, delta)
     return num_components_min_size( G, sizes )
 
 

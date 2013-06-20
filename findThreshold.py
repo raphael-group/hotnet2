@@ -1,9 +1,9 @@
 # -*- coding: iso-8859-1 -*-
-import os.path
-from sys import argv
-from delta import *
-from hnio import *
+import hnio
+import hotnet2 as hn
+import delta
 import networkx as nx
+import sys
 strong_ccs = nx.strongly_connected_components
 
 ITERATION_REPLACEMENT_TOKEN = '##NUM##'
@@ -71,15 +71,15 @@ def run_for_network(args):
     #construct list of paths to the first num_permutations     
     permuted_network_paths = [args.permuted_networks_path.replace(ITERATION_REPLACEMENT_TOKEN, str(i)) for i in range(1, args.num_permutations+1)]
 
-    index2gene = load_index(args.infmat_index_file)
-    heat = load_heat(args.heat_file)
+    index2gene = hnio.load_index(args.infmat_index_file)
+    heat = hnio.load_heat(args.heat_file)
 
     h_vec = [heat[gene] for index, gene in sorted(index2gene.items()) if gene in heat]
     component_fn = strong_ccs if not args.classic else nx.connected_components
         
     #TODO: at some point, pass around immutable views -- deferring for now since there's no built-in immutable dict type
-    deltas = network_delta_selection(permuted_network_paths, index2gene, args.infmat_name, sorted(heat.keys()),
-                                     h_vec, args.max_cc_sizes, component_fn, args.multithreaded)
+    deltas = delta.network_delta_selection(permuted_network_paths, index2gene, args.infmat_name, sorted(heat.keys()),
+                                           h_vec, args.max_cc_sizes, component_fn, args.multithreaded)
     
     print "Deltas is: ", deltas
     #max_sizes = []
@@ -98,20 +98,19 @@ def run_for_heat(args):
     infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
     
     #infmat_index is a dict from indices to gene names
-    infmat_index = load_index(args.infmat_index_file)
+    infmat_index = hnio.load_index(args.infmat_index_file)
   
     #heat is a dict from gene names to heat scores
-    heat = load_heat(args.heat_file)
+    heat = hnio.load_heat(args.heat_file)
   
-    M, gene_index, inf_score = induce_infmat(infmat, infmat_index, sorted(heat.keys()))
-    h = heat_vec(heat, gene_index)
+    M, gene_index, inf_score = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
+    h = hn.heat_vec(heat, gene_index)
 
     component_fn = strong_ccs if not args.classic else nx.connected_components
-    deltas = heat_delta_selection(M, gene_index, h, args.num_permutations, args.max_cc_sizes, component_fn, args.multithreaded)
+    deltas = delta.heat_delta_selection(M, gene_index, h, args.num_permutations, args.max_cc_sizes, component_fn, args.multithreaded)
     print deltas
-    # heat_delta_selection( M, gene_index, h, num_permutations, sizes,
-    #                       component_fn=strong_ccs, parallel=True)
+
 
 if __name__ == "__main__": 
-    args = parse_args(argv[1:])
+    args = parse_args(sys.argv[1:])
     args.func(args)

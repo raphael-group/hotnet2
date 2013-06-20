@@ -1,12 +1,14 @@
 # -*- coding: iso-8859-1 -*-
-
 import numpy as np
+import scipy as sp
 import scipy.io
-from hotnet2 import *
+import hotnet2 as hn
+import networkx
+strong_ccs = networkx.strongly_connected_components
 
 def create_permuted_sim_mat(permuted_mat, permuted_mat_index, genes, h):
-    M, gene_index, _ = induce_infmat(permuted_mat, permuted_mat_index, genes)
-    sim_mat, _ = similarity_matrix(M, h, gene_index)
+    M, gene_index, _ = hn.induce_infmat(permuted_mat, permuted_mat_index, genes)
+    sim_mat, _ = hn.similarity_matrix(M, h, gene_index)
 
     return sim_mat, gene_index
 
@@ -35,7 +37,7 @@ def find_best_delta(permuted_sim, permuted_index, sizes, component_fn, start_qua
             
             # construct graph using new delta
             delta = sorted_edges[int(index)]
-            DiG   = weighted_graph( permuted_sim, permuted_index, delta )
+            DiG = hn.weighted_graph(permuted_sim, permuted_index, delta)
             if delta in visited:
                 size2delta[max_size] = delta
                 break
@@ -90,7 +92,7 @@ def network_delta_selection(permuted_network_paths, index2gene, infmat_name, tes
 def heat_delta_wrapper( (M, h, gene_index, sizes, component_fn) ):
     permuted_h = np.array([ val for val in h] )
     shuffle( permuted_h )
-    sim_mat, _ = similarity_matrix( M, permuted_h, gene_index )
+    sim_mat, _ = hn.similarity_matrix( M, permuted_h, gene_index )
     return find_best_delta( sim_mat, gene_index, sizes, component_fn )
 
 
@@ -104,7 +106,7 @@ def heat_delta_selection( M, gene_index, h, num_permutations, sizes,
     else:
         map_fn = map
 
-    args = [(M, h, gene_index, sizes, component_fn ) for i in range(num_permutations)]
+    args = [(M, h, gene_index, sizes, component_fn)] * num_permutations
     deltas = map_fn(heat_delta_wrapper, args)
 
     if parallel:
