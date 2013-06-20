@@ -44,11 +44,11 @@ def similarity_matrix(M, heat, directed=True):
 ################################################################################
 # Weighted graph functions
 
-def weighted_graph(sim_mat, gene_index, delta, directed=True):
+def weighted_graph(sim_mat, index2gene, delta, directed=True):
     e = zip( *sp.where( sim_mat >= delta) )
     edges = [(int(j), int(i), dict(weight=sim_mat[i,j])) for i, j in e]
     G = nx.DiGraph() if directed else nx.Graph()
-    G.add_edges_from( [(gene_index[i], gene_index[j], d) for i, j, d in edges] )
+    G.add_edges_from( [(index2gene[i], index2gene[j], d) for i, j, d in edges] )
     return G
 
 def connected_components(G, min_size=1):

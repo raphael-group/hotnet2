@@ -2,6 +2,7 @@
 import hnio
 import hotnet2 as hn
 import delta
+import permutations
 import networkx as nx
 import sys
 strong_ccs = nx.strongly_connected_components
@@ -67,6 +68,7 @@ def parse_args(raw_args):
                         
     return parser.parse_args(raw_args)
 
+
 def run_for_network(args):
     #construct list of paths to the first num_permutations     
     permuted_network_paths = [args.permuted_networks_path.replace(ITERATION_REPLACEMENT_TOKEN, str(i)) for i in range(1, args.num_permutations+1)]
@@ -82,32 +84,19 @@ def run_for_network(args):
                                            h_vec, args.max_cc_sizes, component_fn, args.multithreaded)
     
     print "Deltas is: ", deltas
-    #max_sizes = []
-    #for delta in deltas[15]:
-        #max_sizes.append( max( component_sizes( weighted_graph( sim, gene_index, delta
-            #) ) ))
-    #print "Max sizes is: ", max_sizes
 
-    #open("delta_selection.tsv", 'w').write(
-        #"\n".join(["%s\t%s" % (delta, size) for delta, size in zip(deltas,
-            #max_sizes)])
-            #)
 
 def run_for_heat(args):
     import scipy.io
-    infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
     
-    #infmat_index is a dict from indices to gene names
-    infmat_index = hnio.load_index(args.infmat_index_file)
+    infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
+    index2gene = hnio.load_index(args.infmat_index_file)
+    gene2heat = hnio.load_heat(args.heat_file)
   
-    #heat is a dict from gene names to heat scores
-    heat = hnio.load_heat(args.heat_file)
-  
-    M, gene_index = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
-    h = hn.heat_vec(heat, gene_index)
+    M, gene_index = hn.induce_infmat(infmat, index2gene, sorted(gene2heat.keys()))
 
-    component_fn = strong_ccs if not args.classic else nx.connected_components
-    deltas = delta.heat_delta_selection_old(M, gene_index, h, args.num_permutations, args.max_cc_sizes, component_fn, args.multithreaded)
+    heat_permutations = permutations.permute_heat(gene2heat, args.num_permutations, parallel=args.multithreaded)
+    deltas = delta.heat_delta_selection(M, gene_index, heat_permutations, args.max_cc_sizes, not args.classic, args.multithreaded)
     print deltas
 
 
