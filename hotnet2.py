@@ -5,14 +5,6 @@ strong_ccs = nx.strongly_connected_components
 ################################################################################
 # Influence and similarity matrix functions
 
-def score_fn(mat, gene_index):
-    gene2index = dict([(gene, index) for index, gene in gene_index.items()])
-    def score(g1, g2):
-        e1 = "%s -> %s = %s" % ( g1, g2, mat[gene2index[g1]][gene2index[g2]] )
-        e2 = "%s -> %s = %s" % ( g2, g1, mat[gene2index[g2]][gene2index[g1]] )
-        return e1 + "\n" + e2
-    return score
-
 def induce_infmat(infmat, index2gene, genelist):					
     print "* Inducing infmat..."
     start_index = min(index2gene.keys())
@@ -31,8 +23,7 @@ def induce_infmat(infmat, index2gene, genelist):
  
     # Create new gene index and score function
     index2gene = dict([(i, genelist[i]) for i in range(len(genelist))])
-    score = score_fn( M, index2gene )
-    return M, index2gene, score
+    return M, index2gene
 
 def heat_vec(gene2heat, gene_index):
     v = [gene2heat[gene] for _, gene in sorted(gene_index.iteritems()) ]
@@ -48,8 +39,7 @@ def similarity_matrix(M, heat, gene_index, directed=True):
             for j in range(M.shape[1]):
                 sim[i][j] = max(heat[i], heat[j]) * M[i][j]
     
-    scores = score_fn( sim, gene_index )
-    return sim, scores
+    return sim
 
 ################################################################################
 # Weighted graph functions

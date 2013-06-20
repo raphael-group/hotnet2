@@ -103,11 +103,11 @@ def run_for_heat(args):
     #heat is a dict from gene names to heat scores
     heat = hnio.load_heat(args.heat_file)
   
-    M, gene_index, inf_score = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
+    M, gene_index = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
     h = hn.heat_vec(heat, gene_index)
 
     component_fn = strong_ccs if not args.classic else nx.connected_components
-    deltas = delta.heat_delta_selection(M, gene_index, h, args.num_permutations, args.max_cc_sizes, component_fn, args.multithreaded)
+    deltas = delta.heat_delta_selection_old(M, gene_index, h, args.num_permutations, args.max_cc_sizes, component_fn, args.multithreaded)
     print deltas
 
 

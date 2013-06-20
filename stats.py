@@ -11,8 +11,8 @@ def num_components_min_size(G, sizes):
 def significance_wrapper( (infmat, infmat_index, genes, h, delta, filtered_indices, sizes, directed, i) ):
     # print "\t\t- Permutation", i
     permuted_genes = permute_and_filter_genes(genes, filtered_indices)
-    M, gene_index, _ = hn.induce_infmat( infmat, infmat_index, permuted_genes)
-    sim_mat, _ = hn.similarity_matrix(M, h, gene_index, directed)
+    M, gene_index = hn.induce_infmat( infmat, infmat_index, permuted_genes)
+    sim_mat = hn.similarity_matrix(M, h, gene_index, directed)
     G = hn.weighted_graph(sim_mat, gene_index, delta)
     return num_components_min_size( G, sizes )
 

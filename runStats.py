@@ -49,9 +49,9 @@ def run(args):
     delta = hotnet_output[PARAMETERS]["delta"]
     sizes = range(args.cc_start_size, args.cc_stop_size+1)
   
-    M, gene_index, _ = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
+    M, gene_index = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
     h = hn.heat_vec(heat, gene_index)
-    sim, _ = hn.similarity_matrix(M, h, gene_index, not hotnet_output[PARAMETERS]["classic"])
+    sim = hn.similarity_matrix(M, h, gene_index, not hotnet_output[PARAMETERS]["classic"])
     G = hn.weighted_graph(sim, gene_index, delta)
 
     extra_genes = hnio.load_gene_list(args.permutation_genes_file)
@@ -61,7 +61,7 @@ def run(args):
     sizes2counts = stats.calculate_permuted_cc_counts(infmat, infmat_index, genes_eligible_for_heat, h, delta,
                                                       sorted(set(gene_index.values())), args.num_permutations,
                                                       sizes, not hotnet_output[PARAMETERS]["classic"],
-                                                    args.multithreaded)
+                                                      args.multithreaded)
 
     real_counts = stats.num_components_min_size(G, sizes)
     size2real_counts = dict(zip(sizes, real_counts))

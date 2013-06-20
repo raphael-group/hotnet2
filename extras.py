@@ -22,3 +22,11 @@ def top_genes(G, gene2heat, min_length=1, num=100):
     not_found    = [ g for g, h in top if g not in genes_in_ccs ]
     print"Found %s of %s genes with highest heat" % (len(found), num)
     return found, not_found
+
+def score_fn(mat, gene_index):
+    gene2index = dict([(gene, index) for index, gene in gene_index.items()])
+    def score(g1, g2):
+        e1 = "%s -> %s = %s" % ( g1, g2, mat[gene2index[g1]][gene2index[g2]] )
+        e2 = "%s -> %s = %s" % ( g2, g1, mat[gene2index[g2]][gene2index[g1]] )
+        return e1 + "\n" + e2
+    return score

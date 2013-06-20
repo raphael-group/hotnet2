@@ -49,9 +49,9 @@ def run(args):
     #heat is a dict from gene names to heat scores
     heat = hnio.load_heat(args.heat_file)
   
-    M, gene_index, _ = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
+    M, gene_index = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
     h = hn.heat_vec(heat, gene_index)
-    sim, _ = hn.similarity_matrix(M, h, gene_index, not args.classic)
+    sim = hn.similarity_matrix(M, h, gene_index, not args.classic)
     G = hn.weighted_graph(sim, gene_index, args.delta, not args.classic)
     ccs = hn.connected_components(G, args.min_cc_size)
     
