@@ -1,9 +1,6 @@
 # -*- coding: iso-8859-1 -*-
-import sys
 from hotnet2 import *
-
-#random note: /data/compbio/datasets/HeatKernels/IntHint/binary+complex+hi2012/inthint_inf_0.10.mat contains 2 9859x9849 matrices, L and Li
-#to save memory loading, probably best to have this only contain Li
+from hnio import *
 
 def parse_args(raw_args):  
     import argparse
@@ -51,14 +48,14 @@ def run(args):
     #heat is a dict from gene names to heat scores
     heat = load_heat(args.heat_file)
   
-    M, gene_index, inf_score = induce_infmat(infmat, infmat_index, sorted(heat.keys()))
+    M, gene_index, _ = induce_infmat(infmat, infmat_index, sorted(heat.keys()))
     h = heat_vec(heat, gene_index)
-    sim, sim_score = similarity_matrix(M, h, gene_index, not args.classic)
-    G = weighted_graph(sim, gene_index, args.delta)
-
+    sim, _ = similarity_matrix(M, h, gene_index, not args.classic)
+    G = weighted_graph(sim, gene_index, args.delta, not args.classic)
     ccs = connected_components(G, args.min_cc_size)
+    
     output_file = open(args.output_file, 'w') if args.output_file else sys.stdout
-    output = json.dump({"parameters": vars(args), "sizes": component_sizes(ccs), "components": ccs}, output_file, indent=4)
+    json.dump({"parameters": vars(args), "sizes": component_sizes(ccs), "components": ccs}, output_file, indent=4)
     if (args.output_file): output_file.close()
 
 if __name__ == "__main__": 

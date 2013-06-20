@@ -1,6 +1,7 @@
 # -*- coding: iso-8859-1 -*-
 from sys import argv
 from stats import *
+from hnio import *
 import json
 
 def parse_args(raw_args):  
@@ -52,7 +53,7 @@ def run(args):
     sim, sim_score = similarity_matrix(M, h, gene_index, not hotnet_output[PARAMETERS]["classic"])
     G = weighted_graph(sim, gene_index, delta)
 
-    extra_genes = load_permutation_genes(args.permutation_genes_file)
+    extra_genes = load_gene_list(args.permutation_genes_file)
     genes_eligible_for_heat = sorted([g for g in (set(gene_index.values()) | extra_genes) if g in infmat_index.values()])
 
     #size2counts is dict(size -> list of counts, 1 per permutation)

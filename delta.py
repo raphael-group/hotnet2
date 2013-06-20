@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-1 -*-
 
-import numpy as np, sys
+import numpy as np
 import scipy.io
 from hotnet2 import *
 
@@ -24,7 +24,7 @@ def find_best_delta(permuted_sim, permuted_index, sizes, component_fn, start_qua
     size2delta = dict()
     for max_size in sizes:
         # print "\t\tk=", max_size
-        prev_delta, delta = -1, -1
+        delta = -1
         index = round(len(sorted_edges)* start_quant)
         left, right = 0., float(len(sorted_edges))
         visited = []
@@ -32,7 +32,6 @@ def find_best_delta(permuted_sim, permuted_index, sizes, component_fn, start_qua
         while len(visited) < 100:
             # print "\t\t\t%s: %s" % (len(visited), index/len(sorted_edges)),
             # print "(%s)" % format(sorted_edges[int(index)], 'g')
-            prev_index = index
             
             # construct graph using new delta
             delta = sorted_edges[int(index)]

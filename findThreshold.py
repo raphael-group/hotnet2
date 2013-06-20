@@ -2,6 +2,7 @@
 import os.path
 from sys import argv
 from delta import *
+from hnio import *
 import networkx as nx
 strong_ccs = nx.strongly_connected_components
 
@@ -94,7 +95,7 @@ def run_for_network(args):
 
 def run_for_heat(args):
     import scipy.io
-    infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]  
+    infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
     
     #infmat_index is a dict from indices to gene names
     infmat_index = load_index(args.infmat_index_file)
@@ -114,4 +115,3 @@ def run_for_heat(args):
 if __name__ == "__main__": 
     args = parse_args(argv[1:])
     args.func(args)
-    #run( parse_args(argv[1:]) )
