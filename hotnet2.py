@@ -29,7 +29,7 @@ def heat_vec(gene2heat, gene_index):
     v = [gene2heat[gene] for _, gene in sorted(gene_index.iteritems()) ]
     return np.array(v)
 
-def similarity_matrix(M, heat, gene_index, directed=True):
+def similarity_matrix(M, heat, directed=True):
     if directed:
         sim = M * heat
     else:

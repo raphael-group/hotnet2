@@ -51,7 +51,7 @@ def run(args):
   
     M, gene_index = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
     h = hn.heat_vec(heat, gene_index)
-    sim = hn.similarity_matrix(M, h, gene_index, not hotnet_output[PARAMETERS]["classic"])
+    sim = hn.similarity_matrix(M, h, not hotnet_output[PARAMETERS]["classic"])
     G = hn.weighted_graph(sim, gene_index, delta)
 
     extra_genes = hnio.load_gene_list(args.permutation_genes_file)

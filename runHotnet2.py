@@ -51,7 +51,7 @@ def run(args):
   
     M, gene_index = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
     h = hn.heat_vec(heat, gene_index)
-    sim = hn.similarity_matrix(M, h, gene_index, not args.classic)
+    sim = hn.similarity_matrix(M, h, not args.classic)
     G = hn.weighted_graph(sim, gene_index, args.delta, not args.classic)
     ccs = hn.connected_components(G, args.min_cc_size)
     

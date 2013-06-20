@@ -8,7 +8,7 @@ strong_ccs = networkx.strongly_connected_components
 
 def create_permuted_sim_mat(permuted_mat, permuted_mat_index, genes, h):
     M, gene_index = hn.induce_infmat(permuted_mat, permuted_mat_index, genes)
-    sim_mat = hn.similarity_matrix(M, h, gene_index)
+    sim_mat = hn.similarity_matrix(M, h)
 
     return sim_mat, gene_index
 
@@ -92,7 +92,7 @@ def network_delta_selection(permuted_network_paths, index2gene, infmat_name, tes
 def heat_delta_wrapper_old( (M, h, gene_index, sizes, component_fn) ):
     permuted_h = np.array([ val for val in h] )
     shuffle( permuted_h )
-    sim_mat = hn.similarity_matrix( M, permuted_h, gene_index )
+    sim_mat = hn.similarity_matrix( M, permuted_h )
     return find_best_delta( sim_mat, gene_index, sizes, component_fn )
 
 def heat_delta_wrapper((M, heat_permutation)):
@@ -100,7 +100,7 @@ def heat_delta_wrapper((M, heat_permutation)):
 
 def heat_delta_selection(M, gene_index, heat_permutations, sizes,
                          component_fn=strong_ccs, parallel=True):
-    h = hn.heat_vec(gene2heat, gene_index)
+    #h = hn.heat_vec(gene2heat, gene_index)
     return None
 
 #list of num_permutations dicts of max cc size => best delta
