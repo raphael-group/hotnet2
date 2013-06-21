@@ -1,47 +1,35 @@
 # -*- coding: iso-8859-1 -*-
 import hotnet2 as hn
 import networkx as nx
+import multiprocessing as mp
 strong_ccs = nx.strongly_connected_components
-
 
 def num_components_min_size(G, sizes):
     ccs = strong_ccs(G) if isinstance(G, nx.DiGraph) else nx.connected_components(G)
     return [len([ cc for cc in ccs if len(cc) > s]) for s in sizes]
 
-def significance_wrapper( (infmat, infmat_index, genes, h, delta, filtered_indices, sizes, directed, i) ):
-    # print "\t\t- Permutation", i
-    permuted_genes = permute_and_filter_genes(genes, filtered_indices)
-    M, gene_index = hn.induce_infmat( infmat, infmat_index, permuted_genes)
+def significance_wrapper((infmat, index2gene, heat_permutation, delta, sizes, directed)):
+    M, index2gene = hn.induce_infmat(infmat, index2gene, sorted(heat_permutation.keys()))
+    h = hn.heat_vec(heat_permutation, index2gene)
     sim_mat = hn.similarity_matrix(M, h, directed)
-    G = hn.weighted_graph(sim_mat, gene_index, delta)
-    return num_components_min_size( G, sizes )
+    G = hn.weighted_graph(sim_mat, index2gene, delta, directed)
+    return num_components_min_size(G, sizes)
 
-
-def permute_and_filter_genes( genes, filtered_indices ):
-    permuted_genes = list(genes)
-    shuffle( permuted_genes )
-    return [ permuted_genes[i] for i in filtered_indices ]
-
-
-from random import shuffle
-import multiprocessing as mp
-def calculate_permuted_cc_counts(infmat, infmat_index, genes, h, delta, filtered_genes, n,
-                                 sizes=range(2, 11), directed=True, parallel=True):
-    # Find indices of filtered genes in the set of all genes
-    filtered_indices = [genes.index(g) for g in filtered_genes]
-    
+def calculate_permuted_cc_counts(infmat, index2gene, heat_permutations, delta,
+                                 sizes=range(2,11), directed=True, parallel=True):
     # Report parameters of run
     print "* Performing permuted heat statistical signifcance..."
     print "\t- Using no. of components >= k (k \\in",
     print "[%s, %s]) as statistic" % (min(sizes), max(sizes))
     print "\t- Running permutations:"
+    
     if parallel:
         pool = mp.Pool()
         map_fn = pool.map
     else:
         map_fn = map
-        
-    args = [(infmat, infmat_index, genes, h, delta, filtered_indices, sizes, directed, i) for i in range(n)]
+    
+    args = [(infmat, index2gene, heat_permutation, delta, sizes, directed) for heat_permutation in heat_permutations]    
     all_counts = map_fn(significance_wrapper, args)
     
     if parallel:
@@ -54,7 +42,6 @@ def calculate_permuted_cc_counts(infmat, infmat_index, genes, h, delta, filtered
         for size, count in zip(sizes, counts): size2counts[size].append( count )            
 
     return size2counts
-
 
 def compute_statistics(size2counts_real, size2counts_permuted, num_permutations):
     size2stats = dict([(s, []) for s in size2counts_permuted.keys()])

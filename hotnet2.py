@@ -5,7 +5,7 @@ strong_ccs = nx.strongly_connected_components
 ################################################################################
 # Influence and similarity matrix functions
 
-def induce_infmat(infmat, index2gene, genelist):					
+def induce_infmat(infmat, index2gene, genelist):		
     print "* Inducing infmat..."
     start_index = min(index2gene.keys())
     # Reformat gene index
@@ -25,8 +25,8 @@ def induce_infmat(infmat, index2gene, genelist):
     index2gene = dict([(i, genelist[i]) for i in range(len(genelist))])
     return M, index2gene
 
-def heat_vec(gene2heat, gene_index):
-    v = [gene2heat[gene] for _, gene in sorted(gene_index.iteritems()) ]
+def heat_vec(gene2heat, index2gene):
+    v = [gene2heat[gene] for _, gene in sorted(index2gene.iteritems()) if gene in gene2heat]
     return np.array(v)
 
 def similarity_matrix(M, heat, directed=True):

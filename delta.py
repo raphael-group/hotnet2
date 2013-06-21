@@ -3,13 +3,8 @@ import scipy as sp
 import scipy.io
 import hotnet2 as hn
 import networkx as nx
+import multiprocessing as mp
 strong_ccs = nx.strongly_connected_components
-
-def create_permuted_sim_mat(permuted_mat, permuted_mat_index, genes, h):
-    M, gene_index = hn.induce_infmat(permuted_mat, permuted_mat_index, genes)
-    sim_mat = hn.similarity_matrix(M, h)
-
-    return sim_mat, gene_index
 
 def get_component_sizes(arrs):
     return [len(arr) for arr in arrs]
@@ -60,12 +55,12 @@ def find_best_delta(permuted_sim, permuted_index, sizes, directed, start_quant=0
 
 def network_delta_wrapper((network_path, infmat_name, index2gene, tested_genes, h, sizes, directed)):
     permuted_mat = scipy.io.loadmat(network_path)[infmat_name]   
-    sim_mat, gene_index = create_permuted_sim_mat(permuted_mat, index2gene, tested_genes, h)
-    return find_best_delta(sim_mat, gene_index, sizes, directed )
+    M, gene_index = hn.induce_infmat(permuted_mat, index2gene, tested_genes)
+    sim = hn.similarity_matrix(M, h, directed)
+    return find_best_delta(sim, gene_index, sizes, directed )
 
 
-import multiprocessing as mp
-def network_delta_selection(permuted_network_paths, index2gene, infmat_name, tested_genes, h, sizes,
+def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
                             directed=True, parallel=True):
     print "* Performing network delta selection..."
     if parallel:
@@ -73,20 +68,22 @@ def network_delta_selection(permuted_network_paths, index2gene, infmat_name, tes
         map_fn = pool.map
     else:
         map_fn = map
-        
-    args = [(network_path, infmat_name, index2gene, tested_genes, h, sizes, directed) for network_path in permuted_network_paths]
+       
+    h_vec = hn.heat_vec(heat, index2gene)
+    args = [(network_path, infmat_name, index2gene, sorted(heat.keys()), h_vec, sizes, directed) for network_path in network_paths]
     delta_maps = map_fn(network_delta_wrapper, args)
     
     if parallel:
         pool.close()
         pool.join()
-        
+         
     # Parse the delta_maps into one dictionary
     sizes2deltas = dict([(s, []) for s in sizes])
     for size2delta in delta_maps:
         for s in sizes: sizes2deltas[s].append( size2delta[s] )
-
+ 
     return sizes2deltas
+
 
 
 def heat_delta_wrapper((M, index2gene, heat_permutation, directed, sizes)):

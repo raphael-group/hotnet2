@@ -76,12 +76,8 @@ def run_for_network(args):
     index2gene = hnio.load_index(args.infmat_index_file)
     heat = hnio.load_heat(args.heat_file)
 
-    h_vec = [heat[gene] for index, gene in sorted(index2gene.items()) if gene in heat]
-    component_fn = strong_ccs if not args.classic else nx.connected_components
-        
-    #TODO: at some point, pass around immutable views -- deferring for now since there's no built-in immutable dict type
-    deltas = delta.network_delta_selection(permuted_network_paths, index2gene, args.infmat_name, sorted(heat.keys()),
-                                           h_vec, args.max_cc_sizes, component_fn, args.multithreaded)
+    deltas = delta.network_delta_selection(permuted_network_paths, args.infmat_name, index2gene,
+                                           heat, args.max_cc_sizes, not args.classic, args.multithreaded)
     
     print "Deltas is: ", deltas
 

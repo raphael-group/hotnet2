@@ -1,8 +1,10 @@
 # -*- coding: iso-8859-1 -*-
 from sys import argv
+import scipy.io
 import stats
 import hotnet2 as hn
 import hnio
+import permutations
 import json
 
 def parse_args(raw_args):  
@@ -37,8 +39,6 @@ def parse_args(raw_args):
 PARAMETERS = "parameters"
 
 def run(args):
-    import scipy.io
-
     hotnet_output = json.load(open(args.hotnet_output_file))
 
     infmat = scipy.io.loadmat(hotnet_output[PARAMETERS]["infmat_file"])[hotnet_output[PARAMETERS]["infmat_name"]]  
@@ -55,17 +55,15 @@ def run(args):
     G = hn.weighted_graph(sim, gene_index, delta)
 
     extra_genes = hnio.load_gene_list(args.permutation_genes_file)
-    genes_eligible_for_heat = sorted([g for g in (set(gene_index.values()) | extra_genes) if g in infmat_index.values()])
 
+    heat_permutations = permutations.permute_heat(heat, args.num_permutations, extra_genes, args.multithreaded)
+    
     #size2counts is dict(size -> list of counts, 1 per permutation)
-    sizes2counts = stats.calculate_permuted_cc_counts(infmat, infmat_index, genes_eligible_for_heat, h, delta,
-                                                      sorted(set(gene_index.values())), args.num_permutations,
-                                                      sizes, not hotnet_output[PARAMETERS]["classic"],
-                                                      args.multithreaded)
-
+    sizes2counts = stats.calculate_permuted_cc_counts(infmat, infmat_index, heat_permutations, delta, sizes, not hotnet_output[PARAMETERS]["classic"], args.multithreaded)
     real_counts = stats.num_components_min_size(G, sizes)
     size2real_counts = dict(zip(sizes, real_counts))
     sizes2stats = stats.compute_statistics(size2real_counts, sizes2counts, args.num_permutations)
+    
     print json.dumps(sizes2stats, indent=4)
 
 if __name__ == "__main__": 
