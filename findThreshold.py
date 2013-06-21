@@ -1,4 +1,5 @@
 # -*- coding: iso-8859-1 -*-
+import hnap
 import hnio
 import hotnet2 as hn
 import delta
@@ -9,17 +10,9 @@ strong_ccs = nx.strongly_connected_components
 
 ITERATION_REPLACEMENT_TOKEN = '##NUM##'
 
-def parse_args(raw_args):  
-    import argparse
-    
-    class BetterFileArgParser(argparse.ArgumentParser):
-        def convert_arg_line_to_args(self, arg_line):
-            if not arg_line.startswith('#'):
-                for arg in arg_line.split():
-                    yield arg
-
+def parse_args(raw_args):
     description = "" #TODO
-    parser = BetterFileArgParser(description=description, fromfile_prefix_chars='@')
+    parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
     parser.add_argument('-r', '--runname', help='Name of run / disease.')
     #TODO fix this so that multithreading default is true
     parser.add_argument('-m', '--multithreaded', default=False, action='store_true',

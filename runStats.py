@@ -1,5 +1,6 @@
 # -*- coding: iso-8859-1 -*-
-from sys import argv
+import sys
+import hnap
 import scipy.io
 import stats
 import hotnet2 as hn
@@ -7,17 +8,9 @@ import hnio
 import permutations
 import json
 
-def parse_args(raw_args):  
-    import argparse
-    
-    class BetterFileArgParser(argparse.ArgumentParser):
-        def convert_arg_line_to_args(self, arg_line):
-            if not arg_line.startswith('#'):
-                for arg in arg_line.split():
-                    yield arg
-            
+def parse_args(raw_args):      
     description = "" #TODO
-    parser = BetterFileArgParser(description=description, fromfile_prefix_chars='@')
+    parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
 
     parser.add_argument('-hof', '--hotnet_output_file', required=True,
                         help='Path to output file produced by runHotnet2.py')
@@ -67,4 +60,4 @@ def run(args):
     print json.dumps(sizes2stats, indent=4)
 
 if __name__ == "__main__": 
-    run( parse_args(argv[1:]) )
+    run( parse_args(sys.argv[1:]) )

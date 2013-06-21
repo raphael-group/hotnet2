@@ -1,22 +1,16 @@
 # -*- coding: iso-8859-1 -*-
+import hnap
 import hnio
 import hotnet2 as hn
 import sys
 
 def parse_args(raw_args):  
-    import argparse
     
-    class BetterFileArgParser(argparse.ArgumentParser):
-        def convert_arg_line_to_args(self, arg_line):
-            if not arg_line.startswith('#'):
-                for arg in arg_line.split():
-                    yield arg
-            
     description = "Runs generalized HotNet2.\
                    Note that some or all parameters can be specified via a configuration\
                    file by passing '@<ConfigFileName>' as a command-line parameter, e.g.\
                    'python runHotnet2.py @testConf.txt --runname TestRun'."
-    parser = BetterFileArgParser(description=description, fromfile_prefix_chars='@')
+    parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
 
     parser.add_argument('-r', '--runname', help='Name of run / disease.')
     parser.add_argument('-mf', '--infmat_file', required=True,
@@ -32,7 +26,7 @@ def parse_args(raw_args):
     parser.add_argument('-ccs', '--min_cc_size', type=int, default=3,
                         help='Minimum size connected components that should be returned.')
     parser.add_argument('-o', '--output_file',
-                        help='Output file.  If none given, output will be writte to stdout.')
+                        help='Output file.  If none given, output will be written to stdout.')
     parser.add_argument('--classic', default=False, action='store_true',
                         help='Run classic (instead of directed) HotNet.')
     
