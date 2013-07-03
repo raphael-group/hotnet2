@@ -70,7 +70,8 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
         map_fn = map
        
     h_vec = hn.heat_vec(heat, index2gene)
-    args = [(network_path, infmat_name, index2gene, sorted(heat.keys()), h_vec, sizes, directed) for network_path in network_paths]
+    args = [(network_path, infmat_name, index2gene, sorted(heat.keys()), h_vec, sizes, directed)
+            for network_path in network_paths]
     delta_maps = map_fn(network_delta_wrapper, args)
     
     if parallel:
@@ -102,7 +103,8 @@ def heat_delta_selection(M, index2gene, heat_permutations, sizes,
     else:
         map_fn = map
 
-    args = [(M, index2gene, heat_permutation, directed, sizes) for heat_permutation in heat_permutations]
+    args = [(M, index2gene, heat_permutation, directed, sizes)
+            for heat_permutation in heat_permutations]
     deltas = map_fn(heat_delta_wrapper, args)
 
     if parallel:

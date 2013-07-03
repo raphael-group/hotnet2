@@ -11,8 +11,8 @@ import json
 def parse_args(raw_args):  
     
     description = "Runs generalized HotNet2.\
-                   Note that some or all parameters can be specified via a configuration\
-                   file by passing '@<ConfigFileName>' as a command-line parameter, e.g.\
+                   Note that some or all parameters can be specified via a configuration file by\
+                   passing '@<ConfigFileName>' as a command-line parameter, e.g.\
                    'python runHotnet2.py @testConf.txt --runname TestRun'."
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
 
@@ -32,7 +32,8 @@ def parse_args(raw_args):
     parser.add_argument('--classic', default=False, action='store_true',
                         help='Run classic (instead of directed) HotNet.')
     parser.add_argument('-n', '--num_permutations', type=int, required=True,
-                        help='Number of permutation tests to run; set to 0 to skip running permutation tests.')
+                        help='Number of permutation tests to run; set to 0 to skip running\
+                              permutation tests.')
     parser.add_argument('-pgf', '--permutation_genes_file',
                         help='Path to file containing a list of additional genes that can have\
                               permuted heat values assigned to them in permutation tests') 
@@ -64,11 +65,14 @@ def run(args):
     # calculate significance
     if args.num_permutations > 0:
         extra_genes = hnio.load_gene_list(args.permutation_genes_file)
-        heat_permutations = permutations.permute_heat(heat, args.num_permutations, extra_genes, args.multithreaded)
+        heat_permutations = permutations.permute_heat(heat, args.num_permutations, extra_genes,
+                                                      args.multithreaded)
         sizes = range(args.cc_start_size, args.cc_stop_size+1)
     
         #size2counts is dict(size -> (list of counts, 1 per permutation))
-        sizes2counts = stats.calculate_permuted_cc_counts(infmat, infmat_index, heat_permutations, args.delta, sizes, not args.classic, args.multithreaded)
+        sizes2counts = stats.calculate_permuted_cc_counts(infmat, infmat_index, heat_permutations,
+                                                          args.delta, sizes, not args.classic,
+                                                          args.multithreaded)
         real_counts = stats.num_components_min_size(G, sizes)
         size2real_counts = dict(zip(sizes, real_counts))
         sizes2stats = stats.compute_statistics(size2real_counts, sizes2counts, args.num_permutations)

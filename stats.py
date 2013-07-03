@@ -29,7 +29,8 @@ def calculate_permuted_cc_counts(infmat, index2gene, heat_permutations, delta,
     else:
         map_fn = map
     
-    args = [(infmat, index2gene, heat_permutation, delta, sizes, directed) for heat_permutation in heat_permutations]    
+    args = [(infmat, index2gene, heat_permutation, delta, sizes, directed)
+            for heat_permutation in heat_permutations] 
     all_counts = map_fn(significance_wrapper, args)
     
     if parallel:
