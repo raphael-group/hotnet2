@@ -2,7 +2,8 @@
 --infmat_file /data/compbio/datasets/HeatKernels/IntHint/binary+complex+hi2012/inthint_inf_0.10.mat
 --infmat_name Li
 --infmat_index_file /data/compbio/datasets/HeatKernels/IntHint/binary+complex+hi2012/inthint_index_genes
---heat_file /research/compbio/users/jeldridg/heat_file.txt
+--heat_file /research/compbio/users/jeldridg/TestFiles/heat_file.txt
 --delta 0.001
 --min_cc_size 4
 --classic
+--num_permutations 0
