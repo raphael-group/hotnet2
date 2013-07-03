@@ -6,4 +6,4 @@ network
 --infmat_index_file /data/compbio/datasets/HeatKernels/pagerank/IntHint/binary+complex+hi2012/inthint_index_genes
 --num_permutations 2
 --heat_file /research/compbio/users/jeldridg/TestFiles/delta_selection_ex_heat_file.txt
---max_cc_sizes 15
+#--max_cc_sizes 15
