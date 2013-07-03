@@ -4,9 +4,8 @@ import hnio
 import hotnet2 as hn
 import delta
 import permutations
-import networkx as nx
 import sys
-strong_ccs = nx.strongly_connected_components
+import json
 
 ITERATION_REPLACEMENT_TOKEN = '##NUM##'
 
@@ -21,6 +20,8 @@ def parse_args(raw_args):
                         help='Include flag to run permutation tests in parallel.')
     parser.add_argument('-c', '--classic', default=False, action='store_true',
                         help='Run classic (instead of directed) HotNet.')
+    parser.add_argument('-o', '--output_file',
+                        help='Output file.  If none given, output will be written to stdout.')
 
     subparsers = parser.add_subparsers(title='Permutation techinques')
 
@@ -40,7 +41,7 @@ def parse_args(raw_args):
                                 help='Max CC sizes for delta selection')
     network_parser.add_argument('-n', '--num_permutations', type=int,
                                 help='Number of permuted networks to use')
-    network_parser.set_defaults(func=run_for_network)
+    network_parser.set_defaults(delta_fn=get_deltas_for_network)
     
     #create subparser for options for permuting heat scores
     heat_parser = subparsers.add_parser('heat', help='Permute heat scores')
@@ -59,12 +60,20 @@ def parse_args(raw_args):
     #                          help='Value for choosing delta to maximize # CCs of size >= k')
     heat_parser.add_argument('-n', '--num_permutations', type=int,
                              help='Number of heat score permutations to test')
-    heat_parser.set_defaults(func=run_for_heat)
+    heat_parser.set_defaults(delta_fn=get_deltas_for_heat)
                         
     return parser.parse_args(raw_args)
 
+def run(args):
+    deltas = args.delta_fn(args)
+    
+    output_file = open(args.output_file, 'w') if args.output_file else sys.stdout
+    args.delta_fn = "network" if args.delta_fn == get_deltas_for_network else "heat"
+    json.dump({"parameters": vars(args), "deltas": deltas}, output_file, indent=4)
+    if (args.output_file): output_file.close()
 
-def run_for_network(args):
+
+def get_deltas_for_network(args):
     #construct list of paths to the first num_permutations     
     permuted_network_paths = [args.permuted_networks_path.replace(ITERATION_REPLACEMENT_TOKEN, str(i))
                               for i in range(1, args.num_permutations+1)]
@@ -76,10 +85,10 @@ def run_for_network(args):
                                            heat, args.max_cc_sizes, not args.classic,
                                            args.parallel)
     
-    print "Deltas is: ", deltas
+    return deltas
 
 
-def run_for_heat(args):
+def get_deltas_for_heat(args):
     import scipy.io
     
     infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
@@ -92,9 +101,8 @@ def run_for_heat(args):
                                                   parallel=args.parallel)
     deltas = delta.heat_delta_selection(M, gene_index, heat_permutations, args.max_cc_sizes,
                                         not args.classic, args.parallel)
-    print deltas
+    return deltas
 
 
 if __name__ == "__main__": 
-    args = parse_args(sys.argv[1:])
-    args.func(args)
+    run(parse_args(sys.argv[1:]))
