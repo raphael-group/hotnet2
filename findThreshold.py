@@ -32,14 +32,13 @@ def parse_args(raw_args):
                                       Include ' + ITERATION_REPLACEMENT_TOKEN + ' in the\
                                       path to be replaced with the iteration number')
     network_parser.add_argument('-mn', '--infmat_name', default='Li',
-                                help='Variable name of the influence matri[x/ces] in the .mat\
-                                      file[s]')
+                                help='Variable name of the influence matrices in the .mat files')
     network_parser.add_argument('-if', '--infmat_index_file', required=True, default=None,
-                                help='Gene-index file for the influence matrix.')
+                                help='Gene-index file for the influence matrices.')
     network_parser.add_argument('-hf', '--heat_file', required=True, help='Heat score file')
-    network_parser.add_argument('-k', '--max_cc_sizes', nargs='+', type=int, required=True, 
+    network_parser.add_argument('-k', '--max_cc_sizes', nargs='+', type=int, default=[5,10,15,20], 
                                 help='Max CC sizes for delta selection')
-    network_parser.add_argument('-n', '--num_permutations', type=int,
+    network_parser.add_argument('-n', '--num_permutations', type=int, required=True,
                                 help='Number of permuted networks to use')
     network_parser.set_defaults(delta_fn=get_deltas_for_network)
     
@@ -53,12 +52,12 @@ def parse_args(raw_args):
                              help='Gene-index file for the influence matrix.')
     heat_parser.add_argument('-hf', '--heat_file', required=True,
                              help='Heat score file')
-    heat_parser.add_argument('-l', '--max_cc_sizes', nargs='+', type=int, required=True, 
+    heat_parser.add_argument('-l', '--max_cc_sizes', nargs='+', type=int, default=[5,10,15,20],
                              help='Max CC sizes for delta selection')
     #TODO: make k and l mutually exclusive
     # heat_parser.add_argument('-k', '--test_cc_size', nargs='+', type=int, required=True, 
     #                          help='Value for choosing delta to maximize # CCs of size >= k')
-    heat_parser.add_argument('-n', '--num_permutations', type=int,
+    heat_parser.add_argument('-n', '--num_permutations', type=int, required=True,
                              help='Number of heat score permutations to test')
     heat_parser.set_defaults(delta_fn=get_deltas_for_heat)
                         
