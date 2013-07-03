@@ -41,11 +41,10 @@ def parse_args(raw_args):
                         help='Smallest connected component size to count')
     parser.add_argument('-l', '--cc_stop_size', type=int, default=10,
                         help='Largest connected component size to count')
-    #TODO: fix this so that multithreading default is true
     parser.add_argument('-o', '--output_file',
                         help='Output file.  If none given, output will be written to stdout.')
-    parser.add_argument('-m', '--multithreaded', default=False, action='store_true',
-                        help='Set to 0 to disable running permutation tests in parallel')
+    parser.add_argument('-p', '--parallel', default=False, action='store_true',
+                        help='Include flag to run permutation tests in parallel.')
     
     return parser.parse_args(raw_args)
 
@@ -66,13 +65,13 @@ def run(args):
     if args.num_permutations > 0:
         extra_genes = hnio.load_gene_list(args.permutation_genes_file)
         heat_permutations = permutations.permute_heat(heat, args.num_permutations, extra_genes,
-                                                      args.multithreaded)
+                                                      args.parallel)
         sizes = range(args.cc_start_size, args.cc_stop_size+1)
     
         #size2counts is dict(size -> (list of counts, 1 per permutation))
         sizes2counts = stats.calculate_permuted_cc_counts(infmat, infmat_index, heat_permutations,
                                                           args.delta, sizes, not args.classic,
-                                                          args.multithreaded)
+                                                          args.parallel)
         real_counts = stats.num_components_min_size(G, sizes)
         size2real_counts = dict(zip(sizes, real_counts))
         sizes2stats = stats.compute_statistics(size2real_counts, sizes2counts, args.num_permutations)

@@ -11,20 +11,22 @@ strong_ccs = nx.strongly_connected_components
 ITERATION_REPLACEMENT_TOKEN = '##NUM##'
 
 def parse_args(raw_args):
-    description = "" #TODO
+    description = "Runs HotNet threshold-finding procedure.\
+                   Note that some or all parameters can be specified via a configuration file by\
+                   passing '@<ConfigFileName>' as a command-line parameter, e.g.\
+                   'python findThreshold.py @testConf.txt --runname TestRun'."
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
     parser.add_argument('-r', '--runname', help='Name of run / disease.')
-    #TODO fix this so that multithreading default is true
-    parser.add_argument('-m', '--multithreaded', default=False, action='store_true',
-                        help='Set to 0 to disable running permutation tests in parallel')
+    parser.add_argument('-p', '--parallel', default=False, action='store_true',
+                        help='Include flag to run permutation tests in parallel.')
     parser.add_argument('--classic', default=False, action='store_true',
                         help='Run classic (instead of directed) HotNet.')
 
     subparsers = parser.add_subparsers(title='Permutation techinques')
 
     #create subparser for options for permuting networks
-    network_parser = subparsers.add_parser('network', description='Permute networks')
-    network_parser.add_argument('-p', '--permuted_networks_path', required=True,
+    network_parser = subparsers.add_parser('network', help='Permute networks')
+    network_parser.add_argument('-pnp', '--permuted_networks_path', required=True,
                                 help='Path to influence matrices for permuted networks.\
                                       Include ' + ITERATION_REPLACEMENT_TOKEN + ' in the\
                                       path to be replaced with the iteration number')
@@ -50,15 +52,14 @@ def parse_args(raw_args):
                              help='Gene-index file for the influence matrix.')
     heat_parser.add_argument('-hf', '--heat_file', required=True,
                              help='Heat score file')
-    #TODO: make k and l mutually exclusive
     heat_parser.add_argument('-l', '--max_cc_sizes', nargs='+', type=int, required=True, 
                              help='Max CC sizes for delta selection')
+    #TODO: make k and l mutually exclusive
     # heat_parser.add_argument('-k', '--test_cc_size', nargs='+', type=int, required=True, 
     #                          help='Value for choosing delta to maximize # CCs of size >= k')
     heat_parser.add_argument('-n', '--num_permutations', type=int,
                              help='Number of heat score permutations to test')
     heat_parser.set_defaults(func=run_for_heat)
-    #TODO add ability to specify pre-permuted heat files <- is this actually useful?
                         
     return parser.parse_args(raw_args)
 
@@ -73,7 +74,7 @@ def run_for_network(args):
 
     deltas = delta.network_delta_selection(permuted_network_paths, args.infmat_name, index2gene,
                                            heat, args.max_cc_sizes, not args.classic,
-                                           args.multithreaded)
+                                           args.parallel)
     
     print "Deltas is: ", deltas
 
@@ -88,9 +89,9 @@ def run_for_heat(args):
     M, gene_index = hn.induce_infmat(infmat, index2gene, sorted(gene2heat.keys()))
 
     heat_permutations = permutations.permute_heat(gene2heat, args.num_permutations,
-                                                  parallel=args.multithreaded)
+                                                  parallel=args.parallel)
     deltas = delta.heat_delta_selection(M, gene_index, heat_permutations, args.max_cc_sizes,
-                                        not args.classic, args.multithreaded)
+                                        not args.classic, args.parallel)
     print deltas
 
 
