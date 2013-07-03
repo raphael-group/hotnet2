@@ -19,7 +19,7 @@ def parse_args(raw_args):
     parser.add_argument('-r', '--runname', help='Name of run / disease.')
     parser.add_argument('-p', '--parallel', default=False, action='store_true',
                         help='Include flag to run permutation tests in parallel.')
-    parser.add_argument('--classic', default=False, action='store_true',
+    parser.add_argument('-c', '--classic', default=False, action='store_true',
                         help='Run classic (instead of directed) HotNet.')
 
     subparsers = parser.add_subparsers(title='Permutation techinques')

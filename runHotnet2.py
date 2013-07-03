@@ -29,7 +29,7 @@ def parse_args(raw_args):
                         help='Weight threshold for edge removal')
     parser.add_argument('-ccs', '--min_cc_size', type=int, default=3,
                         help='Minimum size connected components that should be returned.')
-    parser.add_argument('--classic', default=False, action='store_true',
+    parser.add_argument('-c', '--classic', default=False, action='store_true',
                         help='Run classic (instead of directed) HotNet.')
     parser.add_argument('-n', '--num_permutations', type=int, required=True,
                         help='Number of permutation tests to run; set to 0 to skip running\
