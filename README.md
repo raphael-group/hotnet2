@@ -7,7 +7,7 @@ The HotNet algorithm, whether classic or directed, has 4 basic steps:
 
 1. Influence matrix creation
 
-    This step creates a matrix that defines an "influence score" for each gene pair in the newtork based on known gene interactions and a heat diffusion process.  Code is not provided for influence matrix creation.
+    This step creates a matrix that defines an "influence score" for each gene pair in the network based on known gene interactions and a heat diffusion process.  Code is not provided for influence matrix creation.
 
 2. Delta selection
 
