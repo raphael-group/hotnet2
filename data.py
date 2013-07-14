@@ -6,29 +6,20 @@ import scipy
 
 def parse_args(raw_args):
     description = "Data module"
-    parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
-    
+    parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')    
     subparsers = parser.add_subparsers(title='Heat scores')
 
-    #create subparser for options for permuting networks
     mutation_parser = subparsers.add_parser('mutation', help='Mutation data')
     mutation_parser.add_argument('--snv_file', required=True, help='SNV file')
     mutation_parser.add_argument('--cna_file', required=True, help='CNA file')
     mutation_parser.add_argument('--sample_file', required=True, help='Sample file')
     mutation_parser.add_argument('--gene_file', required=True, help='Gene file')
-    mutation_parser.add_argument('--min_freq', type=int, default=11, help="Minimum frequency")
+    mutation_parser.add_argument('--min_freq', type=int, default=11, help='Minimum frequency')
+    mutation_parser.add_argument('--gene_filter_file', default=None,
+                                 help='File listing genes whose heat scores should be preserved.\
+                                       If present, all other heat scores will be discarded.')
     mutation_parser.add_argument('--output_file', required=True, help='Output file')
     mutation_parser.set_defaults(heat_fn=mutation)
-    
-    
-#ONCODRIVE_DIR = "/data/compbio/datasets/TCGA/PanCancer/UPF-Barcelona/oncodrive"
-#oncodrive_fm  = "/data/compbio/datasets/TCGA/PanCancer/UPF-Barcelona/oncodrive/pan12_oncoFM_z_values_abr2013_zscores.tsv" % ONCODRIVE_DIR
-#oncodrive_amp = "/data/compbio/datasets/TCGA/PanCancer/UPF-Barcelona/oncodrive/cis/2013-06-06/filtered/pan12_OncodriveCIS_Over.txt" % ONCODRIVE_DIR 
-#oncodrive_del = "/data/compbio/datasets/TCGA/PanCancer/UPF-Barcelona/oncodrive/cis/2013-06-06/filtered/pan12_OncodriveCIS_Under.txt" % ONCODRIVE_DIR
-#GENE2ONCO = load_oncodrive_data(oncodrive_fm, oncodrive_amp, oncodrive_del)
-#genes, heat = fm_heat(GENE2ONCO, 0.2, 0.2, CIS=True)
-#     gene2heat = hnio.load_oncodrive_data(args.fm_scores, args.cis_amp_scores, args.cis_del_scores)
-#     return fm_heat(gene2heat, args.fm_threshold, args.cis_threshold, args.CIS)
     
     oncodrive_parser = subparsers.add_parser('oncodrive', help='Oncodrive scores')
     oncodrive_parser.add_argument('--fm_scores', required=True, help='???')
@@ -37,6 +28,9 @@ def parse_args(raw_args):
     oncodrive_parser.add_argument('--fm_threshold', type=float, default=0.2, help='???')
     oncodrive_parser.add_argument('--cis_threshold', type=float, default=0.2, help='???')
     oncodrive_parser.add_argument('--cis', default=False, action='store_true', help='???')
+    oncodrive_parser.add_argument('--gene_filter_file', default=None,
+                                 help='File listing genes whose heat scores should be preserved.\
+                                       If present, all other heat scores will be discarded.')
     oncodrive_parser.add_argument('--output_file', required=True, help='Output file')
     oncodrive_parser.set_defaults(heat_fn=oncodrive)
     
@@ -44,6 +38,9 @@ def parse_args(raw_args):
     mutsig_parser.add_argument('--mutsig_score_file', required=True, help='MutSig score file')
     mutsig_parser.add_argument('--threshold', type=float, default=1.0, help='Threshold...no idea what this is')
     mutsig_parser.add_argument('--output_file', required=True, help='Output file')
+    mutsig_parser.add_argument('--gene_filter_file', default=None,
+                                 help='File listing genes whose heat scores should be preserved.\
+                                       If present, all other heat scores will be discarded.')
     mutsig_parser.set_defaults(heat_fn=mutsig)
     
     music_parser = subparsers.add_parser('music', help='MuSiC scores')
@@ -51,6 +48,9 @@ def parse_args(raw_args):
     music_parser.add_argument('--threshold', type=float, default=1.0, help='Threshold...no idea what this is')
     music_parser.add_argument('--max_heat', type=float, default=15, help='Max heat')
     music_parser.add_argument('--output_file', required=True, help='Output file')
+    music_parser.add_argument('--gene_filter_file', default=None,
+                                 help='File listing genes whose heat scores should be preserved.\
+                                       If present, all other heat scores will be discarded.')
     music_parser.set_defaults(heat_fn=music)
     
     return parser.parse_args(raw_args)
@@ -118,6 +118,10 @@ def music_heat(gene2music, threshold=1.0, max_heat=15):
                       if scipy.median(scores.values()) < threshold])
     print "\t- Including", len(gene2heat), "genes at threshold", threshold
     return gene2heat.keys(), gene2heat
+
+def expr_filter_heat(gene2heat, genes_to_preserve):
+    gene2heat = dict([(g, h) for g, h in gene2heat.items() if g in genes_to_preserve])
+    return gene2heat.keys(), gene2heat
  
 def mutation(args):
     genes_samples_gene2heat, samples_w_tys = hnio.load_mutation_data(args.snv_file, args.cna_file, args.sample_file, args.gene_file)
@@ -137,12 +141,10 @@ def music(args):
 
 def run(args):
     genes, heat = args.heat_fn(args)
-    hnio.save_heat(heat, args.output_file)
+    if args.gene_filter_file:
+        genes, heat = expr_filter_heat(heat, hnio.load_gene_list(args.gene_filter_file))
     
-#  
-# def expr_filter_heat( gene2heat ):
-#     gene2heat = dict([(g, h) for g, h in gene2heat.items() if g in EXPRESSED_GENES])
-#     return gene2heat.keys(), gene2heat
+    hnio.save_heat(heat, args.output_file)
 
 if __name__ == "__main__": 
     run(parse_args(sys.argv[1:]))
