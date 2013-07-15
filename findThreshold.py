@@ -67,7 +67,7 @@ def run(args):
     deltas = args.delta_fn(args)
     
     output_file = open(args.output_file, 'w') if args.output_file else sys.stdout
-    args.delta_fn = "network" if args.delta_fn == get_deltas_for_network else "heat"
+    args.delta_fn = args.delta_fn.__name__
     json.dump({"parameters": vars(args), "deltas": deltas}, output_file, indent=4)
     if (args.output_file): output_file.close()
 

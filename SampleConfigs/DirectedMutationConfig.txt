@@ -1,0 +1,13 @@
+--runname Test
+--infmat_file /data/compbio/datasets/HeatKernels/pagerank/IntHint/binary+complex+hi2012/inthint_ppr_0.60.mat
+--infmat_name PPR
+--infmat_index_file /data/compbio/datasets/HeatKernels/pagerank/IntHint/binary+complex+hi2012/inthint_index_genes
+--delta 0.000365
+--min_cc_size 4
+--num_permutations 0
+mutation
+--snv_file /research/compbio/users/mdml/tcga/pancancer/preprocessing/datapacks/2013_06_22/pan12/snv/pan12.snv
+--cna_file /research/compbio/users/mdml/tcga/pancancer/preprocessing/datapacks/2013_06_22/pan12/cna/pan12.cna
+--sample_file /research/compbio/users/mdml/tcga/pancancer/preprocessing/datapacks/2013_06_22/pan12/samples.lst
+--gene_file /research/compbio/users/mdml/tcga/pancancer/preprocessing/datapacks/2013_06_22/pan12/genes.lst
+--min_freq 11
