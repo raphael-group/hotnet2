@@ -1,3 +1,5 @@
+import json
+
 ################################################################################
 # Data loading functions
 
@@ -5,7 +7,12 @@ def load_index(index_file):
     arrs  = [l.split() for l in open(index_file)]
     return dict([(int(arr[0]), arr[1]) for arr in arrs])
 
-def load_heat(heat_file):
+def load_heat_json(heat_file):
+    with open(heat_file) as f:
+        blob = json.load(f)
+        return blob["heat"], blob["parameters"]
+
+def load_heat_tsv(heat_file):
     arrs  = [l.split() for l in open(heat_file)]
     return dict([(arr[0], float(arr[1])) for arr in arrs])
 

@@ -2,8 +2,7 @@
 --infmat_file /data/compbio/datasets/HeatKernels/pagerank/IntHint/binary+complex+hi2012/inthint_ppr_0.60.mat
 --infmat_name PPR
 --infmat_index_file /data/compbio/datasets/HeatKernels/pagerank/IntHint/binary+complex+hi2012/inthint_index_genes
+--heat_file /research/compbio/users/jeldridg/TestFiles/MutSig_heat.json
 --delta 0.000365
 --min_cc_size 4
 --num_permutations 0
-mutsig
---mutsig_score_file /data/compbio/datasets/TCGA/PanCancer/Broad/mutsig/scores/U8.pvals.qvals.txt

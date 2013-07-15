@@ -2,12 +2,8 @@
 --infmat_file /data/compbio/datasets/HeatKernels/pagerank/IntHint/binary+complex+hi2012/inthint_ppr_0.60.mat
 --infmat_name PPR
 --infmat_index_file /data/compbio/datasets/HeatKernels/pagerank/IntHint/binary+complex+hi2012/inthint_index_genes
+--heat_file /research/compbio/users/jeldridg/TestFiles/oncodrive_heat.json
 --delta 0.000365
 --min_cc_size 4
 --num_permutations 0
-oncodrive
---fm_scores /data/compbio/datasets/TCGA/PanCancer/UPF-Barcelona/oncodrive/pan12_oncoFM_z_values_abr2013_zscores.tsv
---cis_amp_scores /data/compbio/datasets/TCGA/PanCancer/UPF-Barcelona/oncodrive/cis/2013-06-06/filtered/pan12_OncodriveCIS_Over.txt
---cis_del_scores /data/compbio/datasets/TCGA/PanCancer/UPF-Barcelona/oncodrive/cis/2013-06-06/filtered/pan12_OncodriveCIS_Under.txt
---cis
 

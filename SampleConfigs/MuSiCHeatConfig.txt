@@ -1,0 +1,2 @@
+music
+--music_score_file /data/compbio/datasets/TCGA/PanCancer/WashU/music/scores/music_mut_rates_and_smgs/pancan12/pancan12_all_tested_genes_with_mean_rsem.tsv

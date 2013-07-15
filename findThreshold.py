@@ -78,7 +78,7 @@ def get_deltas_for_network(args):
                               for i in range(1, args.num_permutations+1)]
 
     index2gene = hnio.load_index(args.infmat_index_file)
-    heat = hnio.load_heat(args.heat_file)
+    heat = hnio.load_heat_tsv(args.heat_file)
 
     deltas = delta.network_delta_selection(permuted_network_paths, args.infmat_name, index2gene,
                                            heat, args.max_cc_sizes, not args.classic,
@@ -92,7 +92,7 @@ def get_deltas_for_heat(args):
     
     infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
     index2gene = hnio.load_index(args.infmat_index_file)
-    gene2heat = hnio.load_heat(args.heat_file)
+    gene2heat = hnio.load_heat_tsv(args.heat_file)
   
     M, gene_index = hn.induce_infmat(infmat, index2gene, sorted(gene2heat.keys()))
 
