@@ -135,18 +135,3 @@ def load_music_scores(scores_file):
     # Output parsing info
     print "\t- Loaded %s genes." % len(gene2music)
     return gene2music
-
-################################################################################
-# Data saving functions
-
-"""
-If no output file is given, the heat will be written to stdout
-"""
-import sys
-def save_heat(heat, output_file=None):
-    out = open(output_file, 'w') if output_file else sys.stdout
-
-    for gene, score in heat.iteritems():
-        out.write(gene + '\t' + str(score) + '\n')
-
-    if output_file: out.close()

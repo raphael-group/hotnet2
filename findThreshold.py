@@ -23,7 +23,7 @@ def parse_args(raw_args):
     parser.add_argument('-o', '--output_file',
                         help='Output file.  If none given, output will be written to stdout.')
 
-    subparsers = parser.add_subparsers(title='Permutation techinques')
+    subparsers = parser.add_subparsers(title='Permutation techniques')
 
     #create subparser for options for permuting networks
     network_parser = subparsers.add_parser('network', help='Permute networks')
@@ -64,21 +64,22 @@ def parse_args(raw_args):
     return parser.parse_args(raw_args)
 
 def run(args):
-    deltas = args.delta_fn(args)
+    heat, heat_params = hnio.load_heat_json(args.heat_file)
+    deltas = args.delta_fn(args, heat)
     
     output_file = open(args.output_file, 'w') if args.output_file else sys.stdout
     args.delta_fn = args.delta_fn.__name__
-    json.dump({"parameters": vars(args), "deltas": deltas}, output_file, indent=4)
+    json.dump({"parameters": vars(args), "heat_parameters": heat_params,
+               "deltas": deltas}, output_file, indent=4)
     if (args.output_file): output_file.close()
 
 
-def get_deltas_for_network(args):
+def get_deltas_for_network(args, heat):
     #construct list of paths to the first num_permutations     
     permuted_network_paths = [args.permuted_networks_path.replace(ITERATION_REPLACEMENT_TOKEN, str(i))
                               for i in range(1, args.num_permutations+1)]
 
     index2gene = hnio.load_index(args.infmat_index_file)
-    heat = hnio.load_heat_tsv(args.heat_file)
 
     deltas = delta.network_delta_selection(permuted_network_paths, args.infmat_name, index2gene,
                                            heat, args.max_cc_sizes, not args.classic,
@@ -87,12 +88,11 @@ def get_deltas_for_network(args):
     return deltas
 
 
-def get_deltas_for_heat(args):
+def get_deltas_for_heat(args, gene2heat):
     import scipy.io
     
     infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
     index2gene = hnio.load_index(args.infmat_index_file)
-    gene2heat = hnio.load_heat_tsv(args.heat_file)
   
     M, gene_index = hn.induce_infmat(infmat, index2gene, sorted(gene2heat.keys()))
 

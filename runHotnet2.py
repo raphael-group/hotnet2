@@ -1,7 +1,6 @@
 # -*- coding: iso-8859-1 -*-
 import hnap
 import hnio
-import heat
 import hotnet2 as hn
 import permutations
 import stats
