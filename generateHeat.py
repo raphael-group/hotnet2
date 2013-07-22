@@ -1,6 +1,6 @@
 import hnap
 import hnio
-import heat
+import heat as hnheat
 import sys
 import json
 
@@ -66,24 +66,24 @@ def load_direct_heat(args):
 
 def load_mutation_heat(args):
     genes_samples_gene2heat, _ = hnio.load_mutation_data(args.snv_file, args.cna_file, args.sample_file, args.gene_file)
-    return heat.mut_heat(genes_samples_gene2heat, args.min_freq)
+    return hnheat.mut_heat(genes_samples_gene2heat, args.min_freq)
 
 def load_oncodrive_heat(args):
     gene2heat = hnio.load_oncodrive_data(args.fm_scores, args.cis_amp_scores, args.cis_del_scores)
-    return heat.fm_heat(gene2heat, args.fm_threshold, args.cis_threshold, args.cis)
+    return hnheat.fm_heat(gene2heat, args.fm_threshold, args.cis_threshold, args.cis)
     
 def load_mutsig_heat(args):
     gene2mutsig = hnio.load_mutsig_scores(args.mutsig_score_file)
-    return heat.mutsig_heat(gene2mutsig, args.threshold)
+    return hnheat.mutsig_heat(gene2mutsig, args.threshold)
 
 def load_music_heat(args):
     gene2music = hnio.load_music_scores(args.music_score_file)
-    return heat.music_heat(gene2music, args.threshold, args.max_heat)
+    return hnheat.music_heat(gene2music, args.threshold, args.max_heat)
 
 def run(args):
     heat = args.heat_fn(args)
     if args.gene_filter_file:
-        heat = heat.expr_filter_heat(heat, hnio.load_gene_list(args.gene_filter_file))
+        heat = hnheat.expr_filter_heat(heat, hnio.load_gene_list(args.gene_filter_file))
     
     args.heat_fn = args.heat_fn.__name__
     output_dict = {"parameters": vars(args), "heat": heat}
