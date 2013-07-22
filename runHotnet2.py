@@ -75,6 +75,12 @@ def run(args):
         size2real_counts = dict(zip(sizes, real_counts))
         sizes2stats = stats.compute_statistics(size2real_counts, sizes2counts, args.num_permutations)
     
+    #sort ccs list such that genes within components are sorted alphanumerically, and components
+    #are sorted first by length, then alphanumerically by name of the first gene in the component 
+    ccs = [sorted(cc) for cc in ccs]
+    ccs.sort(key=lambda comp: comp[0])
+    ccs.sort(key=len, reverse=True)
+    
     # write output
     output_dict = {"parameters": vars(args), "heat_parameters": heat_params,
                    "sizes": hn.component_sizes(ccs), "components": ccs}
