@@ -16,8 +16,92 @@ def load_heat_tsv(heat_file):
     arrs  = [l.split() for l in open(heat_file)]
     return dict([(arr[0], float(arr[1])) for arr in arrs])
 
-def load_gene_list(gene_list_file):
-    return set([l.strip() for l in open(gene_list_file)])
+def load_genes(gene_file):
+    """
+    Load tested genes from a file and return as a set.
+    
+    Keyword arguments:
+    gene_file -- path to file containing gene names, one per line.
+    
+    """
+    return set([l.strip() for l in open(gene_file)])
+
+def load_samples(sample_file):
+    """
+    Load sample IDs from a file and return as a set.
+    
+    Keyword arguments:
+    sample_file -- path to TSV file containing sample IDs as the first column. Any other columns
+                   will be ignored.
+    
+    """
+    return set([l.rstrip().split()[0] for l in open(sample_file)])
+
+def include_sample(sample, sample_wlst):
+    return sample in sample_wlst if sample_wlst else True
+
+def gene_filter(gene_set, gene_wlst):
+    return gene_set & gene_wlst if gene_wlst else gene_set
+
+# In [1]: from generateHeat import *
+# 
+# In [2]: snv_file = '/research/compbio/users/mdml/tcga/pancancer/preprocessing/datapacks/2013_06_22/pan12/snv/pan12.snv'
+# 
+# In [3]: cna_file = '/research/compbio/users/mdml/tcga/pancancer/preprocessing/datapacks/2013_06_22/pan12/cna/pan12.cna'
+# 
+# In [4]: gene_file = '/research/compbio/users/mdml/tcga/pancancer/preprocessing/datapacks/2013_06_22/pan12/genes.lst'
+# 
+# In [5]: sample_file = '/research/compbio/users/mdml/tcga/pancancer/preprocessing/datapacks/2013_06_22/pan12/samples.lst'
+
+def load_snv_data(snv_file, gene_wlst=None, sample_wlst=None):
+    """Load SNV data from a file and return a dict mapping sample IDs to sets of genes mutated in the sample.
+    
+    Keyword arguments:
+    snv_file -- path to TSV file containing SNVs where the first column of each line is a sample ID
+                and subsequent columns are names of genes mutated in that sample. Lines starting
+                with '#' will be ignored
+    gene_wlist -- whitelist of allowed genes (default None). Genes not in this list will be ignored.
+                  If None, all mutated genes will be included.
+    sample_wlist -- whitelist of allowed samples (default None). Samples not in this list will be
+                    ignored.  If None, all samples will be included.
+    
+    """
+    arrs = [l.rstrip().split("\t") for l in open(snv_file) if not l.startswith("#")]
+    return dict([(arr[0], gene_filter(set(arr[1:]), gene_wlst)) for arr in arrs
+                 if include_sample(arr[0], sample_wlst)])
+
+def load_cna_data(cna_file, gene_wlst=None, sample_wlst=None):
+    """Load CNA data from a file and return a dict mapping sample IDs to dicts of (gene -> "amp"/"del") mutated in the sample.
+    
+    Keyword arguments:
+    cna_file -- path to TSV file containing CNAs where the first column of each line is a sample ID
+                and subsequent columns contain gene names followed by "(A)" or "(D)" indicating an
+                ammplification or deletion in that gene for the sample. Lines starting with '#'
+                will be ignored.
+    gene_wlist -- whitelist of allowed genes (default None). Genes not in this list will be ignored.
+                  If None, all mutated genes will be included.
+    sample_wlist -- whitelist of allowed samples (default None). Samples not in this list will be
+                    ignored.  If None, all samples will be included.
+    
+    """
+
+    def get_mut_type(cna):
+        if cna.endswith("(A)"): return "amp"
+        elif cna.endswith("(D)"): return "del"
+        else: raise ValueError("Unknown CNA type in sample %s: %s", arr[0], cna)
+    
+    arrs = [l.rstrip().split("\t") for l in open(cna_file) if not l.startswith("#")]
+    arrs = [arr for arr in arrs if include_sample(arr[0], sample_wlst)]
+    
+    samples2cnas = {}
+    for arr in arrs:
+        genes = gene_filter(set([gene.split("(")[0] for gene in arr[1:]]), gene_wlst)
+        gene2type = dict([(cna.split("(")[0], get_mut_type(cna)) for cna in arr[1:] if cna.split("(")[0] in genes])
+        
+        if len(gene2type) > 0:
+            samples2cnas[arr[0]] = gene2type
+            
+    return samples2cnas
 
 def load_mutation_data(snv_file, cna_file, sample_file, gene_file):
     print "* Loading mutation data..."

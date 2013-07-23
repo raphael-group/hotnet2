@@ -65,8 +65,11 @@ def load_direct_heat(args):
     return hnio.load_heat_tsv(args.heat_file)
 
 def load_mutation_heat(args):
-    genes_samples_gene2heat, _ = hnio.load_mutation_data(args.snv_file, args.cna_file, args.sample_file, args.gene_file)
-    return hnheat.mut_heat(genes_samples_gene2heat, args.min_freq)
+    samples = hnio.load_samples(args.sample_file)
+    genes = hnio.load_genes(args.gene_file)
+    samples2snvs = hnio.load_snv_data(args.snv_file, genes, samples)
+    samples2cnas = hnio.load_cna_data(args.cna_file, genes, samples)
+    return hnheat.mut_heat(samples2snvs, samples2cnas, args.min_freq)
 
 def load_oncodrive_heat(args):
     gene2heat = hnio.load_oncodrive_data(args.fm_scores, args.cis_amp_scores, args.cis_del_scores)
@@ -83,7 +86,7 @@ def load_music_heat(args):
 def run(args):
     heat = args.heat_fn(args)
     if args.gene_filter_file:
-        heat = hnheat.expr_filter_heat(heat, hnio.load_gene_list(args.gene_filter_file))
+        heat = hnheat.expr_filter_heat(heat, hnio.load_genes(args.gene_filter_file))
     
     args.heat_fn = args.heat_fn.__name__
     output_dict = {"parameters": vars(args), "heat": heat}
