@@ -43,16 +43,6 @@ def include_sample(sample, sample_wlst):
 def gene_filter(gene_set, gene_wlst):
     return gene_set & gene_wlst if gene_wlst else gene_set
 
-# In [1]: from generateHeat import *
-# 
-# In [2]: snv_file = '/research/compbio/users/mdml/tcga/pancancer/preprocessing/datapacks/2013_06_22/pan12/snv/pan12.snv'
-# 
-# In [3]: cna_file = '/research/compbio/users/mdml/tcga/pancancer/preprocessing/datapacks/2013_06_22/pan12/cna/pan12.cna'
-# 
-# In [4]: gene_file = '/research/compbio/users/mdml/tcga/pancancer/preprocessing/datapacks/2013_06_22/pan12/genes.lst'
-# 
-# In [5]: sample_file = '/research/compbio/users/mdml/tcga/pancancer/preprocessing/datapacks/2013_06_22/pan12/samples.lst'
-
 def load_snv_data(snv_file, gene_wlst=None, sample_wlst=None):
     """Load SNV data from a file and return a dict mapping sample IDs to sets of genes mutated in the sample.
     
