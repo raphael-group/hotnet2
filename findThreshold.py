@@ -15,51 +15,47 @@ def parse_args(raw_args):
                    passing '@<ConfigFileName>' as a command-line parameter, e.g.\
                    'python findThreshold.py @testConf.txt --runname TestRun'."
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
-    parser.add_argument('-r', '--runname', help='Name of run / disease.')
-    parser.add_argument('-p', '--parallel', default=False, action='store_true',
+    
+    #create parent parser for arguments common to both permutation types
+    parent_parser = hnap.HotNetArgParser(add_help=False, fromfile_prefix_chars='@')
+    parent_parser.add_argument('-r', '--runname', help='Name of run / disease.')
+    parent_parser.add_argument('-mn', '--infmat_name', default='Li',
+                                help='Variable name of the influence matrices in the .mat files')
+    parent_parser.add_argument('-if', '--infmat_index_file', required=True, default=None,
+                                help='Gene-index file for the influence matrices.')
+    parent_parser.add_argument('-hf', '--heat_file', required=True, help='Heat score file')
+    parent_parser.add_argument('-n', '--num_permutations', type=int, required=True,
+                                help='Number of permuted networks to use')
+    parent_parser.add_argument('-p', '--parallel', default=False, action='store_true',
                         help='Include flag to run permutation tests in parallel.')
-    parser.add_argument('-c', '--classic', default=False, action='store_true',
+    parent_parser.add_argument('-c', '--classic', default=False, action='store_true',
                         help='Run classic (instead of directed) HotNet.')
-    parser.add_argument('-o', '--output_file',
+    parent_parser.add_argument('-o', '--output_file',
                         help='Output file.  If none given, output will be written to stdout.')
+    parent_parser.add_argument('-l', '--max_cc_sizes', nargs='+', type=int, default=[5,10,15,20],
+                             help='Max CC sizes for delta selection')
 
     subparsers = parser.add_subparsers(title='Permutation techniques')
 
     #create subparser for options for permuting networks
-    network_parser = subparsers.add_parser('network', help='Permute networks')
+    network_parser = subparsers.add_parser('network', help='Permute networks', parents=[parent_parser])
     network_parser.add_argument('-pnp', '--permuted_networks_path', required=True,
                                 help='Path to influence matrices for permuted networks.\
                                       Include ' + ITERATION_REPLACEMENT_TOKEN + ' in the\
                                       path to be replaced with the iteration number')
-    network_parser.add_argument('-mn', '--infmat_name', default='Li',
-                                help='Variable name of the influence matrices in the .mat files')
-    network_parser.add_argument('-if', '--infmat_index_file', required=True, default=None,
-                                help='Gene-index file for the influence matrices.')
-    network_parser.add_argument('-hf', '--heat_file', required=True, help='Heat score file')
-    network_parser.add_argument('-k', '--max_cc_sizes', nargs='+', type=int, default=[5,10,15,20], 
-                                help='Max CC sizes for delta selection')
-    network_parser.add_argument('-n', '--num_permutations', type=int, required=True,
-                                help='Number of permuted networks to use')
     network_parser.set_defaults(delta_fn=get_deltas_for_network)
     
     #create subparser for options for permuting heat scores
-    heat_parser = subparsers.add_parser('heat', help='Permute heat scores')
+    heat_parser = subparsers.add_parser('heat', help='Permute heat scores', parents=[parent_parser])
     heat_parser.add_argument('-mf', '--infmat_file', required=True,
                              help='Path to .mat file containing influence matrix')
-    heat_parser.add_argument('-mn', '--infmat_name', required=True, default='Li',
-                             help='Variable name of the influence matrix in the .mat file')
-    heat_parser.add_argument('-if', '--infmat_index_file', required=True, default=None,
-                             help='Gene-index file for the influence matrix.')
-    heat_parser.add_argument('-hf', '--heat_file', required=True,
-                             help='Heat score file')
-    heat_parser.add_argument('-l', '--max_cc_sizes', nargs='+', type=int, default=[5,10,15,20],
-                             help='Max CC sizes for delta selection')
+    heat_parser.set_defaults(delta_fn=get_deltas_for_heat)
+    
+    #create subparser 
+    
     #TODO: make k and l mutually exclusive
     # heat_parser.add_argument('-k', '--test_cc_size', nargs='+', type=int, required=True, 
     #                          help='Value for choosing delta to maximize # CCs of size >= k')
-    heat_parser.add_argument('-n', '--num_permutations', type=int, required=True,
-                             help='Number of heat score permutations to test')
-    heat_parser.set_defaults(delta_fn=get_deltas_for_heat)
                         
     return parser.parse_args(raw_args)
 
