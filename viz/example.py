@@ -4,6 +4,7 @@ sys.path.append("../")
 import hotnet2 as hn
 import hnio
 import matplotlib.pyplot as plt
+import scipy.io
 
 # load output from HotNet run
 hn_output = json.load(open("/research/compbio/users/jeldridg/PanCancer/Experiments/2013-07-22/FromMyCode/hint-freq.json"))
@@ -40,3 +41,11 @@ samples2snvs = hnio.load_snv_data(heat_parameters["snv_file"], genes, samples)
 samples2cnas = hnio.load_cna_data(heat_parameters["cna_file"], genes, samples)
 print "There were %s samples with SNVs" % (len(samples2snvs))
 print "There were %s samples with CNAs" % (len(samples2cnas))
+
+# get the actual graph
+infmat = scipy.io.loadmat(parameters["infmat_file"])[parameters["infmat_name"]]  
+infmat_index = hnio.load_index(parameters["infmat_index_file"])
+M, gene_index = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
+h = hn.heat_vec(heat, gene_index)
+sim = hn.similarity_matrix(M, h, parameters["classic"])
+G = hn.weighted_graph(sim, gene_index, parameters["delta"], parameters["classic"])
