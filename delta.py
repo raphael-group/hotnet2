@@ -1,6 +1,7 @@
 # -*- coding: iso-8859-1 -*-
 import scipy as sp
 import scipy.io
+import numpy as np
 import hotnet2 as hn
 import networkx as nx
 import multiprocessing as mp
@@ -14,7 +15,7 @@ def delta_too_small(component_sizes, max_size ):
     if max_size > max(component_sizes): return True
     else: return False
 
-def find_best_delta(permuted_sim, permuted_index, sizes, directed, start_quant=0.99):
+def find_best_delta_by_largest_cc(permuted_sim, permuted_index, sizes, directed, start_quant=0.99):
     component_fn = strong_ccs if directed else nx.connected_components
     # Construct weighted digraphs for each network for each delta
     sorted_edges = sorted(sp.ndarray.flatten(permuted_sim))
@@ -52,12 +53,38 @@ def find_best_delta(permuted_sim, permuted_index, sizes, directed, start_quant=0
             
     return size2delta
 
+def find_best_delta_by_num_ccs(permuted_sim, permuted_index, sizes, start=0.05):
+    pass
+
+def get_edges(sim, start=.05):
+    """Return a list of Edge objects 
+    
+    Keyword arguments:
+    sim -- similarity matrix for which edge list should be returned. The matrix is assumed
+           to be symmetric.
+    """
+    sim = np.triu(sim)
+    flattened = np.ndarray.flatten(sim)
+    edges = [Edge(i/len(sim), i%len(sim), flattened[i]) for i in range(len(flattened))
+                if i/len(sim) <= i%len(sim)]    
+    edges = sorted(edges, key=lambda x: x.weight, reverse=True)
+    edges = edges[:int(start*len(edges))]
+    return edges
+
+class Edge:
+    def __init__(self, node1, node2, weight):
+        self.node1 = node1
+        self.node2 = node2
+        self.weight = weight
+
+    def __repr__(self):
+        return '(%s, %s, %s)' % (self.node1, self.node2, self.weight)
 
 def network_delta_wrapper((network_path, infmat_name, index2gene, tested_genes, h, sizes, directed)):
     permuted_mat = scipy.io.loadmat(network_path)[infmat_name]   
     M, gene_index = hn.induce_infmat(permuted_mat, index2gene, tested_genes)
     sim = hn.similarity_matrix(M, h, directed)
-    return find_best_delta(sim, gene_index, sizes, directed )
+    return find_best_delta_by_largest_cc(sim, gene_index, sizes, directed )
 
 
 def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
@@ -90,8 +117,7 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
 def heat_delta_wrapper((M, index2gene, heat_permutation, directed, sizes)):
     heat = hn.heat_vec(heat_permutation, index2gene)
     sim_mat = hn.similarity_matrix(M, heat, directed)
-    return find_best_delta(sim_mat, index2gene, sizes, directed)
-
+    return find_best_delta_by_largest_cc(sim_mat, index2gene, sizes, directed)
 
 #list of num_permutations dicts of max cc size => best delta
 def heat_delta_selection(M, index2gene, heat_permutations, sizes,

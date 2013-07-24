@@ -4,10 +4,9 @@ sys.path.append("../")
 import hotnet2 as hn
 import hnio
 import matplotlib.pyplot as plt
-import scipy.io
 
 # load output from HotNet run
-hn_output = json.load(open("/research/compbio/users/jeldridg/PanCancer/Experiments/2013-07-22/FromMyCode/hint-freq.json"))
+hn_output = json.load(open("/research/compbio/users/jeldridg/TestFiles/HotNet2_Hint_MutFreq_Output.json"))
 
 # get lists of connected components
 components = hn_output["components"]
@@ -26,10 +25,10 @@ parameters = hn_output["parameters"]
 runType = "classic" if parameters["classic"] else "directed"
 print "Was run classic or directed? (expect directed): %s" % runType 
 
-# load the heat scores used for the HotNet run and show them as a histogram 
-heat, _ = hnio.load_heat_json(parameters["heat_file"])
-plt.hist(heat.values(), bins=100)
-plt.show()
+# # load the heat scores used for the HotNet run and show them as a histogram 
+# heat, _ = hnio.load_heat_json(parameters["heat_file"])
+# plt.hist(heat.values(), bins=100)
+# plt.show()
 
 # get parameters used for heat file generation
 heat_parameters = hn_output["heat_parameters"]
@@ -42,10 +41,16 @@ samples2cnas = hnio.load_cna_data(heat_parameters["cna_file"], genes, samples)
 print "There were %s samples with SNVs" % (len(samples2snvs))
 print "There were %s samples with CNAs" % (len(samples2cnas))
 
-# get the actual graph
-infmat = scipy.io.loadmat(parameters["infmat_file"])[parameters["infmat_name"]]  
-infmat_index = hnio.load_index(parameters["infmat_index_file"])
-M, gene_index = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
-h = hn.heat_vec(heat, gene_index)
-sim = hn.similarity_matrix(M, h, parameters["classic"])
-G = hn.weighted_graph(sim, gene_index, parameters["delta"], parameters["classic"])
+# check whether the first two genes in the largest CC interact
+edges = hnio.load_ppi_edges(parameters["edge_list_file"])
+index2gene = hnio.load_index(parameters["infmat_index_file"])
+gene2index_mapping = {gene: index for index, gene in index2gene.items()}
+gene1index = gene2index_mapping[components[0][0]]
+gene2index = gene2index_mapping[components[0][1]]
+genes_interact = (gene1index, gene2index) in edges or (gene2index, gene1index) in edges
+print "Do the first two genes in the largest CC interact (expect False)? %s" % (genes_interact)
+
+# how about hte first gene and the third gene?
+gene3index = gene2index_mapping[components[0][2]]
+genes_interact = (gene1index, gene3index) in edges or (gene3index, gene1index) in edges
+print "Do the first and third genes in the largest CC interact (expect True)? %s" % (genes_interact)

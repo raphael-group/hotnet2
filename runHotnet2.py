@@ -20,8 +20,10 @@ def parse_args(raw_args):
                         help='Path to .mat file containing influence matrix')
     parser.add_argument('-mn', '--infmat_name', required=True, default='Li',
                         help='Variable name of the influence matrix in the .mat file')
-    parser.add_argument('-if', '--infmat_index_file', required=True, default=None,
+    parser.add_argument('-if', '--infmat_index_file', required=True,
                         help='Gene-index file for the influence matrix.')
+    parser.add_argument('-ef', '--edge_list_file', default=None,
+                        help='Edge list file for the PPI underlying the influence matrix')
     parser.add_argument('-hf', '--heat_file', required=True, help='JSON heat score file')
     parser.add_argument('-d', '--delta', type=float, required=True,
                         help='Weight threshold for edge removal')
