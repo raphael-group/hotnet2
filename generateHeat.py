@@ -26,7 +26,7 @@ def parse_args(raw_args):
     mutation_parser.add_argument('--cna_file', required=True, help='CNA file')
     mutation_parser.add_argument('--sample_file', required=True, help='Sample file')
     mutation_parser.add_argument('--gene_file', required=True, help='Gene file')
-    mutation_parser.add_argument('--min_freq', type=int, default=11, help='Minimum frequency')
+    mutation_parser.add_argument('--min_freq', type=int, default=1, help='Minimum frequency')
     mutation_parser.add_argument('--gene_filter_file', default=None,
                                  help='File listing genes whose heat scores should be preserved.\
                                        If present, all other heat scores will be discarded.')

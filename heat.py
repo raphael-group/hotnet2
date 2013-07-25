@@ -29,7 +29,7 @@ def mut_heat(samples2snvs, samples2cnas, min_freq):
     print "\t- Including %s genes in %s samples at min frequency %s" % (len(genes2mutations), int(n), min_freq)
     
     return dict([(g, len( heat ) / n) for g, heat in genes2mutations.items()
-                 if num_snvs(heat) > min_freq or num_cnas(heat) > 0])        
+                 if num_snvs(heat) >= min_freq or num_cnas(heat) > 0])        
 
 NULL = 100
 def fm_heat(gene2heat, fm_threshold, cis_threshold=0.01, CIS=False):
