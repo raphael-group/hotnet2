@@ -41,7 +41,7 @@ def permute_heat(heat, num_permutations, addtl_genes=None, parallel=True):
 
 # def generate_random_svns(genes_to_mutate, gene2length, bmr, gene2bmr={}):
 #     """Generate a random set of SNVs and return a set of genes that are mutated as a result.
-#     
+#      
 #     Keyword arguments:
 #     genes_to_mutate -- iterable of genes for which random SNVs should be generated
 #     gene2length -- dict mapping a gene name to the gene's length
@@ -50,9 +50,9 @@ def permute_heat(heat, num_permutations, addtl_genes=None, parallel=True):
 #     gene2bmr -- dict mapping a gene name to the background mutation rate for that gene. If the
 #                 dict does not contain an entry for a gene in gene_to_mutate, the default BMR will
 #                 be used for that 
-#     
+#      
 #     """
-#     
+#      
 #     mutated_genes = list()    
 #     for gene in genes_to_mutate:
 #         length = gene2length[gene]

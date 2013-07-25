@@ -1,9 +1,8 @@
---runname "Test"
---parallel
 network
 --permuted_networks_path /data/compbio/datasets/HeatKernels/pagerank/permuted_networks/pprs/inthint/##NUM##/inthint_ppr_0.60.mat
 --infmat_name PPR
 --infmat_index_file /data/compbio/datasets/HeatKernels/pagerank/IntHint/binary+complex+hi2012/inthint_index_genes
 --num_permutations 2
 --heat_file /research/compbio/users/jeldridg/TestFiles/heat_file.json
-#--max_cc_sizes 15
+--runname "Test"
+--parallel

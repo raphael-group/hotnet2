@@ -26,15 +26,19 @@ def parse_args(raw_args):
     parent_parser.add_argument('-hf', '--heat_file', required=True, help='Heat score file')
     parent_parser.add_argument('-n', '--num_permutations', type=int, required=True,
                                 help='Number of permuted networks to use')
+    parent_parser.add_argument('-s', '--test_statistic', choices=['max_cc_sizes', 'num_ccs'],
+                               default='max_cc_sizes',
+                               help='If max_cc_sizes, select smallest delta such that the size of\
+                               the largest CC size is >= k. If num_ccs, select SMALLEST? delta that\
+                               maximizes the number of CCs of size >= k.')
+    parent_parser.add_argument('-l', '--sizes', nargs='+', type=int, help='See test_statistic')
     parent_parser.add_argument('-p', '--parallel', default=False, action='store_true',
                         help='Include flag to run permutation tests in parallel.')
     parent_parser.add_argument('-c', '--classic', default=False, action='store_true',
                         help='Run classic (instead of directed) HotNet.')
     parent_parser.add_argument('-o', '--output_file',
                         help='Output file.  If none given, output will be written to stdout.')
-    parent_parser.add_argument('-l', '--max_cc_sizes', nargs='+', type=int, default=[5,10,15,20],
-                             help='Max CC sizes for delta selection')
-
+    
     subparsers = parser.add_subparsers(title='Permutation techniques')
 
     #create subparser for options for permuting networks
@@ -51,13 +55,12 @@ def parse_args(raw_args):
                              help='Path to .mat file containing influence matrix')
     heat_parser.set_defaults(delta_fn=get_deltas_for_heat)
     
-    #create subparser 
-    
-    #TODO: make k and l mutually exclusive
-    # heat_parser.add_argument('-k', '--test_cc_size', nargs='+', type=int, required=True, 
-    #                          help='Value for choosing delta to maximize # CCs of size >= k')
+    #if l not specified, set default based on test statistic 
+    args = parser.parse_args(raw_args)
+    if not args.sizes:
+        args.sizes = [5,10,15,20] if args.test_statistic == "max_cc_sizes" else [3,4,5]
                         
-    return parser.parse_args(raw_args)
+    return args
 
 def run(args):
     heat, heat_params = hnio.load_heat_json(args.heat_file)
@@ -78,7 +81,7 @@ def get_deltas_for_network(args, heat):
     index2gene = hnio.load_index(args.infmat_index_file)
 
     deltas = delta.network_delta_selection(permuted_network_paths, args.infmat_name, index2gene,
-                                           heat, args.max_cc_sizes, not args.classic,
+                                           heat, args.sizes, not args.classic,
                                            args.parallel)
     
     return deltas
@@ -94,8 +97,10 @@ def get_deltas_for_heat(args, gene2heat):
 
     heat_permutations = permutations.permute_heat(gene2heat, args.num_permutations,
                                                   parallel=args.parallel)
-    deltas = delta.heat_delta_selection(M, gene_index, heat_permutations, args.max_cc_sizes,
-                                        not args.classic, args.parallel)
+    delta_selection_fn = delta.find_best_delta_by_largest_cc if args.test_statistic == "max_cc_sizes" else delta.find_best_delta_by_num_ccs 
+    
+    deltas = delta.heat_delta_selection(M, gene_index, heat_permutations, args.sizes,
+                                        not args.classic, args.parallel, delta_selection_fn)
     return deltas
 
 

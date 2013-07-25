@@ -6,6 +6,7 @@ import hotnet2 as hn
 import networkx as nx
 import multiprocessing as mp
 strong_ccs = nx.strongly_connected_components
+from union_find import UnionFind
 
 def get_component_sizes(arrs):
     return [len(arr) for arr in arrs]
@@ -53,20 +54,33 @@ def find_best_delta_by_largest_cc(permuted_sim, permuted_index, sizes, directed,
             
     return size2delta
 
-def find_best_delta_by_num_ccs(permuted_sim, permuted_index, sizes, start=0.05):
-    pass
+def find_best_delta_by_num_ccs(permuted_sim, k, start=0.05):
+    if k < 2:
+        raise ValueError("k must be at least 2")
+    
+    edges = get_edges(permuted_sim, start)
+    max_num_ccs = 0 #initially, each node is its own CC of size 1, so none is of size >= k for k >= 2
+    bestDeltas = [edges[0].weight]
+    uf = UnionFind()
+
+    for edge in edges:
+        uf.union(edge.node1, edge.node2)
+        num_ccs = len([root for root in uf.roots if uf.weights[root] >= k])
+        if num_ccs > max_num_ccs:
+            max_num_ccs = num_ccs
+            bestDeltas = [edge.weight]
+        elif num_ccs == max_num_ccs:
+            bestDeltas.append(edge.weight)
+
+    return max_num_ccs, bestDeltas
 
 def get_edges(sim, start=.05):
-    """Return a list of Edge objects 
-    
-    Keyword arguments:
-    sim -- similarity matrix for which edge list should be returned. The matrix is assumed
-           to be symmetric.
-    """
-    sim = np.triu(sim)
+    """Return a list of Edge objects representing edges in the top start% of edge weights"""
     flattened = np.ndarray.flatten(sim)
-    edges = [Edge(i/len(sim), i%len(sim), flattened[i]) for i in range(len(flattened))
-                if i/len(sim) <= i%len(sim)]    
+    if np.array_equal(sim, sim.transpose()):
+        edges = [Edge(i/len(sim), i%len(sim), flattened[i]) for i in range(len(flattened)) if i/len(sim) <= i%len(sim)]
+    else:
+        edges = [Edge(i/len(sim), i%len(sim), flattened[i]) for i in range(len(flattened))]
     edges = sorted(edges, key=lambda x: x.weight, reverse=True)
     edges = edges[:int(start*len(edges))]
     return edges
@@ -85,7 +99,6 @@ def network_delta_wrapper((network_path, infmat_name, index2gene, tested_genes, 
     M, gene_index = hn.induce_infmat(permuted_mat, index2gene, tested_genes)
     sim = hn.similarity_matrix(M, h, directed)
     return find_best_delta_by_largest_cc(sim, gene_index, sizes, directed )
-
 
 def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
                             directed=True, parallel=True):
@@ -113,15 +126,14 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
     return sizes2deltas
 
 
-
-def heat_delta_wrapper((M, index2gene, heat_permutation, directed, sizes)):
+def heat_delta_wrapper((M, index2gene, heat_permutation, directed, sizes, selection_function)):
     heat = hn.heat_vec(heat_permutation, index2gene)
     sim_mat = hn.similarity_matrix(M, heat, directed)
-    return find_best_delta_by_largest_cc(sim_mat, index2gene, sizes, directed)
+    return selection_function(sim_mat, index2gene, sizes, directed)
 
 #list of num_permutations dicts of max cc size => best delta
-def heat_delta_selection(M, index2gene, heat_permutations, sizes,
-                         directed=True, parallel=True):
+def heat_delta_selection(M, index2gene, heat_permutations, sizes, directed=True, parallel=True,
+                         selection_fn=find_best_delta_by_largest_cc):
     print "* Performing permuted heat delta selection..."
     if parallel:
         pool = mp.Pool()
@@ -129,7 +141,7 @@ def heat_delta_selection(M, index2gene, heat_permutations, sizes,
     else:
         map_fn = map
 
-    args = [(M, index2gene, heat_permutation, directed, sizes)
+    args = [(M, index2gene, heat_permutation, directed, sizes, selection_fn)
             for heat_permutation in heat_permutations]
     deltas = map_fn(heat_delta_wrapper, args)
 

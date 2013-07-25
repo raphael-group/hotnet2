@@ -1,9 +1,11 @@
 heat
---runname Test
---infmat_file /data/compbio/datasets/HeatKernels/pagerank/IntHint/binary+complex+hi2012/inthint_ppr_0.60.mat
---infmat_name PPR
+--runname "Classic Delta Selection"
+--infmat_file /data/compbio/datasets/HeatKernels/IntHint/binary+complex+hi2012/inthint_inf_0.10.mat
+--infmat_name Li
 --infmat_index_file /data/compbio/datasets/HeatKernels/pagerank/IntHint/binary+complex+hi2012/inthint_index_genes
 --heat_file /research/compbio/users/jeldridg/TestFiles/heat_file.json
 --max_cc_sizes 15
 --num_permutations 2
 --parallel
+--classic
+
