@@ -7,19 +7,21 @@ import json
 def parse_args(raw_args): 
     description = "Generates a JSON heat file for input to runHotNet2."
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
-    parser.add_argument('-o', '--output_file',
-                        help='Output file.  If none given, output will be written to stdout.')
+    
+    parent_parser = hnap.HotNetArgParser(add_help=False, fromfile_prefix_chars='@')
+    parent_parser.add_argument('-o', '--output_file',
+                               help='Output file.  If none given, output will be written to stdout.')
     
     subparsers = parser.add_subparsers(title='Heat score type')
     
-    heat_parser = subparsers.add_parser('direct', help='Direct heat scores')
+    heat_parser = subparsers.add_parser('direct', help='Direct heat scores', parents=[parent_parser])
     heat_parser.add_argument('-hf', '--heat_file', required=True, help='Heat score file')
     heat_parser.add_argument('--gene_filter_file', default=None,
                              help='File listing genes whose heat scores should be preserved.\
                                    If present, all other heat scores will be discarded.')
     heat_parser.set_defaults(heat_fn=load_direct_heat)
     
-    mutation_parser = subparsers.add_parser('mutation', help='Mutation data')
+    mutation_parser = subparsers.add_parser('mutation', help='Mutation data', parents=[parent_parser])
     mutation_parser.add_argument('--snv_file', required=True, help='SNV file')
     mutation_parser.add_argument('--cna_file', required=True, help='CNA file')
     mutation_parser.add_argument('--sample_file', required=True, help='Sample file')
@@ -30,7 +32,7 @@ def parse_args(raw_args):
                                        If present, all other heat scores will be discarded.')
     mutation_parser.set_defaults(heat_fn=load_mutation_heat)
     
-    oncodrive_parser = subparsers.add_parser('oncodrive', help='Oncodrive scores')
+    oncodrive_parser = subparsers.add_parser('oncodrive', help='Oncodrive scores', parents=[parent_parser])
     oncodrive_parser.add_argument('--fm_scores', required=True, help='???')
     oncodrive_parser.add_argument('--cis_amp_scores', required=True, help='???')
     oncodrive_parser.add_argument('--cis_del_scores', required=True, help='???')
@@ -42,7 +44,7 @@ def parse_args(raw_args):
                                        If present, all other heat scores will be discarded.')
     oncodrive_parser.set_defaults(heat_fn=load_oncodrive_heat)
     
-    mutsig_parser = subparsers.add_parser('mutsig', help='MutSig scores')
+    mutsig_parser = subparsers.add_parser('mutsig', help='MutSig scores', parents=[parent_parser])
     mutsig_parser.add_argument('--mutsig_score_file', required=True, help='MutSig score file')
     mutsig_parser.add_argument('--threshold', type=float, default=1.0, help='Threshold...no idea what this is')
     mutsig_parser.add_argument('--gene_filter_file', default=None,
@@ -50,7 +52,7 @@ def parse_args(raw_args):
                                        If present, all other heat scores will be discarded.')
     mutsig_parser.set_defaults(heat_fn=load_mutsig_heat)
     
-    music_parser = subparsers.add_parser('music', help='MuSiC scores')
+    music_parser = subparsers.add_parser('music', help='MuSiC scores', parents=[parent_parser])
     music_parser.add_argument('--music_score_file', required=True, help='MuSiC score file')
     music_parser.add_argument('--threshold', type=float, default=1.0, help='Threshold...no idea what this is')
     music_parser.add_argument('--max_heat', type=float, default=15, help='Max heat')
