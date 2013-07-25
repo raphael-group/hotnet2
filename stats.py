@@ -6,7 +6,7 @@ strong_ccs = nx.strongly_connected_components
 
 def num_components_min_size(G, sizes):
     ccs = strong_ccs(G) if isinstance(G, nx.DiGraph) else nx.connected_components(G)
-    return [len([ cc for cc in ccs if len(cc) > s]) for s in sizes]
+    return [len([ cc for cc in ccs if len(cc) >= s]) for s in sizes]
 
 def significance_wrapper((infmat, index2gene, heat_permutation, delta, sizes, directed)):
     M, index2gene = hn.induce_infmat(infmat, index2gene, sorted(heat_permutation.keys()))
