@@ -82,10 +82,11 @@ def get_deltas_for_network(args, heat):
                               for i in range(1, args.num_permutations+1)]
 
     index2gene = hnio.load_index(args.infmat_index_file)
+    delta_selection_fn = delta.find_best_delta_by_largest_cc if args.test_statistic == "max_cc_sizes" else delta.find_best_delta_by_num_ccs 
 
     deltas = delta.network_delta_selection(permuted_network_paths, args.infmat_name, index2gene,
-                                           heat, args.sizes, not args.classic,
-                                           args.parallel)
+                                           heat, args.sizes, not args.classic, args.parallel,
+                                           delta_selection_fn)
     
     return deltas
 

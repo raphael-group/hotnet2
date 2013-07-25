@@ -17,6 +17,7 @@ def delta_too_small(component_sizes, max_size ):
     else: return False
 
 def find_best_delta_by_largest_cc(permuted_sim, permuted_index, sizes, directed, start_quant=0.99):
+    print "Finding smallest delta such that size of largest CC is <= l"
     component_fn = strong_ccs if directed else nx.connected_components
     # Construct weighted digraphs for each network for each delta
     sorted_edges = sorted(sp.ndarray.flatten(permuted_sim))
@@ -55,11 +56,12 @@ def find_best_delta_by_largest_cc(permuted_sim, permuted_index, sizes, directed,
     return size2delta
 
 def find_best_delta_by_num_ccs(permuted_sim, ks, start=0.05):
+    print "Finding smallest delta that maximizes the # of CCs of size >= l"
     edges = get_edges(permuted_sim, start)
     k2delta = {}
 
     for k in ks:
-        max_num_ccs, bestDeltas = find_best_delta_by_num_ccs_for_given_k(permuted_sim, edges, k)
+        _, bestDeltas = find_best_delta_by_num_ccs_for_given_k(permuted_sim, edges, k)
         k2delta[k] = min(bestDeltas)
 
     return k2delta    
@@ -103,14 +105,20 @@ class Edge:
     def __repr__(self):
         return '(%s, %s, %s)' % (self.node1, self.node2, self.weight)
 
-def network_delta_wrapper((network_path, infmat_name, index2gene, tested_genes, h, sizes, directed)):
+def network_delta_wrapper((network_path, infmat_name, index2gene, tested_genes, h, sizes, directed,
+                           selection_function)):
     permuted_mat = scipy.io.loadmat(network_path)[infmat_name]   
     M, gene_index = hn.induce_infmat(permuted_mat, index2gene, tested_genes)
     sim = hn.similarity_matrix(M, h, directed)
-    return find_best_delta_by_largest_cc(sim, gene_index, sizes, directed )
+    if selection_function is find_best_delta_by_largest_cc:
+        return selection_function(sim, gene_index, sizes, directed)
+    elif selection_function is find_best_delta_by_num_ccs:
+        return selection_function(sim, sizes)
+    else:
+        raise ValueError("Unknown delta selection function: %s" % (selection_function))
 
-def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
-                            directed=True, parallel=True):
+def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes, directed=True,
+                            parallel=True, selection_fn=find_best_delta_by_largest_cc):
     print "* Performing network delta selection..."
     if parallel:
         pool = mp.Pool()
@@ -119,8 +127,8 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
         map_fn = map
        
     h_vec = hn.heat_vec(heat, index2gene)
-    args = [(network_path, infmat_name, index2gene, sorted(heat.keys()), h_vec, sizes, directed)
-            for network_path in network_paths]
+    args = [(network_path, infmat_name, index2gene, sorted(heat.keys()), h_vec, sizes, directed,
+             selection_fn) for network_path in network_paths]
     delta_maps = map_fn(network_delta_wrapper, args)
     
     if parallel:
@@ -140,7 +148,6 @@ def heat_delta_wrapper((M, index2gene, heat_permutation, directed, sizes, select
     if selection_function is find_best_delta_by_largest_cc:
         return selection_function(sim_mat, index2gene, sizes, directed)
     elif selection_function is find_best_delta_by_num_ccs:
-        print "performing find_best_delta_by_num_ccs"
         return selection_function(sim_mat, sizes)
     else:
         raise ValueError("Unknown delta selection function: %s" % (selection_function))
