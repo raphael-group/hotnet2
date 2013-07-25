@@ -67,7 +67,7 @@ def run(args):
     
     # calculate significance
     if args.num_permutations > 0:
-        extra_genes = hnio.load_genes(args.permutation_genes_file)
+        extra_genes = hnio.load_genes(args.permutation_genes_file) if args.permutation_genes_file else None
         heat_permutations = permutations.permute_heat(heat, args.num_permutations, extra_genes,
                                                       args.parallel)
         sizes = range(args.cc_start_size, args.cc_stop_size+1)
