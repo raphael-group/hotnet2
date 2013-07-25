@@ -32,12 +32,15 @@ def parse_args(raw_args):
                                the largest CC size is >= k. If num_ccs, select SMALLEST? delta that\
                                maximizes the number of CCs of size >= k.')
     parent_parser.add_argument('-l', '--sizes', nargs='+', type=int, help='See test_statistic')
-    parent_parser.add_argument('-p', '--parallel', default=False, action='store_true',
-                        help='Include flag to run permutation tests in parallel.')
+    parent_parser.add_argument('--parallel', dest='parallel', action='store_true',
+                               help='Run permutation tests in parallel.')
+    parent_parser.add_argument('--no-parallel', dest='parallel', action='store_false',
+                               help='Run permutation tests sequentially.')
     parent_parser.add_argument('-c', '--classic', default=False, action='store_true',
                         help='Run classic (instead of directed) HotNet.')
     parent_parser.add_argument('-o', '--output_file',
                         help='Output file.  If none given, output will be written to stdout.')
+    parent_parser.set_defaults(parallel=False)
     
     subparsers = parser.add_subparsers(title='Permutation techniques')
 

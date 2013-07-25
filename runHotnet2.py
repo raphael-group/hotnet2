@@ -41,10 +41,13 @@ def parse_args(raw_args):
                         help='Smallest connected component size to count')
     parser.add_argument('-l', '--cc_stop_size', type=int, default=10,
                         help='Largest connected component size to count')
+    parser.add_argument('--parallel', dest='parallel', action='store_true',
+                        help='Run permutation tests in parallel.')
+    parser.add_argument('--no-parallel', dest='parallel', action='store_false',
+                        help='Run permutation tests sequentially.')
     parser.add_argument('-o', '--output_file',
                         help='Output file.  If none given, output will be written to stdout.')
-    parser.add_argument('-p', '--parallel', default=False, action='store_true',
-                        help='Include flag to run permutation tests in parallel.')
+    parser.set_defaults(parallel=False)
     
     return parser.parse_args(raw_args)
 
