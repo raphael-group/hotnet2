@@ -54,11 +54,20 @@ def find_best_delta_by_largest_cc(permuted_sim, permuted_index, sizes, directed,
             
     return size2delta
 
-def find_best_delta_by_num_ccs(permuted_sim, k, start=0.05):
-    if k < 2:
-        raise ValueError("k must be at least 2")
-    
+def find_best_delta_by_num_ccs(permuted_sim, ks, start=0.05):
     edges = get_edges(permuted_sim, start)
+    k2delta = {}
+
+    for k in ks:
+        max_num_ccs, bestDeltas = find_best_delta_by_num_ccs_for_given_k(permuted_sim, edges, k)
+        k2delta[k] = min(bestDeltas)
+
+    return k2delta    
+
+def find_best_delta_by_num_ccs_for_given_k(permuted_sim, edges, k):
+    if k < 2:
+            raise ValueError("k must be at least 2")
+
     max_num_ccs = 0 #initially, each node is its own CC of size 1, so none is of size >= k for k >= 2
     bestDeltas = [edges[0].weight]
     uf = UnionFind()
@@ -125,11 +134,16 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
  
     return sizes2deltas
 
-
 def heat_delta_wrapper((M, index2gene, heat_permutation, directed, sizes, selection_function)):
     heat = hn.heat_vec(heat_permutation, index2gene)
     sim_mat = hn.similarity_matrix(M, heat, directed)
-    return selection_function(sim_mat, index2gene, sizes, directed)
+    if selection_function is find_best_delta_by_largest_cc:
+        return selection_function(sim_mat, index2gene, sizes, directed)
+    elif selection_function is find_best_delta_by_num_ccs:
+        print "performing find_best_delta_by_num_ccs"
+        return selection_function(sim_mat, sizes)
+    else:
+        raise ValueError("Unknown delta selection function: %s" % (selection_function))
 
 #list of num_permutations dicts of max cc size => best delta
 def heat_delta_selection(M, index2gene, heat_permutations, sizes, directed=True, parallel=True,

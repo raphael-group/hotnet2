@@ -4,7 +4,7 @@ heat
 --infmat_name Li
 --infmat_index_file /data/compbio/datasets/HeatKernels/pagerank/IntHint/binary+complex+hi2012/inthint_index_genes
 --heat_file /research/compbio/users/jeldridg/TestFiles/heat_file.json
---max_cc_sizes 15
+--sizes 15
 --num_permutations 2
 --parallel
 --classic
