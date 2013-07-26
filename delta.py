@@ -96,7 +96,7 @@ def get_edges(sim, start=.05):
     edges = edges[:int(start*len(edges))]
     return edges
 
-class Edge:
+class Edge(object):
     def __init__(self, node1, node2, weight):
         self.node1 = node1
         self.node2 = node2
