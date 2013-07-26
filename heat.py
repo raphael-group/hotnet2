@@ -6,7 +6,7 @@ def num_snvs(mutation_list):
 
 def num_cnas(mutation_list):
     return len([ p for p, muts in mutation_list.items() if "amp" in muts or "del" in muts ])
-
+    
 def mut_heat(samples2snvs, samples2cnas, min_freq):
     n = float(len(set(samples2snvs.keys()) | set(samples2cnas.keys())))
     
@@ -19,17 +19,17 @@ def mut_heat(samples2snvs, samples2cnas, min_freq):
                 genes2mutations[gene][sample] = []
             genes2mutations[gene][sample].append("snv")
     for sample in samples2cnas:
-        for gene, mut_type in samples2cnas[sample].iteritems():
-            if gene not in genes2mutations:
-                genes2mutations[gene] = {}
+        for cna in samples2cnas[sample]:
+            if cna.gene not in genes2mutations:
+                genes2mutations[cna.gene] = {}
             if sample not in genes2mutations[gene]:
-                genes2mutations[gene][sample] = []
-            genes2mutations[gene][sample].append(mut_type)
+                genes2mutations[cna.gene][sample] = []
+            genes2mutations[cna.gene][sample].append(cna.mut_type)
     
     print "\t- Including %s genes in %s samples at min frequency %s" % (len(genes2mutations), int(n), min_freq)
     
     return dict([(g, len( heat ) / n) for g, heat in genes2mutations.items()
-                 if num_snvs(heat) >= min_freq or num_cnas(heat) > 0])        
+                 if num_snvs(heat) >= min_freq or num_cnas(heat) > 0])          
 
 NULL = 100
 def fm_heat(gene2heat, fm_threshold, cis_threshold=0.01, CIS=False):

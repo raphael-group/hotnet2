@@ -1,7 +1,7 @@
 import random
 
 ################################################################################
-# Permutation functions
+# Heat permutation
 
 def heat_permutation_wrapper((heat_scores, eligible_genes)):
     permuted_genes = list(eligible_genes)
@@ -39,7 +39,34 @@ def permute_heat(heat, num_permutations, addtl_genes=None, parallel=True):
 
     return permutations
 
-# def generate_random_svns(genes_to_mutate, gene2length, bmr, gene2bmr={}):
+################################################################################
+# Mutation permutation
+
+def get_cna_blocks_for_sample(cnas, gene2chromo, chromo2genes):
+    #sort cnas by chromosome, then by position in chromosome
+    cnas.sort(key = lambda cna: (gene2chromo[cna.gene],
+                                 chromo2genes[gene2chromo[cna.gene]].index(cna.gene)))
+    
+    chromo2blocks = {}
+    curr_block = [cnas[0]]
+    chromo2blocks[gene2chromo[cnas[0].gene]] = [curr_block]
+    for cna in cnas[1:]:
+        last_cna = curr_block[-1]
+        curr_chromo = gene2chromo[last_cna.gene]
+        if (gene2chromo[cna.gene] == curr_chromo and
+            chromo2genes[curr_chromo].index(cna.gene) ==
+                chromo2genes[curr_chromo].index(last_cna.gene) + 1 and
+            cna.mut_type == last_cna.mut_type):
+            curr_block.append(cna)
+        else:
+            curr_block = [cna]
+            if gene2chromo[cna.gene] not in chromo2blocks:
+                chromo2blocks[gene2chromo[cna.gene]] = []
+            chromo2blocks[gene2chromo[cna.gene]] = curr_block
+            
+    return chromo2blocks
+
+# def generate_random_snvs(genes_to_mutate, gene2length, bmr, gene2bmr={}):
 #     """Generate a random set of SNVs and return a set of genes that are mutated as a result.
 #      
 #     Keyword arguments:

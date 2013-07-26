@@ -39,6 +39,29 @@ def load_genes(gene_file):
     """
     return set([l.strip() for l in open(gene_file)])
 
+def load_gene_order(gene_order_file):
+    """Load gene order file and return gene->chromosome and chromosome->ordered gene list mappings.
+    
+    Keyword arguments:
+    gene_order_file -- path to file containing tab-separated lists of genes on each chromosme,
+                       one chromosome per line
+    
+    Note that numeric chromosome identifier used is simply the line number for the chromosome in
+    the given file and does not indicate the true chromosome number.  
+    """
+    chromo2genes = {}
+    gene2chromo = {}
+    
+    cid = 0
+    for line in open(gene_order_file):
+        genes = line.split()
+        chromo2genes[cid] = genes
+        gene2chromo.update([(gene, cid) for gene in genes])
+        cid += 1
+        
+    return gene2chromo, chromo2genes
+         
+
 def load_samples(sample_file):
     """Load sample IDs from a file and return as a set.
     
@@ -72,6 +95,35 @@ def load_snv_data(snv_file, gene_wlst=None, sample_wlst=None):
     return dict([(arr[0], gene_filter(set(arr[1:]), gene_wlst)) for arr in arrs
                  if include_sample(arr[0], sample_wlst)])
 
+def load_cnas(cna_file, gene_wlst=None, sample_wlst=None):
+    arrs = [l.rstrip().split("\t") for l in open(cna_file) if not l.startswith("#")]
+    arrs = [arr for arr in arrs if include_sample(arr[0], sample_wlst)]
+    
+    samples2cnas = {}
+    for arr in arrs:
+        genes = gene_filter(set([gene.split("(")[0] for gene in arr[1:]]), gene_wlst)
+        cnas = [CNA(cna.split("(")[0], get_mut_type(cna)) for cna in arr[1:]
+                if cna.split("(")[0] in genes]
+        samples2cnas[arr[0]] = cnas
+    
+    return samples2cnas
+
+AMP = "amp"
+DEL = "del"
+def get_mut_type(cna):
+    if cna.endswith("(A)"): return AMP
+    elif cna.endswith("(D)"): return DEL
+    else: raise ValueError("Unknown CNA type in '%s'", cna)
+    
+class CNA(object):
+    def __init__(self, gene, mut_type):
+        self.gene = gene
+        self.mut_type = mut_type
+
+    def __repr__(self):
+        return '%s(%s)' % (self.gene, self.mut_type)
+
+#DEPRECATED
 def load_cna_data(cna_file, gene_wlst=None, sample_wlst=None):
     """Load CNA data from a file and return a dict mapping sample IDs to dicts of (gene -> "amp"/"del") mutated in the sample.
     
@@ -87,11 +139,6 @@ def load_cna_data(cna_file, gene_wlst=None, sample_wlst=None):
     
     """
 
-    def get_mut_type(cna):
-        if cna.endswith("(A)"): return "amp"
-        elif cna.endswith("(D)"): return "del"
-        else: raise ValueError("Unknown CNA type in sample %s: %s", arr[0], cna)
-    
     arrs = [l.rstrip().split("\t") for l in open(cna_file) if not l.startswith("#")]
     arrs = [arr for arr in arrs if include_sample(arr[0], sample_wlst)]
     
