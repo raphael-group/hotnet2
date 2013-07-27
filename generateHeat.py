@@ -70,7 +70,7 @@ def load_mutation_heat(args):
     samples = hnio.load_samples(args.sample_file)
     genes = hnio.load_genes(args.gene_file)
     samples2snvs = hnio.load_snv_data(args.snv_file, genes, samples)
-    samples2cnas = hnio.load_cnas(args.cna_file, genes, samples)
+    samples2cnas, _ = hnio.load_cnas(args.cna_file, genes, samples)
     return hnheat.mut_heat(samples2snvs, samples2cnas, args.min_freq)
 
 def load_oncodrive_heat(args):

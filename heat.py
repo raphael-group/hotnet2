@@ -1,35 +1,29 @@
 from math import log10
+from collections import defaultdict
 import scipy
+from constants import *
 
-def num_snvs(mutation_list):
-    return len([ p for p, muts in mutation_list.items() if "snv" in muts ])
+def num_snvs(mutations):
+    return len([mut for mut in mutations if mut.mut_type == SNV])
 
-def num_cnas(mutation_list):
-    return len([ p for p, muts in mutation_list.items() if "amp" in muts or "del" in muts ])
-    
+def num_cnas(mutations):
+    return len([mut for mut in mutations if mut.mut_type == AMP or mut.mut_type == DEL])
+
 def mut_heat(samples2snvs, samples2cnas, min_freq):
     n = float(len(set(samples2snvs.keys()) | set(samples2cnas.keys())))
     
-    genes2mutations = {}
-    for sample in samples2snvs:
-        for gene in samples2snvs[sample]:
-            if gene not in genes2mutations:
-                genes2mutations[gene] = {}
-            if sample not in genes2mutations[gene]:
-                genes2mutations[gene][sample] = []
-            genes2mutations[gene][sample].append("snv")
-    for sample in samples2cnas:
-        for cna in samples2cnas[sample]:
-            if cna.gene not in genes2mutations:
-                genes2mutations[cna.gene] = {}
-            if sample not in genes2mutations[gene]:
-                genes2mutations[cna.gene][sample] = []
-            genes2mutations[cna.gene][sample].append(cna.mut_type)
-    
+    genes2mutations = defaultdict(set)
+    snvs = reduce(lambda acc, upd: acc.union(upd), samples2snvs.values(), set())
+    cnas = reduce(lambda acc, upd: acc.union(upd), samples2cnas.values(), set())
+    for snv in snvs:
+        genes2mutations[snv.gene].add(snv)
+    for cna in cnas:
+        genes2mutations[cna.gene].add(cna)
+        
     print "\t- Including %s genes in %s samples at min frequency %s" % (len(genes2mutations), int(n), min_freq)
     
     return dict([(g, len( heat ) / n) for g, heat in genes2mutations.items()
-                 if num_snvs(heat) >= min_freq or num_cnas(heat) > 0])          
+                 if num_snvs(heat) >= min_freq or num_cnas(heat) > 0])
 
 NULL = 100
 def fm_heat(gene2heat, fm_threshold, cis_threshold=0.01, CIS=False):

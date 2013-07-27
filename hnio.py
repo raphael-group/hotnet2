@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict, namedtuple
 
 ################################################################################
 # Data loading functions
@@ -78,6 +79,8 @@ def include_sample(sample, sample_wlst):
 def gene_filter(gene_set, gene_wlst):
     return gene_set & gene_wlst if gene_wlst else gene_set
 
+Mutation = namedtuple("Mutation", ["patient", "gene", "mut_type"])
+
 def load_snv_data(snv_file, gene_wlst=None, sample_wlst=None):
     """Load SNV data from a file and return a dict mapping sample IDs to sets of genes mutated in the sample.
     
@@ -92,41 +95,14 @@ def load_snv_data(snv_file, gene_wlst=None, sample_wlst=None):
     
     """
     arrs = [l.rstrip().split("\t") for l in open(snv_file) if not l.startswith("#")]
-    return dict([(arr[0], gene_filter(set(arr[1:]), gene_wlst)) for arr in arrs
-                 if include_sample(arr[0], sample_wlst)])
+    return dict([(arr[0], map(lambda gene: Mutation(arr[0], gene, SNV),
+                              gene_filter(set(arr[1:]), gene_wlst))) 
+                for arr in arrs if include_sample(arr[0], sample_wlst)])
 
-def load_cnas(cna_file, gene_wlst=None, sample_wlst=None):
-    arrs = [l.rstrip().split("\t") for l in open(cna_file) if not l.startswith("#")]
-    arrs = [arr for arr in arrs if include_sample(arr[0], sample_wlst)]
-    
-    samples2cnas = {}
-    for arr in arrs:
-        genes = gene_filter(set([gene.split("(")[0] for gene in arr[1:]]), gene_wlst)
-        cnas = [CNA(cna.split("(")[0], get_mut_type(cna)) for cna in arr[1:]
-                if cna.split("(")[0] in genes]
-        samples2cnas[arr[0]] = cnas
-    
-    return samples2cnas
+def load_cnas(cna_file, gene_wlst=None, sample_wlst=None, filter_thresh=0):
+    """Load CNA data from a file and return a dict mapping sample IDs to CNA tuples and a dict
+    mapping gene names to CNA tuples.
 
-AMP = "amp"
-DEL = "del"
-def get_mut_type(cna):
-    if cna.endswith("(A)"): return AMP
-    elif cna.endswith("(D)"): return DEL
-    else: raise ValueError("Unknown CNA type in '%s'", cna)
-    
-class CNA(object):
-    def __init__(self, gene, mut_type):
-        self.gene = gene
-        self.mut_type = mut_type
-
-    def __repr__(self):
-        return '%s(%s)' % (self.gene, self.mut_type)
-
-#DEPRECATED
-def load_cna_data(cna_file, gene_wlst=None, sample_wlst=None):
-    """Load CNA data from a file and return a dict mapping sample IDs to dicts of (gene -> "amp"/"del") mutated in the sample.
-    
     Keyword arguments:
     cna_file -- path to TSV file containing CNAs where the first column of each line is a sample ID
                 and subsequent columns contain gene names followed by "(A)" or "(D)" indicating an
@@ -136,9 +112,46 @@ def load_cna_data(cna_file, gene_wlst=None, sample_wlst=None):
                   If None, all mutated genes will be included.
     sample_wlist -- whitelist of allowed samples (default None). Samples not in this list will be
                     ignored.  If None, all samples will be included.
-    
+    filter_thresh -- proportion of CNAs in a gene across samples that must share the same CNA type
+                     in order for the CNAs to be included. If 0, all CNAs will be included.
     """
+    arrs = [l.rstrip().split("\t") for l in open(cna_file) if not l.startswith("#")]
+    arrs = [arr for arr in arrs if include_sample(arr[0], sample_wlst)]
+    
+    samples2cnas = {}
+    genes2cnas = defaultdict(set)
+    for arr in arrs:
+        sample = arr[0]
+        genes = gene_filter(set([gene.split("(")[0] for gene in arr[1:]]), gene_wlst)
+        gene2patientcna = dict([(cna.split("(")[0],
+                                 Mutation(sample, cna.split("(")[0], get_mut_type(cna)))
+                                for cna in arr[1:] if cna.split("(")[0] in genes])
+        #TODO: don't build samples2cnas yet
+        samples2cnas[sample] = gene2patientcna.values()
+        for gene in genes:
+            genes2cnas[gene].add(gene2patientcna[gene])
+    
+    for gene, cnas in genes2cnas.items():
+        amp_count = float(len([cna for cna in cnas if cna.mut_type == AMP]))
+        del_count = float(len([cna for cna in cnas if cna.mut_type == DEL]))
+        if (amp_count / (amp_count + del_count)) >= filter_thresh:
+            #keep only amps?
+            pass
+        elif (del_count / (amp_count + del_count)) >= filter_thresh:
+            #keep only dels?
+            pass
+        else:
+            del genes2cnas[gene]
 
+    return samples2cnas, genes2cnas
+
+def get_mut_type(cna):
+    if cna.endswith("(A)"): return AMP
+    elif cna.endswith("(D)"): return DEL
+    else: raise ValueError("Unknown CNA type in '%s'", cna)
+
+#DEPRECATED
+def load_cna_data(cna_file, gene_wlst=None, sample_wlst=None):
     arrs = [l.rstrip().split("\t") for l in open(cna_file) if not l.startswith("#")]
     arrs = [arr for arr in arrs if include_sample(arr[0], sample_wlst)]
     
