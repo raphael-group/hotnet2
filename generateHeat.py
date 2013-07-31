@@ -3,6 +3,7 @@ import hnio
 import heat as hnheat
 import sys
 import json
+import argparse
 
 def parse_args(raw_args): 
     description = "Generates a JSON heat file for input to runHotNet2."
@@ -27,6 +28,12 @@ def parse_args(raw_args):
     mutation_parser.add_argument('--sample_file', required=True, help='Sample file')
     mutation_parser.add_argument('--gene_file', required=True, help='Gene file')
     mutation_parser.add_argument('--min_freq', type=int, default=1, help='Minimum frequency')
+    mutation_parser.add_argument('--cna_filter_threshold', type=valid_cna_filter_thresh,
+                                 default=None,
+                                 help='Proportion of CNAs in a gene across samples that must share\
+                                       the same CNA type in order for the CNAs to be included. This\
+                                       must either be > .5, or the default, None, in which case all\
+                                       CNAs will be included')
     mutation_parser.add_argument('--gene_filter_file', default=None,
                                  help='File listing genes whose heat scores should be preserved.\
                                        If present, all other heat scores will be discarded.')
@@ -63,15 +70,23 @@ def parse_args(raw_args):
     
     return parser.parse_args(raw_args)
 
+def valid_cna_filter_thresh(string):
+        value = float(string)
+        if value <= .5:
+            raise argparse.ArgumentTypeError("cna_filter_threshold must be > .5")
+        return value
+
 def load_direct_heat(args):
     return hnio.load_heat_tsv(args.heat_file)
 
 def load_mutation_heat(args):
     samples = hnio.load_samples(args.sample_file)
     genes = hnio.load_genes(args.gene_file)
-    samples2snvs = hnio.load_snv_data(args.snv_file, genes, samples)
-    samples2cnas, _ = hnio.load_cnas(args.cna_file, genes, samples)
-    return hnheat.mut_heat(samples2snvs, samples2cnas, args.min_freq)
+    snvs = hnio.load_snvs(args.snv_file, genes, samples)
+    cnas = hnio.load_cnas(args.cna_file, genes, samples)
+    if args.cna_filter_threshold:
+        cnas = hnheat.filter_cnas(cnas, args.cna_filter_threshold)
+    return hnheat.mut_heat(len(samples), snvs, cnas, args.min_freq)
 
 def load_oncodrive_heat(args):
     gene2heat = hnio.load_oncodrive_data(args.fm_scores, args.cis_amp_scores, args.cis_del_scores)

@@ -9,7 +9,47 @@ def num_snvs(mutations):
 def num_cnas(mutations):
     return len([mut for mut in mutations if mut.mut_type == AMP or mut.mut_type == DEL])
 
-def mut_heat(samples2snvs, samples2cnas, min_freq):
+def filter_cnas(cnas, filter_thresh):
+    if filter_thresh <= .5:
+        raise ValueError("filter_thresh must be greater than .5")
+    
+    filtered_cnas = list(cnas)
+    genes2cnas = defaultdict(list)
+    for cna in filtered_cnas:
+        genes2cnas[cna.gene].append(cna)
+    
+    for gene_cnas in genes2cnas.itervalues():
+        amp_count = float(len([cna for cna in gene_cnas if cna.mut_type == AMP]))
+        del_count = float(len([cna for cna in gene_cnas if cna.mut_type == DEL]))
+        if (amp_count / (amp_count + del_count)) >= filter_thresh:
+            remove_opposite_cnas(filtered_cnas, gene_cnas, AMP)
+        elif (del_count / (amp_count + del_count)) >= filter_thresh:
+            remove_opposite_cnas(filtered_cnas, gene_cnas, DEL)
+        else:
+            for cna in gene_cnas:
+                filtered_cnas.remove(cna)
+                
+    return filtered_cnas
+
+def remove_opposite_cnas(cnas, gene_cnas, mut_type):
+    for cna in gene_cnas:
+        if cna.mut_type != mut_type:
+            cnas.remove(cna)
+
+def mut_heat(num_samples, snvs, cnas, min_freq):
+    genes2mutations = defaultdict(set)
+    for snv in snvs:
+        genes2mutations[snv.gene].add(snv)
+    for cna in cnas:
+        genes2mutations[cna.gene].add(cna)
+    
+    print("\t- Including %s genes in %s samples at min frequency %s" %
+          (len(genes2mutations), num_samples, min_freq))
+    
+    return dict([(g, len(heat) / float(num_samples)) for g, heat in genes2mutations.items()
+                 if num_snvs(heat) >= min_freq or num_cnas(heat) > 0])
+
+def mut_heat_old(samples2snvs, samples2cnas, min_freq):
     n = float(len(set(samples2snvs.keys()) | set(samples2cnas.keys())))
     
     genes2mutations = defaultdict(set)
@@ -19,7 +59,7 @@ def mut_heat(samples2snvs, samples2cnas, min_freq):
         genes2mutations[snv.gene].add(snv)
     for cna in cnas:
         genes2mutations[cna.gene].add(cna)
-        
+    
     print "\t- Including %s genes in %s samples at min frequency %s" % (len(genes2mutations), int(n), min_freq)
     
     return dict([(g, len( heat ) / n) for g, heat in genes2mutations.items()
