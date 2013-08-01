@@ -28,9 +28,9 @@ def parse_args(raw_args):
     parent_parser.add_argument('-hf', '--heat_file', required=True, help='Heat score file')
     parent_parser.add_argument('-n', '--num_permutations', type=int, required=True,
                                 help='Number of permuted networks to use')
-    parent_parser.add_argument('-s', '--test_statistic', choices=['max_cc_sizes', 'num_ccs'],
-                               default='max_cc_sizes',
-                               help='If max_cc_sizes, select smallest delta such that the size of\
+    parent_parser.add_argument('-s', '--test_statistic', choices=['max_cc_size', 'num_ccs'],
+                               default='max_cc_size',
+                               help='If max_cc_size, select smallest delta such that the size of\
                                the largest CC size is >= k. If num_ccs, select median delta that\
                                maximizes the number of CCs of size >= k.')
     parent_parser.add_argument('-l', '--sizes', nargs='+', type=int, help='See test_statistic')
