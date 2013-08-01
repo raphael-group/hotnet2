@@ -43,9 +43,6 @@ def parse_args(raw_args):
     parent_parser.add_argument('-n', '--num_permutations', type=int, required=True,
                                help='Number of permutation tests to run; set to 0 to skip running\
                                      permutation tests.')
-    parent_parser.add_argument('-pgf', '--permutation_genes_file',
-                               help='Path to file containing a list of additional genes that can have\
-                                     permuted heat values assigned to them in permutation tests') 
     parent_parser.add_argument('-s', '--cc_start_size', type=int, default=2,
                                help='Smallest connected component size to count')
     parent_parser.add_argument('-l', '--cc_stop_size', type=int, default=10,
@@ -59,7 +56,10 @@ def parse_args(raw_args):
     subparsers = parser.add_subparsers(title='Heat score type', dest='permutation_type')
     
     subparsers.add_parser('none', help='Do not perform statistical significance permutation tests')
-    subparsers.add_parser('heat_scores', help='Permute heat scores', parents=[parent_parser])
+    heat_parser = subparsers.add_parser('heat_scores', help='Permute heat scores', parents=[parent_parser])
+    heat_parser.add_argument('-pgf', '--permutation_genes_file',
+                             help='Path to file containing a list of additional genes that can have\
+                                   permuted heat values assigned to them in permutation tests')
     
     mutation_parser = subparsers.add_parser('mutation_data', help='Permute mutation data',
                                              parents=[parent_parser])
@@ -96,7 +96,7 @@ def run(args):
                                     significance testing based on mutation data permutation.")
             sizes2stats = mutation_permutation_significance(args, infmat, infmat_index, G, heat_params)
         else:
-            raise ValueError("Uncrecognized permutation type %s" % (args.permutation_type))
+            raise ValueError("Unrecognized permutation type %s" % (args.permutation_type))
     
     #sort ccs list such that genes within components are sorted alphanumerically, and components
     #are sorted first by length, then alphanumerically by name of the first gene in the component 

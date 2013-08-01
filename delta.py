@@ -56,13 +56,13 @@ def find_best_delta_by_largest_cc(permuted_sim, permuted_index, sizes, directed,
     return size2delta
 
 def find_best_delta_by_num_ccs(permuted_sim, ks, start=0.05):
-    print "Finding smallest delta that maximizes the # of CCs of size >= l"
+    print "Finding median delta that maximizes the # of CCs of size >= l"
     edges = get_edges(permuted_sim, start)
     k2delta = {}
 
     for k in ks:
         _, bestDeltas = find_best_delta_by_num_ccs_for_given_k(permuted_sim, edges, k)
-        k2delta[k] = min(bestDeltas)
+        k2delta[k] = np.median(bestDeltas)
 
     return k2delta    
 
@@ -142,7 +142,8 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
  
     return sizes2deltas
 
-def heat_delta_wrapper((M, index2gene, heat_permutation, directed, sizes, selection_function)):
+def heat_delta_wrapper((infmat, index2gene, heat_permutation, directed, sizes, selection_function)):
+    M, index2gene = hn.induce_infmat(infmat, index2gene, sorted(heat_permutation.keys()))
     heat = hn.heat_vec(heat_permutation, index2gene)
     sim_mat = hn.similarity_matrix(M, heat, directed)
     if selection_function is find_best_delta_by_largest_cc:
@@ -153,7 +154,7 @@ def heat_delta_wrapper((M, index2gene, heat_permutation, directed, sizes, select
         raise ValueError("Unknown delta selection function: %s" % (selection_function))
 
 #list of num_permutations dicts of max cc size => best delta
-def heat_delta_selection(M, index2gene, heat_permutations, sizes, directed=True, parallel=True,
+def heat_delta_selection(infmat, index2gene, heat_permutations, sizes, directed=True, parallel=True,
                          selection_fn=find_best_delta_by_largest_cc):
     print "* Performing permuted heat delta selection..."
     if parallel:
@@ -161,8 +162,7 @@ def heat_delta_selection(M, index2gene, heat_permutations, sizes, directed=True,
         map_fn = pool.map
     else:
         map_fn = map
-
-    args = [(M, index2gene, heat_permutation, directed, sizes, selection_fn)
+    args = [(infmat, index2gene, heat_permutation, directed, sizes, selection_fn)
             for heat_permutation in heat_permutations]
     deltas = map_fn(heat_delta_wrapper, args)
 
