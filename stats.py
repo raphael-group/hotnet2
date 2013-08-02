@@ -45,11 +45,12 @@ def calculate_permuted_cc_counts(infmat, index2gene, heat_permutations, delta,
     return size2counts
 
 def compute_statistics(size2counts_real, size2counts_permuted, num_permutations):
+    num_permutations = float(num_permutations)
     size2stats = dict([(s, []) for s in size2counts_permuted.keys()])
     for size, counts in size2counts_permuted.items():
         observed = size2counts_real[size]
         expected = sum(counts) / num_permutations
-        pval = len([ c for c in counts if c >= observed ]) / float( num_permutations )
+        pval = len([ c for c in counts if c >= observed ]) / num_permutations
         size2stats[size] = dict(observed=observed, expected=expected, pval=pval)
     
     return size2stats
