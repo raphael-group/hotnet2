@@ -25,8 +25,22 @@ def parse_args(raw_args):
     mutation_parser = subparsers.add_parser('mutation', help='Mutation data', parents=[parent_parser])
     mutation_parser.add_argument('--snv_file', required=True, help='SNV file')
     mutation_parser.add_argument('--cna_file', required=True, help='CNA file')
-    mutation_parser.add_argument('--sample_file', required=True, help='Sample file')
-    mutation_parser.add_argument('--gene_file', required=True, help='Gene file')
+    mutation_parser.add_argument('--sample_file',
+                                 help='File listing samples. Any SNVs or CNAs in samples not listed\
+                                       in this file will be ignored. If HotNet is run with mutation\
+                                       permutation testing, all samples in this file will be eligible\
+                                       for random mutations even if the sample did not have any\
+                                       mutations in the real data. If not provided, the set of samples\
+                                       is assumed to be all samples that are provided in the SNV\
+                                       or CNA data.')
+    mutation_parser.add_argument('--gene_file',
+                                 help='File listing tested genes. SNVs or CNAs in genes not listed\
+                                       in this file will be ignored. If HotNet is run with mutation\
+                                       permutation testing, every gene in this file will be eligible\
+                                       for random mutations even if the gene did not have mutations\
+                                       in any samples in the original data. If not provided, the set\
+                                       of tested genes is assumed to be all genes that have mutations\
+                                       in either the SNV or CNA data.')
     mutation_parser.add_argument('--min_freq', type=int, default=1, help='Minimum frequency')
     mutation_parser.add_argument('--cna_filter_threshold', type=valid_cna_filter_thresh,
                                  default=None,
@@ -80,12 +94,15 @@ def load_direct_heat(args):
     return hnio.load_heat_tsv(args.heat_file)
 
 def load_mutation_heat(args):
-    samples = hnio.load_samples(args.sample_file)
-    genes = hnio.load_genes(args.gene_file)
+    samples = hnio.load_samples(args.sample_file) if args.sample_file else None
+    genes = hnio.load_genes(args.gene_file) if args.gene_file else None
     snvs = hnio.load_snvs(args.snv_file, genes, samples)
     cnas = hnio.load_cnas(args.cna_file, genes, samples)
     if args.cna_filter_threshold:
         cnas = hnheat.filter_cnas(cnas, args.cna_filter_threshold)
+    
+    if not samples:
+        samples = set([snv.sample for snv in snvs] + [cna.sample for cna in cnas])
     return hnheat.mut_heat(len(samples), snvs, cnas, args.min_freq)
 
 def load_oncodrive_heat(args):

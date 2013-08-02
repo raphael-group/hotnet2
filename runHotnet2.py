@@ -122,8 +122,9 @@ def heat_permutation_significance(args, heat, infmat, infmat_index, G):
 def mutation_permutation_significance(args, infmat, infmat_index, G, heat_params):
     heat_permutations = permutations.generate_mutation_permutation_heat(
                             heat_params["heat_fn"], heat_params["sample_file"],
-                            heat_params["gene_file"], args.gene_length_file, args.bmr,
-                            args.bmr_file, heat_params["cna_file"], args.gene_order_file,
+                            heat_params["gene_file"], heat_params["snv_file"],
+                            args.gene_length_file, args.bmr, args.bmr_file,
+                            heat_params["cna_file"], args.gene_order_file,
                             heat_params["cna_filter_threshold"], heat_params["min_freq"],
                             args.num_permutations)
 
