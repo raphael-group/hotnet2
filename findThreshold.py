@@ -1,13 +1,11 @@
 # -*- coding: iso-8859-1 -*-
 import hnap
 import hnio
-import hotnet2 as hn
 import delta
 import permutations
 import sys
 import json
 import scipy.io
-import heat
 
 ITERATION_REPLACEMENT_TOKEN = '##NUM##'
 
@@ -114,28 +112,16 @@ def get_deltas_for_heat(args, gene2heat, _):
     return get_deltas_from_heat_permutations(args, infmat, index2gene, heat_permutations)
 
 def get_deltas_for_mutations(args, gene2heat, heat_params):
-    if heat_params["heat_fn"] != "load_mutation_heat":
-        raise RuntimeError("Heat scores must be based on mutation data to perform\
-                            delta selection based on mutation data permutation.")
-    samples = hnio.load_samples(heat_params["sample_file"])
-    genes = hnio.load_genes(heat_params["gene_file"])
-    cnas = hnio.load_cnas(heat_params["cna_file"], genes, samples)
-    gene2length = hnio.load_gene_lengths(args.gene_length_file)
-    gene2bmr = hnio.load_gene_specific_bmrs(args.bmr_file) if args.bmr_file else {}
-    gene2chromo, chromo2genes = hnio.load_gene_order(args.gene_order_file)
+    heat_permutations = permutations.generate_mutation_permutation_heat(
+                            heat_params["heat_fn"], heat_params["sample_file"],
+                            heat_params["gene_file"], args.gene_length_file, args.bmr,
+                            args.bmr_file, heat_params["cna_file"], args.gene_order_file,
+                            heat_params["cna_filter_threshold"], heat_params["min_freq"],
+                            args.num_permutations)
     
     infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
     index2gene = hnio.load_index(args.infmat_index_file)
-      
-    heat_permutations = []
-    for _ in range(args.num_permutations):
-        permuted_snvs = permutations.permute_snvs(samples, genes, gene2length, args.bmr, gene2bmr)
-        permuted_cnas = permutations.permute_cnas(cnas, gene2chromo, chromo2genes)
-        if heat_params["cna_filter_threshold"]:
-            permuted_cnas = heat.filter_cnas(permuted_cnas, heat_params["cna_filter_threshold"])
-            
-        heat_permutations.append(heat.mut_heat(len(samples), permuted_snvs, permuted_cnas,
-                                               heat_params["min_freq"]))
+
     return get_deltas_from_heat_permutations(args, infmat, index2gene, heat_permutations)
 
 def get_deltas_from_heat_permutations(args, infmat, gene_index, heat_permutations):

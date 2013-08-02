@@ -120,22 +120,12 @@ def heat_permutation_significance(args, heat, infmat, infmat_index, G):
     return calculate_significance(args, infmat, infmat_index, G, heat_permutations)
 
 def mutation_permutation_significance(args, infmat, infmat_index, G, heat_params):
-    samples = hnio.load_samples(heat_params["sample_file"])
-    genes = hnio.load_genes(heat_params["gene_file"])
-    cnas = hnio.load_cnas(heat_params["cna_file"], genes, samples)
-    gene2length = hnio.load_gene_lengths(args.gene_length_file)
-    gene2bmr = hnio.load_gene_specific_bmrs(args.bmr_file) if args.bmr_file else {}
-    gene2chromo, chromo2genes = hnio.load_gene_order(args.gene_order_file)
-    
-    heat_permutations = []
-    for _ in range(args.num_permutations):
-        permuted_snvs = permutations.permute_snvs(samples, genes, gene2length, args.bmr, gene2bmr)
-        permuted_cnas = permutations.permute_cnas(cnas, gene2chromo, chromo2genes)
-        if heat_params["cna_filter_threshold"]:
-            permuted_cnas = heat.filter_cnas(permuted_cnas, heat_params["cna_filter_threshold"])
-            
-        heat_permutations.append(heat.mut_heat(len(samples), permuted_snvs, permuted_cnas,
-                                               heat_params["min_freq"]))
+    heat_permutations = permutations.generate_mutation_permutation_heat(
+                            heat_params["heat_fn"], heat_params["sample_file"],
+                            heat_params["gene_file"], args.gene_length_file, args.bmr,
+                            args.bmr_file, heat_params["cna_file"], args.gene_order_file,
+                            heat_params["cna_filter_threshold"], heat_params["min_freq"],
+                            args.num_permutations)
 
     return calculate_significance(args, infmat, infmat_index, G, heat_permutations)
 

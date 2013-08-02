@@ -2,7 +2,12 @@ import random
 from collections import defaultdict
 from constants import *
 import heat
+import hnio
+import scipy.io
 import multiprocessing as mp
+
+#TODO REMOVE
+random.seed(5)
 
 ################################################################################
 # Heat permutation
@@ -44,6 +49,30 @@ def permute_heat(heat, num_permutations, addtl_genes=None, parallel=True):
 
 ################################################################################
 # Mutation permutation
+
+def generate_mutation_permutation_heat(heat_fn, sample_file, gene_file, gene_length_file, bmr,
+                                       bmr_file, cna_file, gene_order_file, cna_filter_threshold,
+                                       min_freq, num_permutations):
+    if heat_fn != "load_mutation_heat":
+        raise RuntimeError("Heat scores must be based on mutation data to perform\
+                            delta selection based on mutation data permutation.")
+    samples = hnio.load_samples(sample_file)
+    genes = hnio.load_genes(gene_file)
+    cnas = hnio.load_cnas(cna_file, genes, samples)
+    gene2length = hnio.load_gene_lengths(gene_length_file)
+    gene2bmr = hnio.load_gene_specific_bmrs(bmr_file) if bmr_file else {}
+    gene2chromo, chromo2genes = hnio.load_gene_order(gene_order_file)
+      
+    heat_permutations = []
+    for _ in range(num_permutations):
+        permuted_snvs = permute_snvs(samples, genes, gene2length, bmr, gene2bmr)
+        permuted_cnas = permute_cnas(cnas, gene2chromo, chromo2genes)
+        if cna_filter_threshold:
+            permuted_cnas = heat.filter_cnas(permuted_cnas, cna_filter_threshold)
+            
+        heat_permutations.append(heat.mut_heat(len(samples), permuted_snvs, permuted_cnas, min_freq))
+    
+    return heat_permutations
 
 def permute_snvs(samples, tested_genes, gene2length, bmr, gene2bmr):
     permuted_snvs = []
