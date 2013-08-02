@@ -91,71 +91,24 @@ def load_snvs(snv_file, gene_wlst=None, sample_wlst=None):
             for gene in arr[1:] if include(gene, gene_wlst)]
 
 #Returns list of Mutation objects representing CNAs
-def load_cnas(cna_file, gene_wlst=None, sample_wlst=None, filter_thresh=0):
-    if filter_thresh != 0 and filter_thresh <= .5:
-        raise ValueError("filter_thresh must be either 0 or greater than .5")
-    
+def load_cnas(cna_file, gene_wlst=None, sample_wlst=None):
+    """Load CNA data from a file and return a list of Mutation tuples.
+ 
+    Keyword arguments:
+    cna_file -- path to TSV file containing CNAs where the first column of each line is a sample ID
+                and subsequent columns contain gene names followed by "(A)" or "(D)" indicating an
+                ammplification or deletion in that gene for the sample. Lines starting with '#'
+                will be ignored.
+    gene_wlist -- whitelist of allowed genes (default None). Genes not in this list will be ignored.
+                  If None, all mutated genes will be included.
+    sample_wlist -- whitelist of allowed samples (default None). Samples not in this list will be
+                    ignored.  If None, all samples will be included.
+
+    """
     arrs = [l.rstrip().split("\t") for l in open(cna_file) if not l.startswith("#")]
     return [Mutation(arr[0], cna.split("(")[0], get_mut_type(cna))
             for arr in arrs if include(arr[0], sample_wlst)
             for cna in arr[1:] if include(cna.split("(")[0], gene_wlst)]
-    
-
-# def load_cnas_old(cna_file, gene_wlst=None, sample_wlst=None, filter_thresh=0):
-#     """Load CNA data from a file and return a dict mapping sample IDs to CNA tuples and a dict
-#     mapping gene names to CNA tuples.
-# 
-#     Keyword arguments:
-#     cna_file -- path to TSV file containing CNAs where the first column of each line is a sample ID
-#                 and subsequent columns contain gene names followed by "(A)" or "(D)" indicating an
-#                 ammplification or deletion in that gene for the sample. Lines starting with '#'
-#                 will be ignored.
-#     gene_wlist -- whitelist of allowed genes (default None). Genes not in this list will be ignored.
-#                   If None, all mutated genes will be included.
-#     sample_wlist -- whitelist of allowed samples (default None). Samples not in this list will be
-#                     ignored.  If None, all samples will be included.
-#     filter_thresh -- proportion of CNAs in a gene across samples that must share the same CNA type
-#                      in order for the CNAs to be included. This must either be > .5, or the default,
-#                      0, in which case all CNAs will be included.
-#     """
-#     if filter_thresh != 0 and filter_thresh <= .5:
-#         raise ValueError("filter_thresh must be either 0 or greater than .5")
-#     
-#     arrs = [l.rstrip().split("\t") for l in open(cna_file) if not l.startswith("#")]
-#     arrs = [arr for arr in arrs if include_sample(arr[0], sample_wlst)]
-#     
-#     samples2cnas = {}
-#     genes2cnas = defaultdict(set)
-#     for arr in arrs:
-#         sample = arr[0]
-#         genes = gene_filter(set([gene.split("(")[0] for gene in arr[1:]]), gene_wlst)
-#         if len(genes) > 0:
-#             gene2patientcna = dict([(cna.split("(")[0],
-#                                      Mutation(sample, cna.split("(")[0], get_mut_type(cna)))
-#                                     for cna in arr[1:] if cna.split("(")[0] in genes])
-#             #TODO: don't build samples2cnas yet
-#             samples2cnas[sample] = gene2patientcna.values()
-#         for gene in genes:
-#             genes2cnas[gene].add(gene2patientcna[gene])
-#     
-#     if filter_thresh != 0:
-#         excluded_count = 0
-#         for gene, cnas in genes2cnas.items():
-#             amp_count = float(len([cna for cna in cnas if cna.mut_type == AMP]))
-#             del_count = float(len([cna for cna in cnas if cna.mut_type == DEL]))
-#             if (amp_count / (amp_count + del_count)) >= filter_thresh:
-#                 remove_opposite_cnas(cnas, AMP)
-#             elif (del_count / (amp_count + del_count)) >= filter_thresh:
-#                 remove_opposite_cnas(cnas, DEL)
-#             else:
-#                 del genes2cnas[gene]
-#                 excluded_count += 1
-#         print("Excluding %s gene(s) in which CNAs are not in the same direction at least %s%% of "
-#               "the time" % (excluded_count, filter_thresh * 100))
-# 
-#     return samples2cnas, genes2cnas
-
-
 
 def get_mut_type(cna):
     if cna.endswith("(A)"): return AMP
