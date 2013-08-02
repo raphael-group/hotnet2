@@ -49,9 +49,9 @@ def permute_heat(heat, num_permutations, addtl_genes=None, parallel=True):
 ################################################################################
 # Mutation permutation
 
-def generate_mutation_permutation_heat(heat_fn, sample_file, gene_file, snv_file, gene_length_file,
-                                       bmr, bmr_file, cna_file, gene_order_file, cna_filter_threshold,
-                                       min_freq, num_permutations):
+def generate_mutation_permutation_heat(heat_fn, sample_file, gene_file, genes_in_network, snv_file,
+                                       gene_length_file, bmr, bmr_file, cna_file, gene_order_file,
+                                       cna_filter_threshold, min_freq, num_permutations):
     if heat_fn != "load_mutation_heat":
         raise RuntimeError("Heat scores must be based on mutation data to perform\
                             delta selection based on mutation data permutation.")
@@ -67,6 +67,9 @@ def generate_mutation_permutation_heat(heat_fn, sample_file, gene_file, snv_file
         samples = set([snv.sample for snv in snvs] + [cna.sample for cna in cnas])
     if not genes:
         genes = set([snv.gene for snv in snvs] + [cna.gene for cna in cnas])
+    
+    #only generate mutations for genes that are in the network
+    genes = set(genes).intersection(genes_in_network)
     
     heat_permutations = []
     for _ in range(num_permutations):

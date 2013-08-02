@@ -112,17 +112,15 @@ def get_deltas_for_heat(args, gene2heat, _):
     return get_deltas_from_heat_permutations(args, infmat, index2gene, heat_permutations)
 
 def get_deltas_for_mutations(args, gene2heat, heat_params):
-    heat_permutations = permutations.generate_mutation_permutation_heat(
-                            heat_params["heat_fn"], heat_params["sample_file"],
-                            heat_params["gene_file"], heat_params["snv_file"],
-                            args.gene_length_file, args.bmr, args.bmr_file,
-                            heat_params["cna_file"], args.gene_order_file,
-                            heat_params["cna_filter_threshold"], heat_params["min_freq"],
-                            args.num_permutations)
-    
     infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
     index2gene = hnio.load_index(args.infmat_index_file)
-
+    
+    heat_permutations = permutations.generate_mutation_permutation_heat(
+                            heat_params["heat_fn"], heat_params["sample_file"],
+                            heat_params["gene_file"], index2gene.values(), heat_params["snv_file"],
+                            args.gene_length_file, args.bmr, args.bmr_file, heat_params["cna_file"],
+                            args.gene_order_file, heat_params["cna_filter_threshold"],
+                            heat_params["min_freq"], args.num_permutations)
     return get_deltas_from_heat_permutations(args, infmat, index2gene, heat_permutations)
 
 def get_deltas_from_heat_permutations(args, infmat, gene_index, heat_permutations):
