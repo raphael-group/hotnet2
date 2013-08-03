@@ -12,7 +12,7 @@ def load_index(index_file):
 def load_ppi_edges(edge_list_file):
     """Load PPI edges from file and return as a set of 2-tuples of gene indices.
     
-    Keyword arguments:
+    Arguments:
     edge_list_file -- path to file containing edges with a gene name in each of the first two
                       columns.
                       
@@ -35,7 +35,7 @@ def load_heat_tsv(heat_file):
 def load_genes(gene_file):
     """Load tested genes from a file and return as a set.
     
-    Keyword arguments:
+    Arguments:
     gene_file -- path to file containing gene names, one per line.
     
     """
@@ -48,7 +48,7 @@ def load_gene_lengths(gene_lengths_file):
 def load_gene_order(gene_order_file):
     """Load gene order file and return gene->chromosome and chromosome->ordered gene list mappings.
     
-    Keyword arguments:
+    Arguments:
     gene_order_file -- path to file containing tab-separated lists of genes on each chromosme,
                        one chromosome per line
     
@@ -74,7 +74,7 @@ def load_gene_specific_bmrs(bmr_file):
 def load_samples(sample_file):
     """Load sample IDs from a file and return as a set.
     
-    Keyword arguments:
+    Arguments:
     sample_file -- path to TSV file containing sample IDs as the first column. Any other columns
                    will be ignored.
     
@@ -94,7 +94,7 @@ def load_snvs(snv_file, gene_wlst=None, sample_wlst=None):
 def load_cnas(cna_file, gene_wlst=None, sample_wlst=None):
     """Load CNA data from a file and return a list of Mutation tuples.
  
-    Keyword arguments:
+    Arguments:
     cna_file -- path to TSV file containing CNAs where the first column of each line is a sample ID
                 and subsequent columns contain gene names followed by "(A)" or "(D)" indicating an
                 ammplification or deletion in that gene for the sample. Lines starting with '#'

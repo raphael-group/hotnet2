@@ -5,9 +5,6 @@ import heat
 import hnio
 import multiprocessing as mp
 
-#TODO REMOVE
-#random.seed(5)
-
 ################################################################################
 # Heat permutation
 

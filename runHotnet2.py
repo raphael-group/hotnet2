@@ -24,7 +24,8 @@ def parse_args(raw_args):
                         help='Gene-index file for the influence matrix.')
     parser.add_argument('-ef', '--edge_list_file', default=None,
                         help='Edge list file for the PPI underlying the influence matrix')
-    parser.add_argument('-hf', '--heat_file', required=True, help='JSON heat score file')
+    parser.add_argument('-hf', '--heat_file', required=True,
+                        help='JSON heat score file generated via generateHeat.py')
     parser.add_argument('-d', '--delta', type=float, required=True,
                         help='Weight threshold for edge removal')
     parser.add_argument('-ccs', '--min_cc_size', type=int, default=3,
@@ -40,13 +41,15 @@ def parse_args(raw_args):
                                help='Number of permutation tests to run; set to 0 to skip running\
                                      permutation tests.')
     parent_parser.add_argument('-s', '--cc_start_size', type=int, default=2,
-                               help='Smallest connected component size to count')
+                               help='Smallest connected component size to count in permutation tests')
     parent_parser.add_argument('-l', '--cc_stop_size', type=int, default=10,
-                               help='Largest connected component size to count')
+                               help='Largest connected component size to count in permutation tests')
     parent_parser.add_argument('--parallel', dest='parallel', action='store_true',
-                               help='Run permutation tests in parallel.')
+                               help='Run permutation tests in parallel. Only recommended for machines\
+                                     with at least 8 cores.')
     parent_parser.add_argument('--no-parallel', dest='parallel', action='store_false',
-                               help='Run permutation tests sequentially.')
+                               help='Run permutation tests sequentially. Recommended for machines\
+                                     with fewer than 8 cores.')
     parent_parser.set_defaults(parallel=False)
     
     subparsers = parser.add_subparsers(title='Heat score type', dest='permutation_type')
