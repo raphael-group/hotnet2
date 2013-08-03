@@ -1,6 +1,7 @@
 # -*- coding: iso-8859-1 -*-
 import networkx as nx, scipy as sp, numpy as np
 strong_ccs = nx.strongly_connected_components
+from collections import defaultdict
 
 ################################################################################
 # Influence and similarity matrix functions
@@ -57,9 +58,7 @@ def connected_components(G, min_size=1):
     return ccs
 
 def component_sizes(ccs):
-    size_dict = dict()
+    size_dict = defaultdict(int)
     for cc in ccs:
-        if len(cc) not in size_dict:
-            size_dict[len(cc)] = 0
         size_dict[len(cc)] += 1
     return size_dict
