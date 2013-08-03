@@ -33,9 +33,6 @@ def parse_args(raw_args):
                         help='Run classic (instead of directed) HotNet.')
     parser.add_argument('-o', '--output_file', help='Output file.  If none given, output will be\
                                                      written to stdout.')
-    parser.add_argument('-pt', '--permutation_type', choices=['heat_scores', 'mutation_data'],
-                        default='mutation_data', help='Type of permutation to be used for\
-                                                       statistical significance testing.')
     
     #parent parser for arguments common to all permutation types
     parent_parser = hnap.HotNetArgParser(add_help=False, fromfile_prefix_chars='@')
@@ -56,12 +53,12 @@ def parse_args(raw_args):
     
     subparsers.add_parser('none', help='Do not perform statistical significance permutation tests')
     
-    heat_parser = subparsers.add_parser('heat_scores', help='Permute heat scores', parents=[parent_parser])
+    heat_parser = subparsers.add_parser('heat', help='Permute heat scores', parents=[parent_parser])
     heat_parser.add_argument('-pgf', '--permutation_genes_file',
                              help='Path to file containing a list of additional genes that can have\
                                    permuted heat values assigned to them in permutation tests')
     
-    mutation_parser = subparsers.add_parser('mutation_data', help='Permute mutation data',
+    mutation_parser = subparsers.add_parser('mutations', help='Permute mutation data',
                                              parents=[parent_parser])
     mutation_parser.add_argument('-glf', '--gene_length_file', required=True, help='Gene lengths file')
     mutation_parser.add_argument('-gof', '--gene_order_file', required=True, help='Gene order file')
@@ -88,9 +85,9 @@ def run(args):
     
     # calculate significance
     if args.permutation_type != "none":
-        if args.permutation_type == "heat_scores":
+        if args.permutation_type == "heat":
             sizes2stats = heat_permutation_significance(args, heat, infmat, infmat_index, G)
-        elif args.permutation_type == "mutation_data":
+        elif args.permutation_type == "mutations":
             if heat_params["heat_fn"] != "load_mutation_heat":
                 raise RuntimeError("Heat scores must be based on mutation data to perform\
                                     significance testing based on mutation data permutation.")
