@@ -49,9 +49,19 @@ def permute_heat(heat, num_permutations, addtl_genes=None, parallel=True):
 ################################################################################
 # Mutation permutation
 
+def mutation_permuation_heat_wrapper((samples, genes, cnas, gene2length, bmr, gene2bmr, gene2chromo,
+                                     chromo2genes, cna_filter_threshold, min_freq)):
+    permuted_snvs = permute_snvs(samples, genes, gene2length, bmr, gene2bmr)
+    permuted_cnas = permute_cnas(cnas, gene2chromo, chromo2genes)
+    if cna_filter_threshold:
+        permuted_cnas = heat.filter_cnas(permuted_cnas, cna_filter_threshold)
+        
+    return heat.mut_heat(len(samples), permuted_snvs, permuted_cnas, min_freq)
+    
+
 def generate_mutation_permutation_heat(heat_fn, sample_file, gene_file, genes_in_network, snv_file,
                                        gene_length_file, bmr, bmr_file, cna_file, gene_order_file,
-                                       cna_filter_threshold, min_freq, num_permutations):
+                                       cna_filter_threshold, min_freq, num_permutations, parallel=True):
     if heat_fn != "load_mutation_heat":
         raise RuntimeError("Heat scores must be based on mutation data to perform\
                             delta selection based on mutation data permutation.")
@@ -71,14 +81,19 @@ def generate_mutation_permutation_heat(heat_fn, sample_file, gene_file, genes_in
     #only generate mutations for genes that are in the network
     genes = set(genes).intersection(genes_in_network)
     
-    heat_permutations = []
-    for _ in range(num_permutations):
-        permuted_snvs = permute_snvs(samples, genes, gene2length, bmr, gene2bmr)
-        permuted_cnas = permute_cnas(cnas, gene2chromo, chromo2genes)
-        if cna_filter_threshold:
-            permuted_cnas = heat.filter_cnas(permuted_cnas, cna_filter_threshold)
-            
-        heat_permutations.append(heat.mut_heat(len(samples), permuted_snvs, permuted_cnas, min_freq))
+    if parallel:
+        pool = mp.Pool()
+        map_fn = pool.map
+    else:
+        map_fn = map
+    
+    args = [(samples, genes, cnas, gene2length, bmr, gene2bmr, gene2chromo,chromo2genes,
+             cna_filter_threshold, min_freq)] * num_permutations
+    heat_permutations = map_fn(mutation_permuation_heat_wrapper, args)
+    
+    if parallel:
+        pool.close()
+        pool.join()
     
     return heat_permutations
 

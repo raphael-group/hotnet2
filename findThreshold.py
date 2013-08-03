@@ -120,7 +120,7 @@ def get_deltas_for_mutations(args, gene2heat, heat_params):
                             heat_params["gene_file"], index2gene.values(), heat_params["snv_file"],
                             args.gene_length_file, args.bmr, args.bmr_file, heat_params["cna_file"],
                             args.gene_order_file, heat_params["cna_filter_threshold"],
-                            heat_params["min_freq"], args.num_permutations)
+                            heat_params["min_freq"], args.num_permutations, args.parallel)
     return get_deltas_from_heat_permutations(args, infmat, index2gene, heat_permutations)
 
 def get_deltas_from_heat_permutations(args, infmat, gene_index, heat_permutations):

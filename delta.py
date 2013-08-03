@@ -7,6 +7,7 @@ import networkx as nx
 import multiprocessing as mp
 strong_ccs = nx.strongly_connected_components
 from union_find import UnionFind
+from collections import namedtuple
 
 def get_component_sizes(arrs):
     return [len(arr) for arr in arrs]
@@ -66,6 +67,8 @@ def find_best_delta_by_num_ccs(permuted_sim, ks, start=0.05):
 
     return k2delta    
 
+Edge = namedtuple("Edge", ["node1", "node2", "weight"])
+
 def find_best_delta_by_num_ccs_for_given_k(permuted_sim, edges, k):
     if k < 2:
             raise ValueError("k must be at least 2")
@@ -95,15 +98,6 @@ def get_edges(sim, start=.05):
     edges = sorted(edges, key=lambda x: x.weight, reverse=True)
     edges = edges[:int(start*len(edges))]
     return edges
-
-class Edge(object):
-    def __init__(self, node1, node2, weight):
-        self.node1 = node1
-        self.node2 = node2
-        self.weight = weight
-
-    def __repr__(self):
-        return '(%s, %s, %s)' % (self.node1, self.node2, self.weight)
 
 def network_delta_wrapper((network_path, infmat_name, index2gene, tested_genes, h, sizes, directed,
                            selection_function)):

@@ -7,7 +7,6 @@ import stats
 import sys
 import scipy.io
 import json
-import heat
 
 def parse_args(raw_args): 
     description = "Runs generalized HotNet2.\
@@ -56,6 +55,7 @@ def parse_args(raw_args):
     subparsers = parser.add_subparsers(title='Heat score type', dest='permutation_type')
     
     subparsers.add_parser('none', help='Do not perform statistical significance permutation tests')
+    
     heat_parser = subparsers.add_parser('heat_scores', help='Permute heat scores', parents=[parent_parser])
     heat_parser.add_argument('-pgf', '--permutation_genes_file',
                              help='Path to file containing a list of additional genes that can have\
@@ -125,7 +125,7 @@ def mutation_permutation_significance(args, infmat, infmat_index, G, heat_params
                             heat_params["gene_file"], infmat_index.values(), heat_params["snv_file"],
                             args.gene_length_file, args.bmr, args.bmr_file, heat_params["cna_file"],
                             args.gene_order_file, heat_params["cna_filter_threshold"],
-                            heat_params["min_freq"], args.num_permutations)
+                            heat_params["min_freq"], args.num_permutations, args.parallel)
 
     return calculate_significance(args, infmat, infmat_index, G, heat_permutations)
 
