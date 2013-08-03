@@ -17,12 +17,6 @@ def significance_wrapper((infmat, index2gene, heat_permutation, delta, sizes, di
 
 def calculate_permuted_cc_counts(infmat, index2gene, heat_permutations, delta,
                                  sizes=range(2,11), directed=True, parallel=True):
-    # Report parameters of run
-    print "* Performing permuted heat statistical signifcance..."
-    print "\t- Using no. of components >= k (k \\in",
-    print "[%s, %s]) as statistic" % (min(sizes), max(sizes))
-    print "\t- Running permutations:"
-    
     if parallel:
         pool = mp.Pool()
         map_fn = pool.map

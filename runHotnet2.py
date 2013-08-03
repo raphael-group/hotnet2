@@ -112,11 +112,15 @@ def run(args):
     if (args.output_file): output_file.close()
 
 def heat_permutation_significance(args, heat, infmat, infmat_index, G):
+    print "* Performing permuted heat statistical signifcance..."
+     
     extra_genes = hnio.load_genes(args.permutation_genes_file) if args.permutation_genes_file else None
     heat_permutations = permutations.permute_heat(heat, args.num_permutations, extra_genes, args.parallel)
     return calculate_significance(args, infmat, infmat_index, G, heat_permutations)
 
 def mutation_permutation_significance(args, infmat, infmat_index, G, heat_params):
+    print "* Performing permuted mutation data statistical signifcance..."
+    
     heat_permutations = permutations.generate_mutation_permutation_heat(
                             heat_params["heat_fn"], heat_params["sample_file"],
                             heat_params["gene_file"], infmat_index.values(), heat_params["snv_file"],
@@ -129,6 +133,9 @@ def mutation_permutation_significance(args, infmat, infmat_index, G, heat_params
 def calculate_significance(args, infmat, infmat_index, G, heat_permutations):
     sizes = range(args.cc_start_size, args.cc_stop_size+1)
     
+    print "\t- Using no. of components >= k (k \\in",
+    print "[%s, %s]) as statistic" % (min(sizes), max(sizes))
+
     #size2counts is dict(size -> (list of counts, 1 per permutation))
     sizes2counts = stats.calculate_permuted_cc_counts(infmat, infmat_index, heat_permutations,
                                                       args.delta, sizes, not args.classic,
