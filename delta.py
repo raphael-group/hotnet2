@@ -7,7 +7,7 @@ import networkx as nx
 import multiprocessing as mp
 strong_ccs = nx.strongly_connected_components
 from union_find import UnionFind
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
 def get_component_sizes(arrs):
     return [len(arr) for arr in arrs]
@@ -18,6 +18,20 @@ def delta_too_small(component_sizes, max_size ):
     else: return False
 
 def find_best_delta_by_largest_cc(permuted_sim, permuted_index, sizes, directed, start_quant=0.99):
+    """Return a dict mapping each size in sizes to the smallest delta such that the size of the
+    largest CC in the graph corresponding the the given similarity matrix is <= that size.
+    
+    Arguments:
+    permuted_sim -- 2D ndarray representing a similarity matrix
+    permuted_index -- dict mapping an index in the matrix to the name of the gene represented at that
+                      index in the influence matrix
+    sizes -- list of sizes for the largest connected component
+    directed -- whether or not the graph constructed from the similarity matrix should be directed
+    start_quant -- percentile of edge weights that should be used as the starting delta for the
+                   binary search procedure
+    
+    """
+    
     print "Finding smallest delta such that size of largest CC is <= l"
     component_fn = strong_ccs if directed else nx.connected_components
     # Construct weighted digraphs for each network for each delta
@@ -56,7 +70,20 @@ def find_best_delta_by_largest_cc(permuted_sim, permuted_index, sizes, directed,
             
     return size2delta
 
+Edge = namedtuple("Edge", ["node1", "node2", "weight"])
+
 def find_best_delta_by_num_ccs(permuted_sim, ks, start=0.05):
+    """Return a dict mapping each size in ks to the median delta that maximizes the number of
+    connected components of size at least k in the graph corresponding the the given similarity
+    matrix.
+    
+    Arguments:
+    permuted_sim -- 2D ndarray representing a similarity matrix
+    ks -- list of minimum sizes for connected components to be counted. This must be at least 2.
+    start -- only deltas in the top start proportion of edge weights will be considered when
+             searching for deltas that maximize the number of connected components
+    """
+    
     print "Finding median delta that maximizes the # of CCs of size >= l"
     edges = get_edges(permuted_sim, start)
     k2delta = {}
@@ -65,11 +92,10 @@ def find_best_delta_by_num_ccs(permuted_sim, ks, start=0.05):
         _, bestDeltas = find_best_delta_by_num_ccs_for_given_k(permuted_sim, edges, k)
         k2delta[k] = np.median(bestDeltas)
 
-    return k2delta    
-
-Edge = namedtuple("Edge", ["node1", "node2", "weight"])
+    return k2delta
 
 def find_best_delta_by_num_ccs_for_given_k(permuted_sim, edges, k):
+    
     if k < 2:
             raise ValueError("k must be at least 2")
 
@@ -89,7 +115,7 @@ def find_best_delta_by_num_ccs_for_given_k(permuted_sim, edges, k):
     return max_num_ccs, bestDeltas
 
 def get_edges(sim, start=.05):
-    """Return a list of Edge objects representing edges in the top start% of edge weights"""
+    """Return a list of Edge tuples representing edges in the top start% of edge weights"""
     flattened = np.ndarray.flatten(sim)
     if np.array_equal(sim, sim.transpose()):
         edges = [Edge(i/len(sim), i%len(sim), flattened[i]) for i in range(len(flattened)) if i/len(sim) <= i%len(sim)]
@@ -113,7 +139,23 @@ def network_delta_wrapper((network_path, infmat_name, index2gene, tested_genes, 
 
 def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes, directed=True,
                             parallel=True, selection_fn=find_best_delta_by_largest_cc):
+    """Return a dict mapping each size in sizes to a list of the best deltas for each permuted
+    network for that size. 
+    
+    Arguments:
+    network_paths -- iterable of paths to .mat files containing permuted networks
+    infmat_name -- name of influnce matrix in .mat files
+    index2gene -- dict mapping an index in the matrix to the name of the gene represented at that
+                  index in the influence matrix
+    heat -- dict mapping a gene name to the heat score for that gene
+    sizes -- list of sizes for largest CC / min size for CCs to be counted (based on selection_fn)
+    directed -- whether or not the graph constructed from the similarity matrix should be directed
+    parallel -- whether finding the best delta for each permuted network should be performed in parallel
+    selection_fn -- function that should be used for finding the best delta 
+    
+    """
     print "* Performing network delta selection..."
+    
     if parallel:
         pool = mp.Pool()
         map_fn = pool.map
@@ -129,7 +171,7 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
         pool.close()
         pool.join()
          
-    # Parse the delta_maps into one dictionary
+    # Parse the deltas into one dictionary
     sizes2deltas = dict([(s, []) for s in sizes])
     for size2delta in delta_maps:
         for s in sizes: sizes2deltas[s].append( size2delta[s] )
@@ -150,7 +192,22 @@ def heat_delta_wrapper((infmat, index2gene, heat_permutation, directed, sizes, s
 #list of num_permutations dicts of max cc size => best delta
 def heat_delta_selection(infmat, index2gene, heat_permutations, sizes, directed=True, parallel=True,
                          selection_fn=find_best_delta_by_largest_cc):
+    """Return a dict mapping each size in sizes to a list of the best deltas for each heat
+    permutation for that size. 
+    
+    Arguments:
+    infmat -- 2D ndarray representing an influence matrix
+    index2gene -- dict mapping an index in the matrix to the name of the gene represented at that
+                  index in the influence matrix
+    heat_permutations -- list of heat permutations (dicts mapping gene name to heat score)
+    sizes -- list of sizes for largest CC / min size for CCs to be counted (based on selection_fn)
+    directed -- whether or not the graph constructed from the similarity matrix should be directed
+    parallel -- whether finding the best delta for each permuted network should be performed in parallel
+    selection_fn -- function that should be used for finding the best delta 
+    
+    """    
     print "* Performing permuted heat delta selection..."
+    
     if parallel:
         pool = mp.Pool()
         map_fn = pool.map
@@ -163,5 +220,10 @@ def heat_delta_selection(infmat, index2gene, heat_permutations, sizes, directed=
     if parallel:
         pool.close()
         pool.join()
-        
-    return deltas
+    
+    # Parse the deltas into one dictionary
+    sizes2deltas = defaultdict(list)
+    for size2delta in deltas:
+        for s in sizes: sizes2deltas[s].append(size2delta[s])
+         
+    return sizes2deltas
