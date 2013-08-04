@@ -75,7 +75,7 @@ def parse_args(raw_args):
     #if l not specified, set default based on test statistic 
     args = parser.parse_args(raw_args)
     if not args.sizes:
-        args.sizes = [5,10,15,20] if args.test_statistic == "max_cc_sizes" else [3]
+        args.sizes = [5,10,15,20] if args.test_statistic == "max_cc_size" else [3]
                         
     return args
 
@@ -95,7 +95,7 @@ def get_deltas_for_network(args, heat, _):
                               for i in range(1, args.num_permutations+1)]
 
     index2gene = hnio.load_index(args.infmat_index_file)
-    delta_selection_fn = delta.find_best_delta_by_largest_cc if args.test_statistic == "max_cc_sizes" else delta.find_best_delta_by_num_ccs 
+    delta_selection_fn = delta.find_best_delta_by_largest_cc if args.test_statistic == "max_cc_size" else delta.find_best_delta_by_num_ccs 
 
     deltas = delta.network_delta_selection(permuted_network_paths, args.infmat_name, index2gene,
                                            heat, args.sizes, not args.classic, args.parallel,
@@ -124,7 +124,7 @@ def get_deltas_for_mutations(args, gene2heat, heat_params):
     return get_deltas_from_heat_permutations(args, infmat, index2gene, heat_permutations)
 
 def get_deltas_from_heat_permutations(args, infmat, gene_index, heat_permutations):
-    delta_selection_fn = delta.find_best_delta_by_largest_cc if args.test_statistic == "max_cc_sizes" else delta.find_best_delta_by_num_ccs 
+    delta_selection_fn = delta.find_best_delta_by_largest_cc if args.test_statistic == "max_cc_size" else delta.find_best_delta_by_num_ccs 
     
     deltas = delta.heat_delta_selection(infmat, gene_index, heat_permutations, args.sizes,
                                         not args.classic, args.parallel, delta_selection_fn)
