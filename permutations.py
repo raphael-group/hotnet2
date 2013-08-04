@@ -17,14 +17,16 @@ def heat_permutation_wrapper((heat_scores, eligible_genes)):
 
     return permuted_heat
 
-"""
-heat: dict of gene name to heat score
-addtl_genes: list of gene names
-num_permutations: integer
-
-Returns: list of num_permutations dicts of gene names to heat scores
-"""
-def permute_heat(heat, num_permutations, addtl_genes=None, parallel=True):
+def permute_heat(heat, num_permutations, addtl_genes=set(), parallel=True):
+    """Return a list of num_permutation dicts, each mapping gene names to permuted heat scores.
+    
+    Arguments:
+    heat -- dict mapping a gene name to the heat score for that gene
+    addtl_genes -- iterable of names of genes that do not have heat scores in the real data but
+                   which may have heat scores assigned in permutations. Defaults to an empty set.
+    parallel -- whether heat permtutations should be generated in parallel. Defaults to True.
+    
+    """
     if parallel:
         pool = mp.Pool()
         map_fn = pool.map
@@ -32,7 +34,7 @@ def permute_heat(heat, num_permutations, addtl_genes=None, parallel=True):
         map_fn = map
 
     heat_scores = heat.values()
-    genes_eligible_for_heat = set(heat.keys()) | (set(addtl_genes) if addtl_genes else set())
+    genes_eligible_for_heat = set(heat.keys()) | set(addtl_genes)
     
     args = [(heat_scores, genes_eligible_for_heat)] * num_permutations
     permutations = map_fn(heat_permutation_wrapper, args)
@@ -59,9 +61,45 @@ def mutation_permuation_heat_wrapper((samples, genes, cnas, gene2length, bmr, ge
 def generate_mutation_permutation_heat(heat_fn, sample_file, gene_file, genes_in_network, snv_file,
                                        gene_length_file, bmr, bmr_file, cna_file, gene_order_file,
                                        cna_filter_threshold, min_freq, num_permutations, parallel=True):
+    """Return a list of num_permutation dicts, each mapping gene names to heat scores calculated
+    from permuted mutation data.
+    
+    Arguments:
+    heat_fn -- the name of the function used to calculate heat scores for the real data.
+               A RuntimeError is raised if this is not "load_mutation_heat"
+    sample_file -- path to TSV file containing tested sample IDs as the first column. If None, the
+                   set of samples is assumed to be all samples that are provided in the SNV or CNA data.
+    gene_file -- path to file containing names of tested genes, one per line. If None, the set of
+                 tested genes is assumed to be all genes that have mutations in either the SNV or
+                 CNA data.
+    genes_in_network -- iterable of names of genes in the PPI network
+    snv_file -- path to TSV file containing SNVs where the first column of each line is a sample ID
+                and subsequent columns contain the names of SNVs with mutations in that sample.
+    gene_length_file -- path to TSV file containing gene names in the first column and the length
+                        of the gene in base pairs in the second column
+    bmr -- default background mutation rate
+    bmr_file -- path to TSV file with gene names in the first column and the background mutation rate
+                for the gene in the second column. The default BMR will be used for any gene without
+                a BMR in this file. If None, the default BMR will be used for all genes.
+    cna_file -- path to TSV file containing CNAs where the first column of each line is a sample ID
+                and subsequent columns contain gene names followed by "(A)" or "(D)" indicating an
+                ammplification or deletion in that gene for the sample. Lines starting with '#'
+                will be ignored.
+    gene_order_file -- path to file containing tab-separated lists of genes on each chromosme,
+                       one chromosome per line
+    cna_filter_threshold -- proportion of CNAs in a gene across samples that must share  the same
+                            CNA type in order for the CNAs to be included. Must be > .5 if not None.
+                            If None, all CNAs will be included.
+    min_freq -- the minimum number of samples in which a gene must have an SNV to be considered
+                mutated in the heat score calculation.
+    num_permutations -- the number of permuted data sets to be generated
+    parallel -- whether to generate permuted data sets in parallel
+    
+    """
     if heat_fn != "load_mutation_heat":
         raise RuntimeError("Heat scores must be based on mutation data to perform\
                             delta selection based on mutation data permutation.")
+    
     samples = hnio.load_samples(sample_file) if sample_file else None
     genes = hnio.load_genes(gene_file) if gene_file else None
     cnas = hnio.load_cnas(cna_file, genes, samples)

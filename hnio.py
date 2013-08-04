@@ -124,7 +124,7 @@ def load_snvs(snv_file, gene_wlst=None, sample_wlst=None):
     """Load SNV data from a file and return as a list of Mutation tuples with mut_type == SNV.
  
     Arguments:
-    cna_file -- path to TSV file containing SNVs where the first column of each line is a sample ID
+    snv_file -- path to TSV file containing SNVs where the first column of each line is a sample ID
                 and subsequent columns contain the names of SNVs with mutations in that sample.
     gene_wlist -- whitelist of allowed genes (default None). Genes not in this list will be ignored.
                   If None, all mutated genes will be included.
