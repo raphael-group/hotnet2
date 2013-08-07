@@ -1,0 +1,72 @@
+html, body, div, p, ul, li {
+  padding: 0px;
+  margin: 0px;
+  font-weight: none;
+}
+
+.dashboard {
+  background-color: #BDC3C7;  
+  padding: 0px;
+  margin: 10px;
+  width: 1520px;
+}
+
+.dashboard p {
+  color: #BDC3C7;
+  font-size: 24px;
+  width: 100%;
+  text-align: center;
+  font-weight: bolder;
+}
+
+.dashboard p:hover {
+  color: blue;
+}
+
+ul {  
+  float:left;
+  width:100%;
+  padding:0;
+  list-style-type:none;
+}
+
+li {
+  float:left;
+  margin: 5px;
+  padding: 5px;
+  font-size: 24px;
+}
+
+.selected div {
+  float: left;
+  padding: 0px;
+  margin: 5px;
+}
+
+.network .node {
+  stroke: #fff;
+}
+
+.node text{
+  stroke-width: 0px;
+  font-size: 10;
+}
+
+.network div {
+  float: none;
+  margin: 0px;
+  padding: 0px;
+}
+.network .link {
+  stroke: #BDC3C7;
+  stroke-width: 5px;
+}
+
+svg{
+  background-color: #ECF0F1;
+}
+
+text {
+ font-weight: bold;
+ font-family: Helvetica; 
+}
