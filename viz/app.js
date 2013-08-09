@@ -19,7 +19,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
                     "OV":"#6A3D9A",
                     "READ":"#FFFF99",
                     "UCEC":"#B15928"},
-      highlightColor = "#F1C40F",
+      highlightColor = "#f1c40f",
       selectedColor = "#E74C3C",
       textColorStrongest = "#2C3E50",
       textColorStrong = "#34495E",
@@ -33,9 +33,10 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       heatRed = "#E74C3C",
       heatBlue = "#3498DB";
 
-  var networkDimensions = { "width": 500, "height" :550},
-      oncoprintDimensions = { "width": 500, "height" :800},
-      annotationDimensions = { "width": 500, "height": 500};
+  var networkDimensions = { "width": 500, "height" :520},
+      oncoprintDimensions = { "width": 800, "height" :800},
+      infoboxDimensions = { "width": 500, "height" :400},
+      annotationDimensions = { "width": 800, "height": 500};
 
   var gene_display_list;
 
@@ -63,6 +64,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       });
 
     DOMcontainer.append("p")
+      .attr("class", "toggleButton")
       .on("click", function(d, i){ 
         toggleButton(DOMcontainer, canvas, data); 
       })
@@ -73,7 +75,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     if (canvas.classed("unselected")){
       canvas.transition().duration(animation_speed/2)
         .style("height", function(){
-          return oncoprintDimensions["height"] + 500 + "px"
+          return oncoprintDimensions["height"] + 1000+ "px"
         })
         .style("width", function(){
           return oncoprintDimensions["width"] + networkDimensions["width"] + 200 +  "px"
@@ -105,6 +107,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
           .domain([min, max])
           .range([heatBlue, heatRed]);
 
+
     heatColorScale = function heatColorScale(heatValue){
       return heat_color_scale(heatValue);
     };
@@ -112,36 +115,43 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     toggleCategory = function toggleCategory(datum, category){
       var updated_list = updateList(datum, category);
       gene_display_list = updated_list;
+
       network.updateGenes();
       oncoprint.updateGenes();
+      loliplot.updateGenes();
 
       DOMcontainer.selectAll("li")
         .filter(function(d){ return gene_display_list.indexOf(d.gene) > -1 })
         .transition().duration(animation_speed/2)
         .style("color", textColorLightest)
+
       DOMcontainer.selectAll("li")
         .filter(function(d){ return gene_display_list.indexOf(d.gene) <= -1 })
         .transition().duration(animation_speed/2)
-        .style("color", blockColorLight)
-//      loliplot.updateGenes(updated_list);
+        .style("color", blockColorMedium)
+      
     }
 
     highlightCategory = function highlightCategory(datum, category){
+//      highlightGenes(network.node.selectAll(".node"),function(d){ return d.gene; }, datum, "class", "highlighted");
+//      highlightGenes( network.selectAll(".node"),function(d){ return d.gene; }, datum, "stroke", highlightColor);
+
       network.highlightGenes(datum);
       oncoprint.highlightGenes(datum);
+      loliplot.highlightGenes(datum);
       DOMcontainer.selectAll("li")
         .filter(function(d){ return d.gene == datum })
         .transition().duration(animation_speed/2)
         .style("background-color", blockColorStrongest)
-//      loliplot.highlightGenes(updated_list);
     }
 
     unhighlightCategory = function unhighlightCategory(){
       network.unhighlightGenes();
       oncoprint.unhighlightGenes();
+      loliplot.unhighlightGenes();
       DOMcontainer.selectAll("li")
         .transition().duration(animation_speed/2)
-        .style("background-color", blockColorMedium)
+        .style("background-color", blockColorLight)
     }
 
     updateList = function updateList(datum, category){
@@ -157,17 +167,39 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     }
 
     gene_display_list = display_dict["gene"].slice();
-    var network = new generateNetwork(canvas.append("div").attr("class", "network"), data_set, this);
-    var oncoprint = new generateOncoprint(canvas.append("div").attr("class", "oncoprint"), data_set, this);
-    var loliplot = new generateLoliplot(canvas.append("div").attr("class", "loliplot"), data_set, this);
 
+    var leftColumn = canvas.append("div")
+                          .attr("id", "leftColumn")
+                          .attr("class", "column")
+                          .style("width", networkDimensions["width"] + "px"),
+        rightColumn = canvas.append("div")
+                          .attr("id", "rightColumn")
+                          .attr("class", "column")
+                          .style("width", oncoprintDimensions["width"] + "px");
+
+    var network = new generateNetwork(leftColumn.append("div").attr("class", "network"), data_set, this);
+    var oncoprint = new generateOncoprint(rightColumn.append("div").attr("class", "oncoprint"), data_set, this);
+    var infobox = new generateInfoBox(leftColumn.append("div").attr("class", "infobox"), data_set, this);
+    var loliplot = new generateLoliplot(rightColumn.append("div").attr("class", "loliplot"), data_set, this);
+    DOMcontainer.selectAll("li")
+      .transition().duration(animation_speed/2)
+      .style("background-color", blockColorLight)
     canvas.attr("class", "selected");
-
 
     makeInteractive(this, DOMcontainer.selectAll("li"), function(d){ return d.gene; }, "gene");
 
     oncoprint.updateGenes(display_dict["gene"].slice());
 
+  }
+
+  function generateInfoBox(DOMcontainer, data_set, dashboard){
+    var width = infoboxDimensions["width"],
+        height = infoboxDimensions["height"];
+    DOMcontainer
+      .attr("width", width + "px")
+      .attr("height", height + "px")
+      .append("p")
+      .text(" Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.");
   }
 
   function generateNetwork(DOMcontainer, data_set, dashboard){
@@ -183,6 +215,8 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         .charge(-3000)
         .linkDistance(200)
         .size([width, width]);
+
+    DOMcontainer.append("h1").text("HOTNET NETWORK");
 
     DOMcontainer
       .attr("width", width)
@@ -267,7 +301,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     var count_dict = countGenes(data_set.samples, "gene");
 
     node.append("circle")
-      .attr("class", "node")
+//      .attr("class", "circle")
       .attr("r", function(d, i){
         return (count_dict[d.gene]/count_dict["total"]*100)
       });
@@ -307,7 +341,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
 
       hideNodes.style("fill-opacity", 0.25);
 
-      hideNodes.selectAll(".node")  
+      hideNodes.selectAll("circle")  
         .transition().duration(animation_speed)
         .attr("r", 5);
 
@@ -317,7 +351,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
 
       keepNodes.style("fill-opacity", 1);
 
-      keepNodes.selectAll(".node")
+      keepNodes.selectAll("circle")
         .transition().duration(animation_speed)
         .attr("r", function(d, i){
           return count_dict[d.gene]/count_dict["total"]*100;
@@ -347,7 +381,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       node.filter(function(d){
         return d.gene == gene;
       })
-      .selectAll(".node")
+      .selectAll("circle")
 //      .transition().duration(animation_speed)
       .attr("r", function(d, i){
         var tempRad = (gene_display_list.indexOf(d.gene) > -1) ? count_dict[d.gene]/count_dict["total"]*100 : 0;
@@ -358,7 +392,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
           return d.gene == gene && gene_display_list.indexOf(gene) > -1;
         });
 
-      highlight.selectAll(".node")
+      highlight.selectAll("circle")
         .transition().duration(animation_speed/2)
         .style("stroke", highlightColor)
         .style("stroke-width", 5)
@@ -367,10 +401,10 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
 
     function unhighlightGenes(){
       
-      node.selectAll(".node").style("stroke-width", 0);
+      node.selectAll("circle").style("stroke-width", 0);
 
       node
-        .selectAll(".node")
+        .selectAll("circle")
 //        .transition().duration(animation_speed)
         .attr("r", function(d, i){
           return (gene_display_list.indexOf(d.gene) > -1) ? count_dict[d.gene]/count_dict["total"]*100 : 5;
@@ -381,21 +415,266 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
   }
 
   function generateLoliplot(DOMcontainer, data_set, dashboard){
-    var width = annotationDimensions["width"],
-        height = annotationDimensions["height"];
 
-    var svg = DOMcontainer
-      .append("svg")
-      .attr("width", width)
-      .attr("height", height);
+    DOMcontainer.append("h1").text("GENE ANNOTATIONS");
+
+    var numGenes = data_set.annotations.length,
+        boxMargin = 5,
+        radius = 5,
+        boxWidth = annotationDimensions["width"],
+        boxHeight = 120,
+        graphWidth = boxWidth,
+        graphHeight = (numGenes + 1)*boxMargin + numGenes*(boxHeight+50),
+        width = graphWidth,
+        height = graphHeight,
+        resolution = Math.floor(graphWidth/(radius*2))
+        bar_y = 20;  
+
+    var symboling = {"Nonsense_Mutation": 0, "Frame_Shift_Del": 1, "Frame_Shift_Ins": 1, "Missense_Mutation": 2, "Splice_Site": 3, "In_Frame_Del": 4, "In_Frame_Ins": 4}
+
+    var sample = sortViaCategory(data_set.annotations.slice(), "transcripts");
+
+    sample.forEach(function(s){
+      if (s.transcripts.length > 0){
+        loliButtons(DOMcontainer, s, "h2")
+      }
+    });
+
+
+    this.highlightGenes = function highlightGenes(gene){
+      DOMcontainer.selectAll(".lolibox")
+      .filter(function(d){
+        return d == gene;
+      })
+      .selectAll(".background")
+      .style("fill", blockColorStrongest)
+    }
+
+    this.unhighlightGenes = function unhighlightGenes(){
+      
+      DOMcontainer.selectAll(".lolibox")
+      .filter(function(d){
+        return gene_display_list.indexOf(d) > -1;
+      })
+      .selectAll(".background")
+      .style("fill", blockColorLightest)
+
+      DOMcontainer.selectAll(".lolibox")
+      .filter(function(d){
+        return gene_display_list.indexOf(d) <= -1;
+      })
+      .selectAll(".background")
+      .style("fill", blockColorLight)
+    }
+
+    this.updateGenes = function updateGenes(){
+
+      var hide = DOMcontainer.selectAll(".lolibox")
+        .filter(function(d){
+          return gene_display_list.indexOf(d) <= -1;
+        })
+
+      hide.selectAll(".symbols").style("fill-opacity", 0.25)
+          .style("stroke-opacity", 0.25);
+
+      hide.selectAll(".background").style("fill", blockColorLight)
+
+      var keep = DOMcontainer.selectAll(".lolibox")
+        .filter(function(d){
+          return gene_display_list.indexOf(d) > -1;
+        });
+
+      keep.selectAll(".symbols")
+          .style("fill-opacity", 1)
+          .style("stroke-opacity", 1);
+
+    }
+
+    function loliButtons(selection, sample, DOMElement){
+      var div = selection.append("div");
+
+      div.selectAll(".null")
+        .data(function(){
+          if (sample.transcripts){
+            return [sample.gene]
+          }
+          else{
+            return sample
+          }
+        }).enter()
+        .append(DOMElement)
+        .text(function(d){ return (sample.transcripts)? d : d.name; })
+        .attr("class", "unselected")
+        .on("click", function(d){
+
+          if (d3.select(this).classed("unselected")){
+            // console.log(sample)
+            if (sample.transcripts){
+              loliButtons(div,sample.transcripts, "h3");
+            }
+            else{
+              drawLoliplot(div, d, d.name)
+            }
+            d3.select(this).attr("class", "selected");
+          }
+          else{
+            if (sample.transcripts){
+              div.selectAll("svg").remove();
+              div.selectAll("h3").remove();
+            }
+            else{
+              div.selectAll("#" + d.name).remove();
+            }            
+            d3.select(this).attr("class", "unselected");
+          }
+        });
+
+//      makeInteractive(dashboard, div.selectAll("h2"), function(d){ return d; }, "gene");
+    }
+
+    function drawLoliplot(selection, sample, id){
+      // var min = d3.min(sample.mutations, function(gene){ return gene.locus;}),
+      //     max = d3.max(sample.mutations, function(gene){ return gene.locus;});
+      var min = 0,
+          max = sample.length;
+
+      var x = d3.scale.linear()
+            .domain([min, max])
+            .range([0, graphWidth]);
+
+      var xAxis = d3.svg.axis()
+            .scale(x)
+            .orient("bottom")
+            .ticks(5)
+            .tickSize(0)
+            .tickPadding(1.25);
+
+      var zoom = d3.behavior.zoom()
+            .x(x)
+            .scaleExtent([1, 20])
+            .on("zoom", function(){
+              draw(svg);
+            });
+
+      var svg = selection
+        .selectAll(".null").data([sample.gene]).enter()
+        .append("svg")
+        .attr("class", "lolibox")
+        .attr("id", id)
+        .style("width", boxWidth)
+        .style("height", boxHeight)
+        .call(zoom);
+
+      var background = svg.append("rect")
+          .attr("width", boxWidth)
+          .attr("height", boxHeight)
+          .attr("class", "background")
+          .style("fill", blockColorLightest);
+
+      var menu_bar = svg.append("rect")
+          .attr("class", "menu_bar")
+          .attr("y", boxHeight - bar_y*2)
+          .attr("x", x(min))
+          .attr("width", x(max)-x(min) - 2*boxMargin)
+          .attr("height", bar_y - boxMargin)
+          .style("fill", blockColorLight);
+
+      svg.append("g")
+        .attr("class", "xaxis")
+        .attr("transform", "translate(0," + (boxHeight - bar_y + boxMargin) + ")")
+        .style("font-size", "12px")
+        .style("fill", blockColorLight)
+        .call(xAxis);
+
+      var domains = svg.selectAll(".domains")
+        .data(sample.domains.slice()).enter()
+        .append("rect")
+        .attr("width", function(d, i){
+          return x(d.end) - x(d.start);
+        })
+        .attr("height", bar_y + boxMargin)
+        .attr("y", boxHeight - bar_y*2 - boxMargin)
+        .attr("class", "domains")
+        .style("fill-opacity", .5)
+        .style("fill", blockColorMedium);
+
+      var gene_name = sample.gene;
+      var data_set = sample["mutations"].slice();
+      
+      var circle = svg.selectAll(".symbols")
+        .data(data_set).enter()
+        .append("path")
+        .attr("class", "symbols")
+        .attr("d", d3.svg.symbol()
+          .type(function(d, i){
+            return d3.svg.symbolTypes[symboling[d.mutation]];
+          })
+          .size(radius*radius)
+        )
+        .style("stroke", function(d, i){
+          return coloring[d.cancer];
+        })
+        .style("fill", function(d, i){
+          return coloring[d.cancer];
+        })
+        .style("stroke-width", 2);
+
+      draw(svg);
+
+      makeInteractive(dashboard, svg, function(d){ return d; }, "gene");
+
+      function draw(selection){
+        var cur_min = d3.min(x.domain()),
+            cur_max = d3.max(x.domain()),
+            cur_res = Math.round((cur_max - cur_min)/resolution);
+        cur_res = (cur_res) ? cur_res : 1;
+
+        var index_dict = {};
+        for (var i = Math.floor(cur_min/cur_res) - 5; i < Math.ceil(cur_max/cur_res) + 5; i++){
+          index_dict[i] = 0;
+        }
+        var selected_circles = selection.selectAll(".symbols")
+          .attr("transform", function(d, i){
+            var cur_index = (Math.round(d.locus/cur_res));
+            index_dict[cur_index] ++;
+            // console.log(x(cur_index*cur_res) + ", " + (bar_y - index_dict[cur_index] * radius*2) );
+            return "translate(" + x(cur_index*cur_res) + ", " + (boxHeight - bar_y*2 - index_dict[cur_index] * radius*2 - boxMargin) + ")";
+          })
+          .attr("stroke-opacity", 1)
+          .attr("fill-opacity", 1);
+
+        selection.selectAll(".symbols").filter(function(d, i){ 
+            return !(cur_min < d.locus && cur_max > d.locus); 
+          })
+        .attr("stroke-opacity", 0)
+        .attr("fill-opacity", 0);
+
+//        selection.selectAll(".line")
+//          .attr("d",line);
+
+       selection.select(".xaxis").call(xAxis);
+       selection.select(".menu_bar")
+         .attr("x", x(min) + boxMargin)
+         .attr("width", x(max)-x(min) - 2*boxMargin)
+
+        selection.selectAll(".domains")
+          .attr("x", function(d, i){
+            return x(d.start);
+          })
+          .attr("width", function(d, i){
+            return x(d.end) - x(d.start);
+          });
+      }
+    }
+
   }
 
   function generateOncoprint(DOMcontainer, data_set, dashboard){
-
+    DOMcontainer.append("h1").text("ONCOPRINTS");
     var width = oncoprintDimensions["width"],
         height = oncoprintDimensions["height"],
         labelHeight = 0,
-        labelWidth = 150
+        labelWidth = 120
         boxMargin = 5,
         graphWidth = width,
         graphHeight = height;
@@ -427,7 +706,15 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       height = (numGenes)*(boxHeight+boxMargin) + boxMargin;
       gene_index = createGeneOrder(samples);
     }
-
+    function updateGraph(){
+      DOMcontainer.transition()
+      .duration(animation_speed/2)
+      .style("width", width).style("height", height);
+      svg.transition()
+      .duration(animation_speed/2)
+      .style("width", width)
+      .style("height", height)
+    }
     var zoom = d3.behavior.zoom()
       .x(x)
       .scaleExtent([1, Math.round(20*numSamples/graphWidth)])
@@ -437,9 +724,9 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
 
     var svg = DOMcontainer
       .append("svg")
-      .attr("width", width)
-      .attr("height", height)
       .call(zoom);
+
+    updateGraph()
 
     samples.forEach(function(d){
       var cur_genes = d.genes,
@@ -456,7 +743,8 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     });
 
     // Takes in sample list, list of gene order, and depth or recursion
-    var sorted_samples = sortViaCoocurrence(samples, 
+    var semisorted_samples = sortViaCategory(samples, "cancer")
+    var sorted_samples = sortViaCoocurrence(semisorted_samples, 
       d3.keys(gene_index).sort(function(a, b){ 
         return gene_index[a] - gene_index[b]; 
       }), 1);
@@ -496,14 +784,20 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         unhilightSample(d3.select(this), true);
       });
 
-    data_box.selectAll(".oncosample")
-      .append("text")
+    boxes.append("text")
       .attr("text-anchor", "end")
       .text(function(d){
         var nameLen = d.name.length;
         return d.name.slice(nameLen - 4, nameLen);
       })
       .attr("fill", blockColorMedium);
+
+
+
+    // boxes.selectAll(".box")
+    //   .enter(function(d){ return d.genes }).enter()
+    //     .append("rect")
+    //     .attr("class", "box");
 
     sorted_samples.forEach(function(d, i){
       data_box.selectAll("#" + d.name)
@@ -513,7 +807,9 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         .attr("class", "box");
     })
 
+
     var count_dict = countGenes(samples, "gene");
+
     labels.append("text")
       .attr("class", "geneLabelsText")
       .attr("font-size", 14)
@@ -522,6 +818,18 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         return d + " (" + count_dict[d] + ")";
       });
 
+    boxes.selectAll(".inactivating")
+    .data(function(d){ 
+      return d.genes; })
+    .enter()
+    .append("rect")
+    .filter(function(d){ return d.inactivating})
+    .attr("class", "inactivating")
+    .style("fill", blockColorStrongest)
+    .attr("width", boxWidth)
+    .attr("height", boxHeight/4)
+
+
     this.renderOncoprint = renderOncoprint;
     this.highlightGenes = highlightGenes;
     this.unhighlightGenes = unhighlightGenes;
@@ -529,6 +837,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
 
     function renderOncoprint(){
       updateDimensions();
+      updateGraph();
       renderBoxes(boxes, gene_index);
       renderLabels(labels, gene_index);
     }
@@ -583,7 +892,8 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     }
 
     function highlightSample(selection, boolText){
-      selection.selectAll(".box")
+      selection
+      //.selectAll(".box")
         .filter(function(d){ return gene_display_list.indexOf(d.gene) > -1})
         .transition().duration(animation_speed/2)
         .style("fill", highlightColor);
@@ -597,7 +907,8 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     }
 
     function unhilightSample(selection, boolText){
-      selection.selectAll(".box")
+      selection
+      //.selectAll(".box")
         .transition().duration(animation_speed/2)
         .style("fill", function(d){
           return coloring[d.cancer];
@@ -620,7 +931,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       .style("stroke-opacity", 0);
 
       var fade = selection.filter(function(d, i){
-        return (x(i) < (labelWidth) || x(i) > (graphWidth));
+        return (x(i) < (labelWidth) || x(i) > graphWidth - boxWidth);
       })
       .style("fill-opacity", 0.25)
       .style("stroke-opacity", 0);
@@ -636,11 +947,20 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       renderOncoOpacities(keep.selectAll(".box"), 0, 1)
       renderOncoOpacities(fade.selectAll(".box"), 0, 0.25)
 
+      selection.selectAll(".inactivating")
+        .filter(function(d){
+          return d.inactivating;
+        })
+        .attr("width", boxWidth)
+        .attr("y", function(d, i){
+          return ((gene_index[d.gene] ? gene_index[d.gene]: 0) + 0.375)* (boxHeight + boxMargin) + labelHeight + boxMargin;
+      });
+
       selection.selectAll(".box")
         .filter(function(d){ return (gene_display_list.indexOf(d.gene) > -1) })
         .attr("width", boxWidth)
         .attr("height", function(d, i){
-          if (d.CNA){
+          if (d.cna){
             return boxHeight/2;
           }
           return boxHeight;
@@ -648,7 +968,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         .attr("y", function(d, i){
           var index = (gene_index[d.gene] ? gene_index[d.gene]: 0),
               CNA_addition = 0;
-          if (d.CNA == "del"){
+          if (d.cna == "del"){
             CNA_addition += boxHeight/2;
           }
           return (index)* (boxHeight + boxMargin)+ CNA_addition + labelHeight + boxMargin;
@@ -703,7 +1023,6 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       return valid;
     }
   }
-
 
 
 
@@ -779,6 +1098,27 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     return sort_dict;
   }
 
+  function sortViaCategory(samples, category){
+    var sort_dict = countCategory(samples, category);
+    var buckets = {};
+    var manifest = d3.keys(sort_dict).sort(
+      function(a, b){
+        return sort_dict[a] - sort_dict[b]
+    });
+    manifest.forEach(function(bucket){
+      buckets[bucket] = []
+    });
+    samples.forEach(function(sample){
+      buckets[sample[category]].push(sample);
+    });
+    var return_list = [];
+    for (var i = 0; i < manifest.length; i ++){
+      return_list = return_list.concat(buckets[manifest[i]]);
+    }
+    return return_list;
+
+  }
+
   // INPUT: List of [{genes: [{gene: name}, ...]}, { ... }, ...]
   //        List of [gene1, gene2, gene3 ... ]
   //        int
@@ -829,6 +1169,26 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     .on("click", function(d){
       dashboard.toggleCategory(accessor(d), category)
     })
+  }
+
+  function highlightGenes(selection, accessor, gene, attribute, highlightState){
+      selection.filter(function(d){
+        return accessor(d) == gene;
+      })
+      .style(attribute, highlightState);
+  }
+
+  function unhighlightGenes(selection, accessor,  attribute, normalState, hiddenState){
+    
+    selection.filter(function(d){
+      return gene_display_list.indexOf(accessor(d)) > -1;
+    })
+    .style(attribute, normalState);
+
+    selection.filter(function(d){
+      return gene_display_list.indexOf(accessor(d)) <= -1;
+    })
+    .style(attribute, hiddenState);
   }
 
 });

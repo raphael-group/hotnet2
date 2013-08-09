@@ -4,44 +4,72 @@ html, body, div, p, ul, li {
   font-weight: none;
 }
 
+html, body, div, p, ul{
+  width: 100%;
+}
 .dashboard {
   background-color: #BDC3C7;  
   padding: 0px;
   margin: 10px;
-  width: 1520px;
+  width: 1340px;
 }
 
 .dashboard p {
-  color: #BDC3C7;
+  color: #95A5A6;
   font-size: 24px;
   width: 100%;
   text-align: center;
   font-weight: bolder;
 }
 
-.dashboard p:hover {
-  color: blue;
+.dashboard div {
+  float: left;
+  padding: 0px;
+  margin: 5px;
 }
 
+.toggleButton:hover {
+  color: #2980b9;
+}
+
+.column {
+  float: none;
+}
+
+.column p{
+  color: #7F8C8D;
+  text-align: left;
+  font-size: 12px;
+  padding: 0px;
+}
+
+.column h1{
+  color: #ECF0F1;
+  text-align: left;
+  font-size: 18px;
+  padding: 0px;
+  margin: 0px;
+}
+
+.infobox p{
+  color: #7F8C8D;
+  text-align: right;
+  font-size: 16px;
+  padding: 0px;
+}
 ul {  
   float:left;
   width:100%;
-  padding:0;
+  margin: 5px;
   list-style-type:none;
 }
 
 li {
   float:left;
   margin: 5px;
-  padding: 5px;
-  font-size: 24px;
+  font-size: 18px;
 }
 
-.selected div {
-  float: left;
-  padding: 0px;
-  margin: 5px;
-}
 
 .network .node {
   stroke: #fff;
@@ -62,8 +90,39 @@ li {
   stroke-width: 5px;
 }
 
+.loliplot h2, h3 {
+  margin: 0px;
+  margin-top: 5px;
+  margin-bottom: 0px;
+  padding: 5px;
+  background-color: #ECF0F1;  
+  color: #7F8C8D;
+  font-size: 18px;
+}
+.loliplot h3 {
+  margin: 0px;
+  padding-left: 15px;
+  background-color: #ECF0F1;  
+  color: #7F8C8D;
+  font-size: 12px;
+}
+
+.loliplot h2:hover, .loliplot h3:hover {
+  background-color: #2C3E50;  
+  color: #BDC3C7;
+}
+
+.loliplot div {
+  padding: 0px;
+  margin: 0px;
+}
 svg{
   background-color: #ECF0F1;
+}
+
+.node .highlighted {
+  stroke-width: 5;
+  stroke-opacity: 1;
 }
 
 text {
