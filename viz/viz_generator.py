@@ -5,10 +5,13 @@ import hotnet2 as hn
 import hnio
 import matplotlib.pyplot as plt
 import random
+from constants import *
+from collections import defaultdict
 
 # load output from HotNet run
 # hn_output = json.load(open("run2.json"))
-hn_output = json.load(open("/research/compbio/users/jeldridg/TestFiles/HotNet2_Hint_MutFreq_Output.json"))
+# hn_output = json.load(open("/research/compbio/users/jeldridg/TestFiles/HotNet2_Hint_MutFreq_Output.json"))
+hn_output = json.load(open("temp/hotnet2_results.json"))
 
 # get lists of connected components
 components = hn_output["components"]
@@ -49,7 +52,7 @@ index2gene = hnio.load_index(parameters["infmat_index_file"])
 gene2index_mapping = {gene: index for index, gene in index2gene.items()}
 gene1index = gene2index_mapping[components[0][0]]
 gene2index = gene2index_mapping[components[0][1]]
-# genes_interact = (gene1index, gene2index) in edges or (gene2index, gene1index) in edges
+genes_interact = (gene1index, gene2index) in edges or (gene2index, gene1index) in edges
 # print "Do the first two genes in the largest CC interact (expect False)? %s" % (genes_interact)
 
 # how about hte first gene and the third gene?
@@ -57,29 +60,47 @@ gene3index = gene2index_mapping[components[0][2]]
 genes_interact = (gene1index, gene3index) in edges or (gene3index, gene1index) in edges
 # print "Do the first and third genes in the largest CC interact (expect True)? %s" % (genes_interact)
 
+important_genes = []
+for subnetwork in components:
+	important_genes.extend(subnetwork)
 
 query = ["network", "oncoprint", "loliplot"]
+# query = ["oncoprint", "loliplot"]
+# query = ["oncoprint"]
 
 # This loads the annotation data
 annotation_data = json.load(open("/gpfs/main/home/bournewu/pan12.json"))["genes"]
 
 # This remembers the association of each sample to every gene that it contains
-sample_dict = {sample: {} for sample in samples}
+# sample_dict = {sample: {} for sample in samples}
+sample_dict = defaultdict(dict)
 
 # This remembers the association of each gene with every sample that contains it
-gene_dict = {gene: {} for gene in genes}
+gene_dict = defaultdict(list)
 
 cancer_dict = {}
-
 cancer_gene_file = [line.split(" ") for line in open("samples.lst","r")]
 for i in range(len(cancer_gene_file)):
 	littlelist=cancer_gene_file[i]
 	cancer_dict[littlelist[0]]=littlelist[1].split()
 
-# with open('hotnet_viz_data.json') as data_file:
-# 	data=json.load(data_file)
+truncating_list = []
 
-def parseInactivatingGenes(mutationList = "temp/inactivating_genes.tsv"):
+def parseTruncatingGenes(mutationList = "combined_truncating_annotation.tsv"):
+	mutation_list = [line.split() for line in open(mutationList)]
+	for line in mutation_list:
+		gene = line[0]
+		sampleID = line[1]
+		transcript = line[2]
+		cancer = line[3]
+		mutation_type = line[4]
+		locus = line[5]
+		biological_info = line[6]
+		truncating_list.append(Mutation(sampleID, gene, mutation_type))
+
+parseTruncatingGenes()
+
+def parseInactivatingGenes(mutationList = "inactivating_genes.tsv"):
 	mutation_list = [line.split() for line in open(mutationList)]
 	mutation_dict = {}
 	for line in mutation_list:
@@ -92,25 +113,29 @@ def parseInactivatingGenes(mutationList = "temp/inactivating_genes.tsv"):
 inactivating_genes = parseInactivatingGenes()
 
 def parseMutationList(mutationList, category):
-	for sample in mutationList:
-		cur_sample = str(sample.sample)
-		cur_gene = str(sample.gene)
-		if (cur_sample not in gene_dict[cur_gene]):
-			gene_dict[cur_gene][cur_sample] = cur_sample
+	for mutation in mutationList:
+		cur_sample = str(mutation.sample)
+		cur_gene = str(mutation.gene)
 		inactivating = False
-		if (cur_sample in inactivating_genes):
-			inactivating = True if (cur_gene in inactivating_genes[cur_sample]) else False
-		if (cur_gene not in sample_dict[cur_sample]):
-			sample_dict[cur_sample][cur_gene] = { 
-			"gene": cur_gene,
-			"sample": cur_sample,
-			"cancer": cancer_dict[cur_sample],
-			"inactivating": inactivating}
-		sample_dict[cur_sample][cur_gene][category] = sample.mut_type
+		if cur_sample in inactivating_genes:
+			inactivating = (cur_gene in inactivating_genes[cur_sample])
+		if cur_gene in important_genes:
+			gene_dict[cur_gene].append(cur_sample)
+			if cur_gene not in sample_dict[cur_sample]:
+				sample_dict[cur_sample][cur_gene] = { 
+						"gene": cur_gene,
+						"sample": cur_sample,
+						"cancer": cancer_dict[cur_sample],
+						"inactivating": inactivating}
+			sample_dict[cur_sample][cur_gene][category] =  mutation.mut_type
+		
 
+parseMutationList(truncating_list, "all")
 parseMutationList(snvList, "snv")
 parseMutationList(cnaList, "cna")
 
+for cur_sample in sample_dict:
+	sample_dict[cur_sample] = sample_dict[cur_sample].values()
 
 # Inputs:	return_list: 		a list holding all the dictionaries that
 # 								holds the dictionaries representing the 
@@ -135,19 +160,24 @@ def generateNetworkData(return_list, components_list = components):
 			gene1 = str(current_subnetwork[j])
 			nodes.append({	"gene": gene1, 
 							"category": i,
-							"heat": heat[0][gene1]})
+							"heat": heat[0][gene1] if (gene1 in heat[0]) else 0 })
+			if (gene1 not in heat[0]):
+				print "ERROR: ", gene1, " is missing its heat score"
 			index_dict[gene1] = index
 			index += 1
 
 		# Having populated the index_dict, we
 		# can now generate all the links
-		for j in range(len(current_subnetwork)):
-			gene1 = str(current_subnetwork[j])
-			for k in range(len(current_subnetwork)):
-				gene2 = str(current_subnetwork[k])
+		for gene1 in current_subnetwork:
+			for gene2 in current_subnetwork:
 				link = {"source": index_dict[gene1],
 						"target": index_dict[gene2]}
-				link["present"] =  True if ((gene2index_mapping[gene1], gene2index_mapping[gene2]) in edges) else False
+				link_present = False
+				if (gene1 in gene2index_mapping and gene2 in gene2index_mapping):
+					link_present = ((gene2index_mapping[gene1], gene2index_mapping[gene2]) in edges) or ((gene2index_mapping[gene2], gene2index_mapping[gene1]) in edges)
+				else:
+					print "ERROR: ", gene1, " or ", gene2, " is not in gene2index_mapping"
+				link["present"] =  link_present
 				links.append(link)
 
 		return_list[i]["nodes"] = nodes;
@@ -166,24 +196,39 @@ def generateNetworkData(return_list, components_list = components):
 # 			generate the subnetworks filled in
 def generateOncoprintData(return_list,  components_list = components):
 
+	# Okay, we want to populate a json object that is 
+	# {	name:
+	# 	cancer:
+	#	genes: []}
+	# And since they have to be in index order, we start by looping through
+	# the components list
+	# This is a bit convoluted since we
+	# get all the genes first, then we can find the samples
+	# So the plan of attack is we find all the genes,
+	# then we find all the samples, and then from that
+	# list of samples we create each json object
+
 	for i in range(len(components_list)):
 		current_subnetwork = components_list[i]
-		samples = []
-		for j in range(len(current_subnetwork)):
-			gene1 = str(current_subnetwork[j])
-			cur_sample_list = gene_dict[gene1].keys()
-			for k in range(len(cur_sample_list)):
-				cur_sample = cur_sample_list[k]
-				filtered_gene_list = []
-				for l in range(len(current_subnetwork)):
-					temp_cur_component = current_subnetwork[l]
-					if (temp_cur_component in sample_dict[cur_sample]):
-						filtered_gene_list.append(sample_dict[cur_sample][temp_cur_component])
-				samples.append({	"name": cur_sample,
-									"cancer": cancer_dict[cur_sample],
-									"genes": filtered_gene_list
-									})
-		return_list[i]["samples"] = samples
+		samples_list = list(set(reduce(lambda a, b: a + b, [gene_dict[x] for x in current_subnetwork])))
+
+		return_samples_list = []
+		for sample in samples_list:
+
+			mutation_list = []
+			for mutation in sample_dict[sample]:
+				if mutation["gene"] in current_subnetwork:
+					mutation_list.append(mutation)
+			# for gene in current_subnetwork:
+			# 	# print gene + " in " + str(current_subnetwork) + " is adding "
+			# 	if gene in sample_dict[sample]:
+			# 		mutation_list.append(sample_dict[sample][gene])
+			if len(mutation_list) > 0:
+				return_samples_list.append({"name": sample,
+											"cancer": cancer_dict[sample],
+											"genes": mutation_list})
+
+		return_list[i]["samples"] = return_samples_list
 	return return_list
 
 def generateLolliplotData(return_list, components_list = components):
@@ -211,7 +256,6 @@ def generateLolliplotData(return_list, components_list = components):
 														"mutation": current_mutation_type ,
 														"cancer": mutation_type["cancer"] })
 
-
 					transcript = {	"name": transcript_name,
 									"gene": current_gene,
 									"length": current_transcript["length"],
@@ -227,7 +271,7 @@ def generateLolliplotData(return_list, components_list = components):
 	return return_list
 #		END OF HOTNET CODE. IT'S VISUALIZATION TIME!
 
-return_list = [{} for x in range(len(components))]
+return_list = [{"nodes": [], "links": [], "samples": [], "annotations": []} for x in range(len(components))]
 
 if ("network" in query):
 	return_list = generateNetworkData(return_list)
@@ -237,6 +281,6 @@ if ("oncoprint" in query):
 
 if ("loliplot" in query):
 	return_list = generateLolliplotData(return_list);
-
+# print gene_dict
 with open('hotnet_viz_data.json', 'w+') as outfile:
 	json.dump(return_list, outfile, skipkeys=False, ensure_ascii=True, indent=1 )

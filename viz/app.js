@@ -33,6 +33,8 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       heatRed = "#E74C3C",
       heatBlue = "#3498DB";
 
+  var totalWidth = 1340;
+
   var networkDimensions = { "width": 500, "height" :520},
       oncoprintDimensions = { "width": 800, "height" :800},
       infoboxDimensions = { "width": 500, "height" :400},
@@ -49,9 +51,29 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
 
   function createButtons(DOMcontainer, data){
 
+    // var names = [];
+    
+    // for (var category in data){
+    //   console.log(category)
+    //   tempNames = [];
+    //   switch(category){
+    //     case "nodes":
+    //       tempNames = data.nodes.slice().map(function(d){ return d.gene});
+    //       break
+    //     case "annotations":
+    //       tempNames = data.annotations.slice().map(function(d){ return d.gene});
+    //       break 
+    //     case "samples":
+    //       tempNames = d3.keys(countGenes(data.samples.slice(), "gene"))
+    //       break;
+    //   }
+    //   // console.log(tempNames)
+    // }
+
+    // console.log(names)
     DOMcontainer.append("ul")
       .selectAll("li")
-      .data(data.nodes).enter()
+      .data(data.nodes.slice()).enter()
       .append("li")
       .style("background-color", blockColorMedium)
       .text(function(d){ return d.gene; })
@@ -75,7 +97,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     if (canvas.classed("unselected")){
       canvas.transition().duration(animation_speed/2)
         .style("height", function(){
-          return oncoprintDimensions["height"] + 1000+ "px"
+          return oncoprintDimensions["height"] + 100+ "px"
         })
         .style("width", function(){
           return oncoprintDimensions["width"] + networkDimensions["width"] + 200 +  "px"
@@ -101,12 +123,13 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       "mutation": mutationList = d3.keys(countGenes(data_set.samples.slice(), "CNA"))
     }
 
+    var graph_list = [];
+
     var min = d3.min(data_set.nodes, function(d){ return d.heat;}),
         max = d3.max(data_set.nodes, function(d){ return d.heat;}),
         heat_color_scale = d3.scale.linear()
           .domain([min, max])
           .range([heatBlue, heatRed]);
-
 
     heatColorScale = function heatColorScale(heatValue){
       return heat_color_scale(heatValue);
@@ -116,29 +139,30 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       var updated_list = updateList(datum, category);
       gene_display_list = updated_list;
 
-      network.updateGenes();
-      oncoprint.updateGenes();
-      loliplot.updateGenes();
+      graph_list.forEach(function(graph){
+        graph.updateGenes();        
+      })
 
-      DOMcontainer.selectAll("li")
-        .filter(function(d){ return gene_display_list.indexOf(d.gene) > -1 })
-        .transition().duration(animation_speed/2)
-        .style("color", textColorLightest)
+      renderOncoOpacities(DOMcontainer.selectAll("li"), "gene","color", blockColorMedium, textColorLightest);
 
-      DOMcontainer.selectAll("li")
-        .filter(function(d){ return gene_display_list.indexOf(d.gene) <= -1 })
-        .transition().duration(animation_speed/2)
-        .style("color", blockColorMedium)
+      // DOMcontainer.selectAll("li")
+      //   .filter(function(d){ return gene_display_list.indexOf(d.gene) > -1 })
+      //   .transition().duration(animation_speed/2)
+      //   .style("color", textColorLightest)
+
+      // DOMcontainer.selectAll("li")
+      //   .filter(function(d){ return gene_display_list.indexOf(d.gene) <= -1 })
+      //   .transition().duration(animation_speed/2)
+      //   .style("color", blockColorMedium)
       
     }
 
     highlightCategory = function highlightCategory(datum, category){
 //      highlightGenes(network.node.selectAll(".node"),function(d){ return d.gene; }, datum, "class", "highlighted");
 //      highlightGenes( network.selectAll(".node"),function(d){ return d.gene; }, datum, "stroke", highlightColor);
-
-      network.highlightGenes(datum);
-      oncoprint.highlightGenes(datum);
-      loliplot.highlightGenes(datum);
+      graph_list.forEach(function(graph){
+        graph.highlightGenes(datum);
+      });
       DOMcontainer.selectAll("li")
         .filter(function(d){ return d.gene == datum })
         .transition().duration(animation_speed/2)
@@ -146,14 +170,34 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     }
 
     unhighlightCategory = function unhighlightCategory(){
-      network.unhighlightGenes();
-      oncoprint.unhighlightGenes();
-      loliplot.unhighlightGenes();
+
+      graph_list.forEach(function(graph){
+        graph.unhighlightGenes();
+      });
       DOMcontainer.selectAll("li")
         .transition().duration(animation_speed/2)
         .style("background-color", blockColorLight)
     }
 
+    function highlightGenes(selection, accessor, gene, attribute, highlightState){
+        selection.filter(function(d){
+          return accessor(d) == gene;
+        })
+        .style(attribute, highlightState);
+    }
+
+    function unhighlightGenes(selection, accessor,  attribute, normalState, hiddenState){
+      
+      selection.filter(function(d){
+        return gene_display_list.indexOf(accessor(d)) > -1;
+      })
+      .style(attribute, normalState);
+
+      selection.filter(function(d){
+        return gene_display_list.indexOf(accessor(d)) <= -1;
+      })
+      .style(attribute, hiddenState);
+    }
     updateList = function updateList(datum, category){
       
       var list = display_dict[category];
@@ -177,10 +221,25 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
                           .attr("class", "column")
                           .style("width", oncoprintDimensions["width"] + "px");
 
-    var network = new generateNetwork(leftColumn.append("div").attr("class", "network"), data_set, this);
-    var oncoprint = new generateOncoprint(rightColumn.append("div").attr("class", "oncoprint"), data_set, this);
+    for (var category in data_set){
+      var graph;
+      switch(category){
+        case "samples":
+          graph = new generateOncoprint(rightColumn.append("div").attr("class", "oncoprint"), data_set, this);
+          graph.updateGenes(display_dict["gene"].slice());
+          break
+        case "nodes":
+          graph = new generateNetwork(leftColumn.append("div").attr("class", "network"), data_set, this);
+          break
+        case "annotations":
+          graph = new generateLoliplot(rightColumn.append("div").attr("class", "loliplot"), data_set, this);
+          break 
+      }
+      graph_list.push(graph);
+    }
+
     var infobox = new generateInfoBox(leftColumn.append("div").attr("class", "infobox"), data_set, this);
-    var loliplot = new generateLoliplot(rightColumn.append("div").attr("class", "loliplot"), data_set, this);
+
     DOMcontainer.selectAll("li")
       .transition().duration(animation_speed/2)
       .style("background-color", blockColorLight)
@@ -188,11 +247,11 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
 
     makeInteractive(this, DOMcontainer.selectAll("li"), function(d){ return d.gene; }, "gene");
 
-    oncoprint.updateGenes(display_dict["gene"].slice());
 
   }
 
   function generateInfoBox(DOMcontainer, data_set, dashboard){
+    console.log("GENERATING")
     var width = infoboxDimensions["width"],
         height = infoboxDimensions["height"];
     DOMcontainer
@@ -440,6 +499,78 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       }
     });
 
+    var numLegendRows = 2,
+        legendBlockWidth = 15,
+        legendBlockHeight = 20,
+        mutationKeysData = d3.keys(symboling),
+        numKeys = mutationKeysData.length,
+        legendHeight = numLegendRows*legendBlockHeight + (numLegendRows)*boxMargin;
+
+    var legend = DOMcontainer
+      .append("div")
+      .append("svg")
+      .style("margin-top", "5px")
+      .attr("width", width)
+      .attr("height", legendHeight);
+
+    var mutationKeys = legend.selectAll("keys")
+      .data(mutationKeysData).enter()
+      .append("g")
+      .attr("transform", function(d, i){
+        console.log((Math.round(i/numKeys)))
+        var rowLength = Math.ceil(numKeys/2)
+        return "translate(" + (i%(rowLength)*width/(rowLength) + 2*boxMargin) + ", " + ((Math.round(i/numKeys))*legendBlockHeight + (Math.round(i/numKeys)+2)*boxMargin) + ")"
+      })
+
+    // var cancerKeys = legend.selectAll("keys")
+    //   .data(cancerKeysData).enter()
+    //   .append("g")
+    //   .attr("transform", function(d, i){
+    //     return "translate(" + ( (i%(numKeys/2))*(width/(numKeys/2)) + boxMargin) + "," + (boxMargin + (legendBlockHeight + boxMargin)*Math.round(i/numKeys)) + ")"
+    //   });
+
+    mutationKeys.append("path")
+        .attr("class", "symbols")
+        .attr("d", d3.svg.symbol()
+          .type(function(d, i){
+            return d3.svg.symbolTypes[symboling[d]];
+          })
+          .size(2*legendBlockHeight)
+        )
+        .style("stroke", blockColorMedium)
+        .style("fill", blockColorMedium)
+        .style("stroke-width", 2);
+
+    // var miscKeys = legend.selectAll("miscKeys")
+    //   .data(otherKeys).enter()
+    //   .append("g")
+    //   .attr("transform", function(d, i){
+    //     return "translate(" + (i*(width/(otherKeys.length)) + boxMargin) + "," + (boxMargin + (legendBlockHeight + boxMargin)*2) + ")"
+    //   });
+
+    // miscKeys.append("rect")
+    //   .attr("fill", blockColorLight)
+    //   .attr("width", legendBlockWidth)
+    //   .attr("height", function(d){ return (d == "amp" || d == "del") ? legendBlockHeight/2 : legendBlockHeight})
+    //   .attr("y", function(d){ return (d == "del") ? legendBlockHeight/2 : 0});
+
+    // miscKeys.filter(function(d){ return d == "inactivating"})
+    //   .append("rect")
+    //   .attr("width", legendBlockWidth)
+    //   .attr("height", legendBlockHeight/4)
+    //   .attr("fill", blockColorStrong)
+    //   .attr("y", legendBlockHeight*3/8);
+
+    legend.selectAll("g").append("text")
+      .text(function(d){
+        return d.replace(/_/g, " "); 
+      })
+      .attr("x", legendBlockWidth + boxMargin)
+      .attr("y", boxMargin)
+      .attr("font-size", 12)
+      .attr("fill", blockColorMedium)
+
+    // makeInteractive(dashboard, legend, function(d){return d;}, "mutations")
 
     this.highlightGenes = function highlightGenes(gene){
       DOMcontainer.selectAll(".lolibox")
@@ -487,7 +618,6 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       keep.selectAll(".symbols")
           .style("fill-opacity", 1)
           .style("stroke-opacity", 1);
-
     }
 
     function loliButtons(selection, sample, DOMElement){
@@ -529,7 +659,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
           }
         });
 
-//      makeInteractive(dashboard, div.selectAll("h2"), function(d){ return d; }, "gene");
+      makeInteractive(dashboard, div.selectAll("h2"), function(d){ return d; }, "gene");
     }
 
     function drawLoliplot(selection, sample, id){
@@ -670,7 +800,9 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
   }
 
   function generateOncoprint(DOMcontainer, data_set, dashboard){
+
     DOMcontainer.append("h1").text("ONCOPRINTS");
+
     var width = oncoprintDimensions["width"],
         height = oncoprintDimensions["height"],
         labelHeight = 0,
@@ -706,15 +838,19 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       height = (numGenes)*(boxHeight+boxMargin) + boxMargin;
       gene_index = createGeneOrder(samples);
     }
+
+    
     function updateGraph(){
       DOMcontainer.transition()
       .duration(animation_speed/2)
-      .style("width", width).style("height", height);
+      .style("width", width)
+      .style("height", height+legendHeight);
       svg.transition()
       .duration(animation_speed/2)
-      .style("width", width)
-      .style("height", height)
+      .attr("width", width)
+      .attr("height", height)
     }
+
     var zoom = d3.behavior.zoom()
       .x(x)
       .scaleExtent([1, Math.round(20*numSamples/graphWidth)])
@@ -792,21 +928,18 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       })
       .attr("fill", blockColorMedium);
 
-
-
-    // boxes.selectAll(".box")
-    //   .enter(function(d){ return d.genes }).enter()
-    //     .append("rect")
-    //     .attr("class", "box");
-
-    sorted_samples.forEach(function(d, i){
-      data_box.selectAll("#" + d.name)
-        .selectAll(".box")
-        .data(d.genes).enter()
+    boxes.selectAll(".box")
+      .data(function(d){ return d.genes }).enter()
         .append("rect")
         .attr("class", "box");
-    })
 
+    // sorted_samples.forEach(function(d, i){
+    //   data_box.selectAll("#" + d.name)
+    //     .selectAll(".box")
+    //     .data(d.genes).enter()
+    //     .append("rect")
+    //     .attr("class", "box");
+    // })
 
     var count_dict = countGenes(samples, "gene");
 
@@ -819,16 +952,69 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       });
 
     boxes.selectAll(".inactivating")
-    .data(function(d){ 
-      return d.genes; })
-    .enter()
-    .append("rect")
-    .filter(function(d){ return d.inactivating})
-    .attr("class", "inactivating")
-    .style("fill", blockColorStrongest)
-    .attr("width", boxWidth)
-    .attr("height", boxHeight/4)
+      .data(function(d){ 
+        return d.genes; })
+      .enter()
+      .append("rect")
+      .filter(function(d){ return d.inactivating})
+      .attr("class", "inactivating")
+      .style("fill", blockColorStrongest)
+      .attr("width", boxWidth)
+      .attr("height", boxHeight/4)
 
+    var numLegendRows = 3,
+        legendBlockWidth = 15,
+        legendBlockHeight = boxHeight,
+        legendWidth = width - 0,
+        legendHeight = legendBlockHeight*numLegendRows + (numLegendRows+1)*boxMargin,
+        cancerKeysData = d3.keys(coloring),
+        otherKeys = ["snv", "amp", "del", "inactivating"]
+        numKeys = cancerKeysData.length;
+
+    var legend = DOMcontainer
+      .append("svg") 
+      .attr("width", legendWidth)
+      .attr("height", legendHeight);
+
+    var cancerKeys = legend.selectAll("keys")
+      .data(cancerKeysData).enter()
+      .append("g")
+      .attr("transform", function(d, i){
+        var tempNumKeys = Math.ceil((numKeys/2))
+        return "translate(" + ( (i%tempNumKeys)*(legendWidth/(tempNumKeys)) + boxMargin) + "," + (boxMargin + (legendBlockHeight + boxMargin)*Math.round(i/numKeys)) + ")"
+      });
+
+    cancerKeys.append("rect")
+      .attr("fill", function(d){ return coloring[d]})
+      .attr("width", legendBlockWidth)
+      .attr("height", legendBlockHeight);
+
+    var miscKeys = legend.selectAll("miscKeys")
+      .data(otherKeys).enter()
+      .append("g")
+      .attr("transform", function(d, i){
+        return "translate(" + (i*(legendWidth/(otherKeys.length)) + boxMargin) + "," + (boxMargin + (legendBlockHeight + boxMargin)*2) + ")"
+      });
+
+    miscKeys.append("rect")
+      .attr("fill", blockColorLight)
+      .attr("width", legendBlockWidth)
+      .attr("height", function(d){ return (d == "amp" || d == "del") ? legendBlockHeight/2 : legendBlockHeight})
+      .attr("y", function(d){ return (d == "del") ? legendBlockHeight/2 : 0});
+
+    miscKeys.filter(function(d){ return d == "inactivating"})
+      .append("rect")
+      .attr("width", legendBlockWidth)
+      .attr("height", legendBlockHeight/4)
+      .attr("fill", blockColorStrong)
+      .attr("y", legendBlockHeight*3/8);
+
+    legend.selectAll("g").append("text")
+      .text(function(d){ return d; })
+      .attr("x", legendBlockWidth + boxMargin)
+      .attr("y", legendBlockHeight*2/3)
+      .attr("font-size", 12)
+      .attr("fill", blockColorMedium)
 
     this.renderOncoprint = renderOncoprint;
     this.highlightGenes = highlightGenes;
@@ -844,7 +1030,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
 
     function updateGenes(){
 
-      renderOncoOpacities(svg.selectAll(".geneLabels").selectAll(".geneLabelsRow"), 1, 1)
+      renderOncoOpacities(svg.selectAll(".geneLabels").selectAll(".geneLabelsRow"), "gene", "fill-opacity", 1, 1)
 
       data_box.selectAll(".oncosample")
         .filter(function(d){
@@ -928,7 +1114,14 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         return x(i) >= (labelWidth) && x(i) <= (graphWidth);
       })
       .style("fill-opacity", 1)
-      .style("stroke-opacity", 0);
+
+      keep.selectAll(".box")
+      .style("stroke-opacity", function(){
+        return (boxWidth>10)?1:0
+      })
+      .style("stroke-width", function(){
+        return (boxWidth>10)?boxWidth/10:0
+      });
 
       var fade = selection.filter(function(d, i){
         return (x(i) < (labelWidth) || x(i) > graphWidth - boxWidth);
@@ -944,8 +1137,8 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         .style("font-size", (boxWidth < 10) ? boxWidth : 10)
         .attr("transform", "translate(" + boxWidth/2 +"," + boxHeight + "), rotate(90)");
 
-      renderOncoOpacities(keep.selectAll(".box"), 0, 1)
-      renderOncoOpacities(fade.selectAll(".box"), 0, 0.25)
+      renderOncoOpacities(keep.selectAll(".box"), "gene", "fill-opacity", 0, 1)
+      renderOncoOpacities(fade.selectAll(".box"), "gene", "fill-opacity", 0, 0.25)
 
       selection.selectAll(".inactivating")
         .filter(function(d){
@@ -960,17 +1153,17 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         .filter(function(d){ return (gene_display_list.indexOf(d.gene) > -1) })
         .attr("width", boxWidth)
         .attr("height", function(d, i){
-          if (d.cna){
-            return boxHeight/2;
-          }
+          // if (d.cna){
+          //   return boxHeight/2;
+          // }
           return boxHeight;
         })
         .attr("y", function(d, i){
           var index = (gene_index[d.gene] ? gene_index[d.gene]: 0),
               CNA_addition = 0;
-          if (d.cna == "del"){
-            CNA_addition += boxHeight/2;
-          }
+          // if (d.cna == "del"){
+          //   CNA_addition += boxHeight/2;
+          // }
           return (index)* (boxHeight + boxMargin)+ CNA_addition + labelHeight + boxMargin;
       });
     }
@@ -994,20 +1187,6 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         .attr("transform", function(d, i){
           return "translate(" + (2*boxMargin) + ", " + (boxHeight) +  ")"
         });
-    }
-
-    function renderOncoOpacities(selection, minOpacity, maxOpacity){
-
-      selection
-        .filter(function(d){ 
-          return (gene_display_list.indexOf(d.gene) <= -1) 
-        })
-        .style("fill-opacity", minOpacity)
-      selection
-        .filter(function(d){ 
-          return (gene_display_list.indexOf(d.gene) > -1) 
-        })
-        .style("fill-opacity", maxOpacity)
     }
 
     function checkValidGene(data, list){
@@ -1160,35 +1339,30 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     }
   }
   function makeInteractive(dashboard, selection, accessor, category){
+
     selection.on("mouseover", function(d){
       dashboard.highlightCategory(accessor(d), category)
     })
     .on("mouseout", function(d){
       dashboard.unhighlightCategory()
     })
-    .on("click", function(d){
+    .on("dblclick", function(d){
       dashboard.toggleCategory(accessor(d), category)
     })
   }
 
-  function highlightGenes(selection, accessor, gene, attribute, highlightState){
-      selection.filter(function(d){
-        return accessor(d) == gene;
+  function renderOncoOpacities(selection, category, attribute, minOpacity, maxOpacity){
+
+    selection
+      .filter(function(d){ 
+        return (gene_display_list.indexOf(d[category]) <= -1) 
       })
-      .style(attribute, highlightState);
-  }
-
-  function unhighlightGenes(selection, accessor,  attribute, normalState, hiddenState){
-    
-    selection.filter(function(d){
-      return gene_display_list.indexOf(accessor(d)) > -1;
-    })
-    .style(attribute, normalState);
-
-    selection.filter(function(d){
-      return gene_display_list.indexOf(accessor(d)) <= -1;
-    })
-    .style(attribute, hiddenState);
+      .style(attribute, minOpacity)
+    selection
+      .filter(function(d){ 
+        return (gene_display_list.indexOf(d[category]) > -1) 
+      })
+      .style(attribute, maxOpacity)
   }
 
 });
