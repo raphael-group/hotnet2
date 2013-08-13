@@ -1,13 +1,9 @@
 html, body, div, p, ul, li {
-  
   padding: 0px;
   margin: 0px;
   font-weight: none;
 }
 
-html, body, div, p, ul{
-  width: 100%;
-}
 .dashboard {
   background-color: #BDC3C7;  
   padding: 0px;
@@ -23,7 +19,7 @@ html, body, div, p, ul{
   font-weight: bolder;
 }
 
-.dashboard div {
+.dashboard div{
   float: left;
 
   width: 100%;
@@ -58,8 +54,18 @@ html, body, div, p, ul{
   color: #7F8C8D;
   text-align: right;
   font-size: 16px;
-  padding: 0px;
+  padding: 5px;
+  width: auto;
 }
+
+.infobox h2{
+  color: #2C3E50;
+  text-align: right;
+  padding: 10px;
+  margin: 0px;
+  width: auto;
+}
+
 ul {  
   float:left;
   width:100%;
@@ -122,11 +128,6 @@ li {
 svg{
   background-color: #ECF0F1;
   width: 100%;
-}
-
-.node .highlighted {
-  stroke-width: 5;
-  stroke-opacity: 1;
 }
 
 .oncosample .box {

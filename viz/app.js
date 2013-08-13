@@ -1,4 +1,4 @@
-d3.json("hotnet_viz_data.json", function(error, samples) {
+d3.json("../json_parsing/hotnet_viz_data.json", function(error, samples) {
 
   if(error) {
     console.log('error: ');
@@ -49,6 +49,8 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     createButtons(menu.append("div").attr("class", "dashboard"), sample)
   })
 
+  // createButtons(menu.append("div").attr("class", "dashboard"), samples[5])
+
   function createButtons(DOMcontainer, data){
 
     // var names = [];
@@ -71,14 +73,19 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     // }
 
     // console.log(names)
-    DOMcontainer.append("ul")
-      .selectAll("li")
-      .data(data.nodes.slice()).enter()
-      .append("li")
-      .style("background-color", blockColorMedium)
-      .text(function(d){ return d.gene; })
-      .style("color", textColorLightest);
-
+    if (data.nodes){
+      DOMcontainer.append("ul")
+        .selectAll("li")
+        .data(data.nodes.slice()).enter()
+        .append("li")
+        .style("background-color", blockColorMedium)
+        .text(function(d){ return d.gene; })
+        .style("color", textColorLightest);
+    }
+    else{
+      DOMcontainer.append("h2")
+        .text(data.infobox.name)
+    }
     var canvas = DOMcontainer.append("div")
       .attr("class", "unselected")
       .attr("id", function(d, i){
@@ -97,7 +104,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     if (canvas.classed("unselected")){
       canvas.transition().duration(animation_speed/2)
         .style("height", function(){
-          return oncoprintDimensions["height"] + 100+ "px"
+          return oncoprintDimensions["height"] + (50*data_set.nodes.length + 100)+ "px"
         })
         .style("width", function(){
           return oncoprintDimensions["width"] + networkDimensions["width"] + 200 +  "px"
@@ -179,25 +186,25 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         .style("background-color", blockColorLight)
     }
 
-    function highlightGenes(selection, accessor, gene, attribute, highlightState){
-        selection.filter(function(d){
-          return accessor(d) == gene;
-        })
-        .style(attribute, highlightState);
-    }
+    // function highlightGenes(selection, accessor, gene, attribute, highlightState){
+    //     selection.filter(function(d){
+    //       return accessor(d) == gene;
+    //     })
+    //     .style(attribute, highlightState);
+    // }
 
-    function unhighlightGenes(selection, accessor,  attribute, normalState, hiddenState){
+    // function unhighlightGenes(selection, accessor,  attribute, normalState, hiddenState){
       
-      selection.filter(function(d){
-        return gene_display_list.indexOf(accessor(d)) > -1;
-      })
-      .style(attribute, normalState);
+    //   selection.filter(function(d){
+    //     return gene_display_list.indexOf(accessor(d)) > -1;
+    //   })
+    //   .style(attribute, normalState);
 
-      selection.filter(function(d){
-        return gene_display_list.indexOf(accessor(d)) <= -1;
-      })
-      .style(attribute, hiddenState);
-    }
+    //   selection.filter(function(d){
+    //     return gene_display_list.indexOf(accessor(d)) <= -1;
+    //   })
+    //   .style(attribute, hiddenState);
+    // }
     updateList = function updateList(datum, category){
       
       var list = display_dict[category];
@@ -213,32 +220,40 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
     gene_display_list = display_dict["gene"].slice();
 
     var leftColumn = canvas.append("div")
-                          .attr("id", "leftColumn")
-                          .attr("class", "column")
-                          .style("width", networkDimensions["width"] + "px"),
+          .attr("id", "leftColumn")
+          .attr("class", "column")
+          .style("width", networkDimensions["width"] + "px"),
         rightColumn = canvas.append("div")
-                          .attr("id", "rightColumn")
-                          .attr("class", "column")
-                          .style("width", oncoprintDimensions["width"] + "px");
+          .attr("id", "rightColumn")
+          .attr("class", "column")
+          .style("width", oncoprintDimensions["width"] + "px");
 
     for (var category in data_set){
       var graph;
-      switch(category){
-        case "samples":
-          graph = new generateOncoprint(rightColumn.append("div").attr("class", "oncoprint"), data_set, this);
-          graph.updateGenes(display_dict["gene"].slice());
-          break
-        case "nodes":
-          graph = new generateNetwork(leftColumn.append("div").attr("class", "network"), data_set, this);
-          break
-        case "annotations":
-          graph = new generateLoliplot(rightColumn.append("div").attr("class", "loliplot"), data_set, this);
-          break 
+      if (data_set[category].length > 0){
+        switch(category){
+          case "samples":
+            graph = new generateOncoprint(rightColumn.append("div").attr("class", "oncoprint"), data_set, this);
+            graph.updateGenes(display_dict["gene"].slice());
+            graph_list.push(graph);
+            break
+          case "nodes":
+            graph = new generateNetwork(leftColumn.append("div").attr("class", "network"), data_set, this);
+            graph_list.push(graph);
+            break
+          case "annotations":
+            graph = new generateLoliplot(rightColumn.append("div").attr("class", "loliplot"), data_set, this);
+            graph_list.push(graph);
+            break 
+        }        
       }
-      graph_list.push(graph);
     }
 
-    var infobox = new generateInfoBox(leftColumn.append("div").attr("class", "infobox"), data_set, this);
+    var infobox;
+
+    if (data_set["infobox"].length > 0){
+      infobox = new generateInfoBox(leftColumn.append("div").attr("class", "infobox"), data_set, this);      
+    }
 
     DOMcontainer.selectAll("li")
       .transition().duration(animation_speed/2)
@@ -247,18 +262,51 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
 
     makeInteractive(this, DOMcontainer.selectAll("li"), function(d){ return d.gene; }, "gene");
 
+    // var printWin = window.open("printpage","print"); 
+    // printWin.document.open();
+    // printWin.document.write();
+    // printWin.print()
+
 
   }
 
   function generateInfoBox(DOMcontainer, data_set, dashboard){
-    console.log("GENERATING")
+    
     var width = infoboxDimensions["width"],
         height = infoboxDimensions["height"];
+
     DOMcontainer
       .attr("width", width + "px")
-      .attr("height", height + "px")
+      .attr("height", height + "px");
+
+    DOMcontainer.append("h2")
+      .style("text-align", "right")
+      .text(data_set["infobox"]["name"]);
+  
+    DOMcontainer.append("p")
+      .text(data_set["infobox"]["description"]);
+
+    if (data_set["infobox"]["images"].length>0){
+      data_set["infobox"]["images"].forEach(function(d){
+        DOMcontainer
+        .append("p")
+        .append("a")
+        .attr("href",  "../../" + d)
+        .text(d)
+        // .append("img")
+        // .attr("src", "../../" + d);
+      })
+    }
+    if (data_set["infobox"]["figure"].length>0){
+      DOMcontainer
       .append("p")
-      .text(" Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.");
+      .append("a")
+      .attr("href",  "../../" + data_set["infobox"]["figure"])
+      .text(data_set["infobox"]["figure"])
+      // .append("p")
+      // .append("img")
+      //   .attr("src", "../../" + data_set["infobox"]["figure"]);
+    }
   }
 
   function generateNetwork(DOMcontainer, data_set, dashboard){
@@ -347,8 +395,12 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       })
       .attr("class", "link");
 
-    link.filter(function(d){ return !d.present })
-      .style("stroke-width", 0);
+    link.filter(function(d, i){
+      return d.network == "HINT"
+    }).style("stroke-width", 5)
+    link.filter(function(d, i){
+      return d.network != "HINT"
+    }).style("stroke-width", 0)
 
     var node = svg.selectAll(".node")
       .data(data_set.nodes)
@@ -517,7 +569,6 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       .data(mutationKeysData).enter()
       .append("g")
       .attr("transform", function(d, i){
-        console.log((Math.round(i/numKeys)))
         var rowLength = Math.ceil(numKeys/2)
         return "translate(" + (i%(rowLength)*width/(rowLength) + 2*boxMargin) + ", " + ((Math.round(i/numKeys))*legendBlockHeight + (Math.round(i/numKeys)+2)*boxMargin) + ")"
       })
@@ -578,7 +629,8 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         return d == gene;
       })
       .selectAll(".background")
-      .style("fill", blockColorStrongest)
+      .style("stroke", blockColorStrongest)
+      .style("stroke-width", 5)
     }
 
     this.unhighlightGenes = function unhighlightGenes(){
@@ -588,14 +640,16 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         return gene_display_list.indexOf(d) > -1;
       })
       .selectAll(".background")
-      .style("fill", blockColorLightest)
+      .style("stroke", blockColorLightest)
+      .style("stroke-width", 0)
 
       DOMcontainer.selectAll(".lolibox")
       .filter(function(d){
         return gene_display_list.indexOf(d) <= -1;
       })
       .selectAll(".background")
-      .style("fill", blockColorLight)
+      .style("stroke", blockColorLight)
+      .style("stroke-width", 0)
     }
 
     this.updateGenes = function updateGenes(){
@@ -638,9 +692,9 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         .on("click", function(d){
 
           if (d3.select(this).classed("unselected")){
-            // console.log(sample)
             if (sample.transcripts){
-              loliButtons(div,sample.transcripts, "h3");
+              loliButtons(div.append("div"),sample.transcripts, "h3");
+              makeInteractive(dashboard, div.selectAll("h2"), function(d){ return d; }, "gene");
             }
             else{
               drawLoliplot(div, d, d.name)
@@ -658,8 +712,6 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
             d3.select(this).attr("class", "unselected");
           }
         });
-
-      makeInteractive(dashboard, div.selectAll("h2"), function(d){ return d; }, "gene");
     }
 
     function drawLoliplot(selection, sample, id){
@@ -716,18 +768,6 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         .style("fill", blockColorLight)
         .call(xAxis);
 
-      var domains = svg.selectAll(".domains")
-        .data(sample.domains.slice()).enter()
-        .append("rect")
-        .attr("width", function(d, i){
-          return x(d.end) - x(d.start);
-        })
-        .attr("height", bar_y + boxMargin)
-        .attr("y", boxHeight - bar_y*2 - boxMargin)
-        .attr("class", "domains")
-        .style("fill-opacity", .5)
-        .style("fill", blockColorMedium);
-
       var gene_name = sample.gene;
       var data_set = sample["mutations"].slice();
       
@@ -749,6 +789,38 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         })
         .style("stroke-width", 2);
 
+      var domains = svg.selectAll(".domains")
+        .data(sample.domains.slice()).enter()
+        .append("g")
+        .attr("class", "domains")
+
+      domains.append("rect")
+        .attr("width", function(d, i){
+          console.log(d)
+          return x(d.end) - x(d.start);
+        })
+        .attr("height", bar_y + boxMargin)
+        .style("fill-opacity", .5)
+        .style("fill", blockColorMedium);
+
+      domains.append("text")
+        .text(function(d, i){ 
+          return d.name
+        })
+        .attr("y", bar_y - boxMargin/2)
+        .attr("x", boxMargin*2)
+        .style("fill-opacity", 0)
+        .style("fill", textColorStrongest);
+
+      domains.on("mouseover", function(){
+          d3.select(this).selectAll("rect").style("fill", highlightColor)
+          d3.select(this).selectAll("text").style("fill-opacity", 1)
+        })
+        .on("mouseout", function(){
+          d3.select(this).selectAll("rect").style("fill", blockColorMedium)
+          d3.select(this).selectAll("text").style("fill-opacity", 0)
+        })
+
       draw(svg);
 
       makeInteractive(dashboard, svg, function(d){ return d; }, "gene");
@@ -767,7 +839,6 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
           .attr("transform", function(d, i){
             var cur_index = (Math.round(d.locus/cur_res));
             index_dict[cur_index] ++;
-            // console.log(x(cur_index*cur_res) + ", " + (bar_y - index_dict[cur_index] * radius*2) );
             return "translate(" + x(cur_index*cur_res) + ", " + (boxHeight - bar_y*2 - index_dict[cur_index] * radius*2 - boxMargin) + ")";
           })
           .attr("stroke-opacity", 1)
@@ -787,13 +858,17 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
          .attr("x", x(min) + boxMargin)
          .attr("width", x(max)-x(min) - 2*boxMargin)
 
-        selection.selectAll(".domains")
-          .attr("x", function(d, i){
-            return x(d.start);
-          })
-          .attr("width", function(d, i){
+        domains.attr("transform", function(d, i){
+          return "translate(" + x(d.start) + "," + (boxHeight - bar_y*2 - boxMargin) + ")"
+        })
+        domains.selectAll("rect")
+        .attr("width", function(d, i){
             return x(d.end) - x(d.start);
-          });
+        });
+        domains.selectAll("text")
+        .attr("text-anchor", function(d, i){
+          return (x(d.start)  > boxWidth*7/8) ? "end" : "start"
+        })
       }
     }
 
@@ -1066,7 +1141,8 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         })
         .selectAll("rect")
         .transition().duration(animation_speed/2)
-        .style("fill", blockColorStrongest)
+        .style("stroke", blockColorStrongest)
+        .style("stroke-width", 3);
     }
 
     function unhighlightGenes(){
@@ -1074,7 +1150,8 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
 
      labels.selectAll(".geneLabelsRow")
       .transition().duration(animation_speed/2)
-      .style("fill", "#BDC3C7")
+      .style("stroke", "#BDC3C7")
+      .style("stroke-width", 0)
     }
 
     function highlightSample(selection, boolText){
@@ -1120,7 +1197,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         return (boxWidth>10)?1:0
       })
       .style("stroke-width", function(){
-        return (boxWidth>10)?boxWidth/10:0
+        return (boxWidth>10)?boxWidth/7:0
       });
 
       var fade = selection.filter(function(d, i){
@@ -1347,6 +1424,7 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
       dashboard.unhighlightCategory()
     })
     .on("dblclick", function(d){
+      // print();
       dashboard.toggleCategory(accessor(d), category)
     })
   }
@@ -1363,6 +1441,16 @@ d3.json("hotnet_viz_data.json", function(error, samples) {
         return (gene_display_list.indexOf(d[category]) > -1) 
       })
       .style(attribute, maxOpacity)
+  }
+
+  function print(){
+      // var divToPrint = document.getElementById("number0").innerHTML;
+      console.log(divToPrint)
+      var popupWin = window.open('', '_blank', 'width=300,height=300');
+          popupWin.document.open();
+          popupWin.document.write('<html><body>' + divToPrint + '</html>');
+          // popupWin.document.close();
+                
   }
 
 });
