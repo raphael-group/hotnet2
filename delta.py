@@ -154,8 +154,6 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
     selection_fn -- function that should be used for finding the best delta 
     
     """
-    print "* Performing network delta selection..."
-    
     if parallel:
         pool = mp.Pool()
         map_fn = pool.map
@@ -205,9 +203,7 @@ def heat_delta_selection(infmat, index2gene, heat_permutations, sizes, directed=
     parallel -- whether finding the best delta for each permuted network should be performed in parallel
     selection_fn -- function that should be used for finding the best delta 
     
-    """    
-    print "* Performing permuted heat delta selection..."
-    
+    """
     if parallel:
         pool = mp.Pool()
         map_fn = pool.map
