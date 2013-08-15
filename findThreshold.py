@@ -20,12 +20,15 @@ def parse_args(raw_args):
     parent_parser = hnap.HotNetArgParser(add_help=False, fromfile_prefix_chars='@')
     parent_parser.add_argument('-r', '--runname', help='Name of run / disease.')
     parent_parser.add_argument('-mn', '--infmat_name', default='Li',
-                                help='Variable name of the influence matrices in the .mat files')
+                               help='Variable name of the influence matrices in the .mat files')
     parent_parser.add_argument('-if', '--infmat_index_file', required=True, default=None,
-                                help='Gene-index file for the influence matrices.')
-    parent_parser.add_argument('-hf', '--heat_file', required=True, help='Heat score file')
+                               help='Path to tab-separated file containing an index in the first\
+                                     column and the name of the gene represented at that index in\
+                                     the second column of each line.')
+    parent_parser.add_argument('-hf', '--heat_file', required=True,
+                               help='JSON heat score file generated via generateHeat.py')
     parent_parser.add_argument('-n', '--num_permutations', type=int, required=True,
-                                help='Number of permuted networks to use')
+                                help='Number of permuted data sets to generate')
     parent_parser.add_argument('-s', '--test_statistic', choices=['max_cc_size', 'num_ccs'],
                                default='max_cc_size',
                                help='If max_cc_size, select smallest delta such that the size of\
@@ -33,13 +36,15 @@ def parse_args(raw_args):
                                maximizes the number of CCs of size >= k.')
     parent_parser.add_argument('-l', '--sizes', nargs='+', type=int, help='See test_statistic')
     parent_parser.add_argument('--parallel', dest='parallel', action='store_true',
-                               help='Run permutation tests in parallel.')
+                               help='Run permutation tests in parallel. Only recommended for machines\
+                                     with at least 8 cores.')
     parent_parser.add_argument('--no-parallel', dest='parallel', action='store_false',
-                               help='Run permutation tests sequentially.')
+                               help='Run permutation tests sequentially. Recommended for machines\
+                                     with fewer than 8 cores.')
     parent_parser.add_argument('-c', '--classic', default=False, action='store_true',
                         help='Run classic (instead of directed) HotNet.')
     parent_parser.add_argument('-o', '--output_file',
-                        help='Output file.  If none given, output will be written to stdout.')
+                               help='Output file.  If none given, output will be written to stdout.')
     parent_parser.set_defaults(parallel=False)
     
     subparsers = parser.add_subparsers(title='Permutation techniques')
@@ -63,8 +68,14 @@ def parse_args(raw_args):
                                             parents=[parent_parser])
     mutation_parser.add_argument('-mf', '--infmat_file', required=True,
                                  help='Path to .mat file containing influence matrix')
-    mutation_parser.add_argument('-glf', '--gene_length_file', required=True, help='Gene lengths file')
-    mutation_parser.add_argument('-gof', '--gene_order_file', required=True, help='Gene order file')
+    mutation_parser.add_argument('-glf', '--gene_length_file', required=True,
+                                 help='Path to tab-separated file containing gene names in the\
+                                       first column and the length of the gene in base pairs in\
+                                       the second column')
+    mutation_parser.add_argument('-gof', '--gene_order_file', required=True,
+                                 help='Path to file containing tab-separated lists of genes on\
+                                 each chromosme, in order of their position on the chromosome, one\
+                                  chromosome per line')
     mutation_parser.add_argument('-b', '--bmr', type=float, required=True,
                                  help='Default background mutation rate')
     mutation_parser.add_argument('-bf', '--bmr_file',
@@ -90,6 +101,8 @@ def run(args):
     if (args.output_file): output_file.close()
 
 def get_deltas_for_network(args, heat, _):
+    print "* Performing permuted network delta selection..."
+    
     #construct list of paths to the first num_permutations     
     permuted_network_paths = [args.permuted_networks_path.replace(ITERATION_REPLACEMENT_TOKEN, str(i))
                               for i in range(1, args.num_permutations+1)]
@@ -104,6 +117,7 @@ def get_deltas_for_network(args, heat, _):
     return deltas
 
 def get_deltas_for_heat(args, gene2heat, _):
+    print "* Performing permuted heat delta selection..."
     infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
     index2gene = hnio.load_index(args.infmat_index_file)
   
@@ -112,6 +126,7 @@ def get_deltas_for_heat(args, gene2heat, _):
     return get_deltas_from_heat_permutations(args, infmat, index2gene, heat_permutations)
 
 def get_deltas_for_mutations(args, gene2heat, heat_params):
+    print "* Performing permuted mutation data delta selection..."
     infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
     index2gene = hnio.load_index(args.infmat_index_file)
     

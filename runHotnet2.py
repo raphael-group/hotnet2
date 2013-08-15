@@ -21,7 +21,9 @@ def parse_args(raw_args):
     parser.add_argument('-mn', '--infmat_name', required=True, default='Li',
                         help='Variable name of the influence matrix in the .mat file')
     parser.add_argument('-if', '--infmat_index_file', required=True,
-                        help='Gene-index file for the influence matrix.')
+                        help='Path to tab-separated file containing an index in the first column\
+                              and the name of the gene represented at that index in the second\
+                              column of each line.')
     parser.add_argument('-ef', '--edge_list_file', default=None,
                         help='Edge list file for the PPI underlying the influence matrix')
     parser.add_argument('-hf', '--heat_file', required=True,
@@ -38,8 +40,7 @@ def parse_args(raw_args):
     #parent parser for arguments common to all permutation types
     parent_parser = hnap.HotNetArgParser(add_help=False, fromfile_prefix_chars='@')
     parent_parser.add_argument('-n', '--num_permutations', type=int, required=True,
-                               help='Number of permutation tests to run; set to 0 to skip running\
-                                     permutation tests.')
+                               help='Number of permutation tests to run')
     parent_parser.add_argument('-s', '--cc_start_size', type=int, default=2,
                                help='Smallest connected component size to count in permutation tests')
     parent_parser.add_argument('-l', '--cc_stop_size', type=int, default=10,
@@ -63,8 +64,14 @@ def parse_args(raw_args):
     
     mutation_parser = subparsers.add_parser('mutations', help='Permute mutation data',
                                              parents=[parent_parser])
-    mutation_parser.add_argument('-glf', '--gene_length_file', required=True, help='Gene lengths file')
-    mutation_parser.add_argument('-gof', '--gene_order_file', required=True, help='Gene order file')
+    mutation_parser.add_argument('-glf', '--gene_length_file', required=True,
+                                 help='Path to tab-separated file containing gene names in the\
+                                       first column and the length of the gene in base pairs in\
+                                       the second column')
+    mutation_parser.add_argument('-gof', '--gene_order_file', required=True,
+                                 help='Path to file containing tab-separated lists of genes on\
+                                 each chromosme, in order of their position on the chromosome, one\
+                                  chromosome per line')
     mutation_parser.add_argument('-b', '--bmr', type=float, required=True,
                                  help='Default background mutation rate')
     mutation_parser.add_argument('-bf', '--bmr_file',
@@ -115,14 +122,14 @@ def run(args):
     if (args.output_file): output_file.close()
 
 def heat_permutation_significance(args, heat, infmat, infmat_index, G):
-    print "* Performing permuted heat statistical signifcance..."
+    print "* Performing permuted heat statistical significance..."
      
     extra_genes = hnio.load_genes(args.permutation_genes_file) if args.permutation_genes_file else None
     heat_permutations = permutations.permute_heat(heat, args.num_permutations, extra_genes, args.parallel)
     return calculate_significance(args, infmat, infmat_index, G, heat_permutations)
 
 def mutation_permutation_significance(args, infmat, infmat_index, G, heat_params):
-    print "* Performing permuted mutation data statistical signifcance..."
+    print "* Performing permuted mutation data statistical significance..."
     
     heat_permutations = permutations.generate_mutation_permutation_heat(
                             heat_params["heat_fn"], heat_params["sample_file"],
