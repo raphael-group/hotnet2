@@ -20,40 +20,35 @@ parser.add_argument(
 	default=["network", "oncoprint", "loliplot", "textbox"])
 
 parser.add_argument('--hotNetOutput',
-	help='This should be the path to the .json file that describes the hotnet output', 
+	help='This should be the path to the .json file that describes the hotnet output--i.e. components, parameters, etc. ', 
 	default = '/research/compbio/MutationNetwork/TCGA/THCA/hotnet2/output/2013-08-14/delta_0.000529847053502/results.json')
 
 parser.add_argument('--edgeFile', 
-	help='This should be the path to the .json file that describes the edges of the gene networks',
-	default = '/data/compbio/datasets/HeatKernels/pagerank/IntHint/binary+complex+hi2012/inthint_edge_list')
+	help='This should be the path to the .json file that describes the edges of the gene networks')
 
 parser.add_argument('--transcriptInfo', 
-	help='This should be the path to the .json file that describes the transcript information', 
-	default = '/gpfs/main/home/bournewu/pan12.json')
+	help='This should be the path to the .json file that describes the transcript information')
 
 parser.add_argument('--sampleToCancer', 
-	help='This should be the path to the .txt file that associates each sample with its cancer type', 
-	default = 'misc_gene_info/samples.lst')
+	help='This should be the path to the .txt file that associates each sample with its cancer type.\
+	 For each line, the first column is the sample name, and the second column is the cancer, and they should be separated by spaces or tabs')
 
 parser.add_argument('--truncatingGenes', 
-	help='This should be the path to the .tsv file that describes the truncating genes', 
-	default = 'misc_gene_info/combined_truncating_annotation.tsv')
+	help='This should be the path to the .tsv file that describes the truncating genes\
+		Each row has the following information in this order: \
+		gene name, sample name, transcript name, cancer type, type of mutation (e.g. Missense_Mutation), mutation location (e.g. "p.G2128A" is a change from Glycine-->Allanine at locus 2128), and the name of the protein')
 
 parser.add_argument('--inactivatingGenes', 
-	help='This should be the path to the .tsv file that describes the inactivating genes', 
-	default = 'misc_gene_info/inactivating_genes.tsv')
+	help='This should be the path to the .tsv file that describes the inactivating genes. For each row, the first item is the sample name, and then all subsequent items are the names of the genes with inactivating SNVs. All are separated by tabs. The first row is assumed to be lables, and is ignored. ')
 
 parser.add_argument('--geneInfo', 
-	help='You probably do not want this', 
-	default = 'misc_gene_info/table_s4.json')
+	help='You probably do not want this')
+	# default = 'misc_gene_info/table_s4.json')
 
 parser.add_argument('--destination', 
-	help='The path to the folder where you would like to output', 
-	default = '')
-
-parser.add_argument('--folder', 
-	help='The name of the folder you would like to create', 
+	help='The path to the folder where you would like to output.',
 	default = 'output')
+
 args = parser.parse_args()
 
 query = args.query
@@ -65,8 +60,23 @@ parsedTruncating = args.truncatingGenes
 parsedInactivating = args.inactivatingGenes
 parsedGeneInfo = args.geneInfo
 parsedOutput = args.destination
-parsedOutputFolder = args.folder
 
+if ("network" in query):
+	if (parsedEdges == None):
+		parsedEdges = "/data/compbio/datasets/HeatKernels/pagerank/IntHint/binary+complex+hi2012/inthint_edge_list" 
+
+if ("oncoprint" in query):
+	print parsedTruncating
+	if (parsedTruncating == None):
+		parsedTruncating = "/research/compbio/CancerViz/misc_gene_info/combined_truncating_annotation.tsv"
+	if (parsedInactivating == None):
+		parsedInactivating = "/research/compbio/CancerViz/misc_gene_info/inactivating_genes.tsv" 
+
+if ("loliplot" in query):
+	if (parsedTranscripts == None):
+		parsedTranscripts = "/gpfs/main/home/bournewu/pan12.json" 
+	if (parsedEdges == None):
+		parsedEdges = "/data/compbio/datasets/HeatKernels/pagerank/IntHint/binary+complex+hi2012/inthint_edge_list" 
 
 # load output from HotNet run
 # hn_output = json.load(open("run2.json"))
@@ -77,6 +87,7 @@ hn_output = json.load(open(parsedPath))
 
 # get lists of connected components
 components = hn_output["components"]
+
 
 # calculate their sizes
 # sizes = hn.component_sizes(components)
@@ -109,7 +120,9 @@ cnaList = hnio.load_cnas(heat_parameters["cna_file"], genes, samples)
 # print "There were %s samples with CNAs" % (len(cnaList))
 
 # check whether the first two genes in the largest CC interact
-edges = hnio.load_ppi_edges(parsedEdges)
+edges = []
+if ("network" in query):
+	edges = hnio.load_ppi_edges(parsedEdges)
 index2gene = hnio.load_index(parameters["infmat_index_file"])
 gene2index_mapping = {gene: index for index, gene in index2gene.items()}
 gene1index = gene2index_mapping[components[0][0]]
@@ -126,83 +139,26 @@ important_genes = []
 for subnetwork in components:
 	important_genes.extend(subnetwork)
 
-
-# This loads the annotation data
-# TAKE IN AS A PARAMETER IN PYTHON SCRIPT
-annotation_data = json.load(open(parsedTranscripts))
-if "genes" in annotation_data:
-	annotation_data = annotation_data["genes"]
-
-# This remembers the association of each sample to every gene that it contains
-# sample_dict = {sample: {} for sample in samples}
-sample_dict = defaultdict(dict)
-
-# This remembers the association of each gene with every sample that contains it
-gene_dict = defaultdict(list)
-
 cancer_dict = {}
 
+if (parsedSampleToCancer == None):
+	def mergeSamples(a, b):
+		return a + b
+	for sample in reduce(mergeSamples, components):
+		cancer_dict[sample] = "NA"
+
+else:
+	cancer_gene_file = [line.split(" ") for line in open(parsedSampleToCancer)]
+	for i in range(len(cancer_gene_file)):
+		littlelist=cancer_gene_file[i]
+		cancer_dict[littlelist[0]]=littlelist[1].replace("\n", "")
+
 # optional
-cancer_gene_file = [line.split(" ") for line in open(parsedSampleToCancer)]
-for i in range(len(cancer_gene_file)):
-	littlelist=cancer_gene_file[i]
-	cancer_dict[littlelist[0]]=littlelist[1].replace("\n", "")
 
-truncating_list = []
-
-# To draw in the black dash
-def parseTruncatingGenes(mutationList = parsedTruncating):
-	mutation_list = [line.split() for line in open(mutationList)]
-	for line in mutation_list:
-		gene = line[0]
-		sampleID = line[1]
-		transcript = line[2]
-		cancer = line[3]
-		mutation_type = line[4]
-		locus = line[5]
-		biological_info = line[6]
-		truncating_list.append(Mutation(sampleID, gene, mutation_type))
-
-parseTruncatingGenes()
 
 # To determine mutation type--i.e. missense or nonsense
-def parseInactivatingGenes(mutationList = parsedInactivating):
-	mutation_list = [line.split() for line in open(mutationList)]
-	mutation_dict = {}
-	for line in mutation_list:
-		sample_name = line[0]
-		mutation_dict[sample_name] = []
-		for i in range(1, len(line)):
-			mutation_dict[sample_name].append(line[i])
-	return mutation_dict
-
-inactivating_genes = parseInactivatingGenes()
 
 
-def parseMutationList(mutationList, category):
-	for mutation in mutationList:
-		cur_sample = str(mutation.sample)
-		cur_gene = str(mutation.gene)
-		inactivating = False
-		if cur_sample in inactivating_genes:
-			inactivating = (cur_gene in inactivating_genes[cur_sample])
-		if cur_gene in important_genes:
-			gene_dict[cur_gene].append(cur_sample)
-			if cur_gene not in sample_dict[cur_sample]:
-				sample_dict[cur_sample][cur_gene] = { 
-						"gene": cur_gene,
-						"sample": cur_sample,
-						"cancer": cancer_dict[cur_sample] if (cur_sample in cancer_dict) else "NA",
-						"inactivating": inactivating}
-			sample_dict[cur_sample][cur_gene][category] =  mutation.mut_type
-		
-
-parseMutationList(truncating_list, "all")
-parseMutationList(snvList, "snv")
-parseMutationList(cnaList, "cna")
-
-for cur_sample in sample_dict:
-	sample_dict[cur_sample] = sample_dict[cur_sample].values()
 
 # Inputs:	return_list: 		a list holding all the dictionaries that
 # 								holds the dictionaries representing the 
@@ -279,6 +235,67 @@ def generateOncoprintData(return_list,  components_list = components):
 	# then we find all the samples, and then from that
 	# list of samples we create each json object
 
+	# This remembers the association of each sample to every gene that it contains
+	# sample_dict = {sample: {} for sample in samples}
+	sample_dict = defaultdict(dict)
+
+	# This remembers the association of each gene with every sample that contains it
+	gene_dict = defaultdict(list)
+
+	def parseMutationList(mutationList, category):
+		for mutation in mutationList:
+			cur_sample = str(mutation.sample)
+			cur_gene = str(mutation.gene)
+			inactivating = False
+			if cur_sample in inactivating_genes:
+				inactivating = (cur_gene in inactivating_genes[cur_sample])
+			if cur_gene in important_genes:
+				gene_dict[cur_gene].append(cur_sample)
+				if cur_gene not in sample_dict[cur_sample]:
+					sample_dict[cur_sample][cur_gene] = { 
+							"gene": cur_gene,
+							"sample": cur_sample,
+							"cancer": cancer_dict[cur_sample] if (cur_sample in cancer_dict) else "NA",
+							"inactivating": inactivating}
+				sample_dict[cur_sample][cur_gene][category] =  mutation.mut_type
+
+	# To draw in the black dash
+	def parseTruncatingGenes(return_list, mutationList = parsedTruncating):
+		mutation_list = [line.split() for line in open(mutationList)]
+		for line in mutation_list:
+			gene = line[0]
+			sampleID = line[1]
+			transcript = line[2]
+			cancer = line[3]
+			mutation_type = ""
+			locus = ""
+			biological_info = ""
+			if (len(line) >= 6):
+				mutation_type = line[4]
+				locus = line[5]
+				biological_info = line[6]
+			return_list.append(Mutation(sampleID, gene, mutation_type))
+		return return_list
+
+	def parseInactivatingGenes(mutationList = parsedInactivating):
+		mutation_list = [line.split() for line in open(mutationList)]
+		mutation_dict = {}
+		for line in mutation_list:
+			sample_name = line[0]
+			mutation_dict[sample_name] = []
+			for i in range(1, len(line)):
+				mutation_dict[sample_name].append(line[i])
+		return mutation_dict
+
+	inactivating_genes = parseInactivatingGenes()
+	truncating_list = parseTruncatingGenes([])
+	parseMutationList(truncating_list, "all")
+	parseMutationList(snvList, "snv")
+	parseMutationList(cnaList, "cna")
+
+	for cur_sample in sample_dict:
+		sample_dict[cur_sample] = sample_dict[cur_sample].values()
+
 	for i in range(len(components_list)):
 		current_subnetwork = components_list[i]
 		samples_list = list(set(reduce(lambda a, b: a + b, [gene_dict[x] for x in current_subnetwork])))
@@ -303,6 +320,11 @@ def generateOncoprintData(return_list,  components_list = components):
 	return return_list
 
 def generateLolliplotData(return_list, components_list = components):
+	# This loads the annotation data
+	# TAKE IN AS A PARAMETER IN PYTHON SCRIPT
+	annotation_data = json.load(open(parsedTranscripts))
+	if "genes" in annotation_data:
+		annotation_data = annotation_data["genes"]
 
 	for i in range(len(components_list)):
 		current_subnetwork = components_list[i]
@@ -361,10 +383,6 @@ def generateTextInfo(return_list, components_list = components):
 return_list = [{"nodes": [], "links": [], "samples": [], "annotations": [], "infobox":[]} for x in range(len(components))]
 
 
-# query = ["network", "oncoprint", "loliplot", "textbox"]
-# query = ["network", "loliplot"]
-# query = ["textbox"]
-
 if ("network" in query):
 	return_list = generateNetworkData(return_list)
 
@@ -395,10 +413,10 @@ if ("loliplot" in query):
 # 		return_list = generateTextInfo(return_list);
 # 	with open('subnetwork' + str(i+1) + '.json', 'w+') as outfile:
 # 		json.dump(current_subnetwork, outfile, skipkeys=False, ensure_ascii=True, indent=1 )
-os.mkdir(parsedOutput + parsedOutputFolder)
-with open(parsedOutput + parsedOutputFolder + '/hotnet_viz_data.json', 'w+') as outfile:
+
+with open(parsedOutput + '/hotnet_viz_data.json', 'w+') as outfile:
 	json.dump(return_list, outfile, skipkeys=False, ensure_ascii=True, indent=1 )
 
-shutil.copy("test.html", parsedOutput + parsedOutputFolder + '/index.html' )
-shutil.copy("app.js", parsedOutput + parsedOutputFolder + '/app.js' )
-shutil.copy("style.css", parsedOutput + parsedOutputFolder + '/style.css' )
+shutil.copy("/research/compbio/CancerViz/web_output/test.html", parsedOutput + 'index.html' )
+shutil.copy("/research/compbio/CancerViz/web_output/app.js", parsedOutput + 'app.js' )
+shutil.copy("/research/compbio/CancerViz/web_output/style.css", parsedOutput + 'style.css' )
