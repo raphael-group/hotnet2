@@ -1,6 +1,6 @@
 import json
 import sys
-sys.path.append("../")
+sys.path.append("hotnet_boilerplate/")
 # import hotnet2 as hn
 import hnio
 import matplotlib.pyplot as plt
@@ -75,9 +75,7 @@ if ("oncoprint" in query):
 if ("loliplot" in query):
 	if (parsedTranscripts == None):
 		parsedTranscripts = "/gpfs/main/home/bournewu/pan12.json" 
-	if (parsedEdges == None):
-		parsedEdges = "/data/compbio/datasets/HeatKernels/pagerank/IntHint/binary+complex+hi2012/inthint_edge_list" 
-
+		
 # load output from HotNet run
 # hn_output = json.load(open("run2.json"))
 # hn_output = json.load(open("/research/compbio/users/jeldridg/TestFiles/HotNet2_Hint_MutFreq_Output.json"))
@@ -87,7 +85,7 @@ hn_output = json.load(open(parsedPath))
 
 # get lists of connected components
 components = hn_output["components"]
-
+parameters = hn_output["parameters"]
 
 # calculate their sizes
 # sizes = hn.component_sizes(components)
@@ -97,43 +95,23 @@ components = hn_output["components"]
 # print "Sizes from output and calculation match (expect True): %s" % (sizes == sizes2)
 
 # get command-line parameters used for the HotNet run
-parameters = hn_output["parameters"]
+
 
 # print out whether this was a classic or directed HotNet run
 # runType = "classic" if parameters["classic"] else "directed"
 # print "Was run classic or directed? (expect directed): %s" % runType 
 
 # # load the heat scores used for the HotNet run and show them as a histogram 
-heat = hnio.load_heat_json(parameters["heat_file"])
 # plt.hist(heat.values(), bins=100)
 # plt.show()
 
 # get parameters used for heat file generation
-heat_parameters = hn_output["heat_parameters"]
 
-# print out the number of samples with SNVs and CNAs
-genes = hnio.load_genes(heat_parameters["gene_file"])
-samples = hnio.load_samples(heat_parameters["sample_file"])
-snvList = hnio.load_snvs(heat_parameters["snv_file"], genes, samples)
-cnaList = hnio.load_cnas(heat_parameters["cna_file"], genes, samples)
+
 # print "There were %s samples with SNVs" % (len(snvList))
 # print "There were %s samples with CNAs" % (len(cnaList))
 
 # check whether the first two genes in the largest CC interact
-edges = []
-if ("network" in query):
-	edges = hnio.load_ppi_edges(parsedEdges)
-index2gene = hnio.load_index(parameters["infmat_index_file"])
-gene2index_mapping = {gene: index for index, gene in index2gene.items()}
-gene1index = gene2index_mapping[components[0][0]]
-gene2index = gene2index_mapping[components[0][1]]
-genes_interact = (gene1index, gene2index) in edges or (gene2index, gene1index) in edges
-# print "Do the first two genes in the largest CC interact (expect False)? %s" % (genes_interact)
-
-# how about hte first gene and the third gene?
-gene3index = gene2index_mapping[components[0][2]]
-genes_interact = (gene1index, gene3index) in edges or (gene3index, gene1index) in edges
-# print "Do the first and third genes in the largest CC interact (expect True)? %s" % (genes_interact)
 
 important_genes = []
 for subnetwork in components:
@@ -172,6 +150,25 @@ def generateNetworkData(return_list, components_list = components):
 	# Generating the nodes and links requires 
 	# the links index into the respective nodes
 	# This keeps track of each node's index
+
+
+	edges = []
+	if ("network" in query):
+		edges = hnio.load_ppi_edges(parsedEdges)
+	index2gene = hnio.load_index(parameters["infmat_index_file"])
+	gene2index_mapping = {gene: index for index, gene in index2gene.items()}
+	gene1index = gene2index_mapping[components[0][0]]
+	gene2index = gene2index_mapping[components[0][1]]
+	genes_interact = (gene1index, gene2index) in edges or (gene2index, gene1index) in edges
+	# print "Do the first two genes in the largest CC interact (expect False)? %s" % (genes_interact)
+
+	# how about hte first gene and the third gene?
+	gene3index = gene2index_mapping[components[0][2]]
+	genes_interact = (gene1index, gene3index) in edges or (gene3index, gene1index) in edges
+	# print "Do the first and third genes in the largest CC interact (expect True)? %s" % (genes_interact)
+
+	heat = hnio.load_heat_json(parameters["heat_file"])
+
 	index_dict = {}	
 	for i in range(len(components_list)):
 		nodes = []
@@ -234,6 +231,13 @@ def generateOncoprintData(return_list,  components_list = components):
 	# So the plan of attack is we find all the genes,
 	# then we find all the samples, and then from that
 	# list of samples we create each json object
+	heat_parameters = hn_output["heat_parameters"]
+
+	# print out the number of samples with SNVs and CNAs
+	genes = hnio.load_genes(heat_parameters["gene_file"])
+	samples = hnio.load_samples(heat_parameters["sample_file"])
+	snvList = hnio.load_snvs(heat_parameters["snv_file"], genes, samples)
+	cnaList = hnio.load_cnas(heat_parameters["cna_file"], genes, samples)
 
 	# This remembers the association of each sample to every gene that it contains
 	# sample_dict = {sample: {} for sample in samples}
@@ -413,10 +417,10 @@ if ("loliplot" in query):
 # 		return_list = generateTextInfo(return_list);
 # 	with open('subnetwork' + str(i+1) + '.json', 'w+') as outfile:
 # 		json.dump(current_subnetwork, outfile, skipkeys=False, ensure_ascii=True, indent=1 )
-
+os.mkdir(parsedOutput)
 with open(parsedOutput + '/hotnet_viz_data.json', 'w+') as outfile:
 	json.dump(return_list, outfile, skipkeys=False, ensure_ascii=True, indent=1 )
 
-shutil.copy("/research/compbio/CancerViz/web_output/test.html", parsedOutput + 'index.html' )
-shutil.copy("/research/compbio/CancerViz/web_output/app.js", parsedOutput + 'app.js' )
-shutil.copy("/research/compbio/CancerViz/web_output/style.css", parsedOutput + 'style.css' )
+shutil.copy("/research/compbio/CancerViz/web_output/test.html", parsedOutput + '/index.html' )
+shutil.copy("/research/compbio/CancerViz/web_output/app.js", parsedOutput + '/app.js' )
+shutil.copy("/research/compbio/CancerViz/web_output/style.css", parsedOutput + '/style.css' )
