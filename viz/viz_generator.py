@@ -1,6 +1,6 @@
 import json
 import sys
-sys.path.append("hotnet_boilerplate/")
+sys.path.append("../")
 # import hotnet2 as hn
 import hnio
 import matplotlib.pyplot as plt
