@@ -125,10 +125,11 @@ def get_edges(sim, start=.05):
     edges = edges[:int(start*len(edges))]
     return edges
 
-def network_delta_wrapper((network_path, infmat_name, index2gene, tested_genes, h, sizes, directed,
+def network_delta_wrapper((network_path, infmat_name, index2gene, heat, sizes, directed,
                            selection_function)):
     permuted_mat = scipy.io.loadmat(network_path)[infmat_name]   
-    M, gene_index = hn.induce_infmat(permuted_mat, index2gene, tested_genes)
+    M, gene_index = hn.induce_infmat(permuted_mat, index2gene, sorted(heat.keys()))
+    h = hn.heat_vec(heat, gene_index)
     sim = hn.similarity_matrix(M, h, directed)
     if selection_function is find_best_delta_by_largest_cc:
         return selection_function(sim, gene_index, sizes, directed)
@@ -144,7 +145,7 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
     
     Arguments:
     network_paths -- iterable of paths to .mat files containing permuted networks
-    infmat_name -- name of influnce matrix in .mat files
+    infmat_name -- name of influence matrix in .mat files
     index2gene -- dict mapping an index in the matrix to the name of the gene represented at that
                   index in the influence matrix
     heat -- dict mapping a gene name to the heat score for that gene
@@ -160,8 +161,7 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
     else:
         map_fn = map
        
-    h_vec = hn.heat_vec(heat, index2gene)
-    args = [(network_path, infmat_name, index2gene, sorted(heat.keys()), h_vec, sizes, directed,
+    args = [(network_path, infmat_name, index2gene, heat, sizes, directed,
              selection_fn) for network_path in network_paths]
     delta_maps = map_fn(network_delta_wrapper, args)
     
