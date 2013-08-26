@@ -3,6 +3,23 @@ from collections import defaultdict
 import scipy
 from constants import *
 
+def filter_heat(heat, min_score):
+    """Returns (1) a dict mapping gene names to heat scores that contains only entries with heat
+    scores greater than min_score; (2) a list of the genes excluded because their heat scores were
+    less than min_score; and (3) the value of min_score, which will not be None even if
+    it was given as None.
+    
+    Arguments:
+    heat -- dict mapping gene names to heat scores
+    min_score -- minimum heat score a gene must have to be included in the returned dict. If None,
+                 the minimum score will be calculated as the minimum of the non-zero heat scores
+                 included in the input dict 
+    """
+    if min_score is None:
+        min_score = min([score for score in heat.values() if score > 0])
+    filtered_heat = dict([(gene, score) for gene, score in heat.iteritems() if score >= min_score])
+    return filtered_heat, [gene for gene in heat if gene not in filtered_heat], min_score
+
 def num_snvs(mutations):
     """Return the number of SNVs in the given iterable of Mutations (those with mut_type == SNV).
     
@@ -128,5 +145,19 @@ def music_heat(gene2music, threshold=1.0, max_heat=15):
     return gene2heat
 
 def expr_filter_heat(gene2heat, genes_to_preserve):
-    gene2heat = dict([(g, h) for g, h in gene2heat.items() if g in genes_to_preserve])
-    return gene2heat
+    """Return (1) a dict mapping gene names to heat scores containing only entries for genes in
+    genes_to_preserve, and (2) a list of genes whose heat scores are not included in the returned dict.
+    
+    Arguments:
+    gene2heat -- dict mapping gene names to heat scores
+    genes_to_preserve -- set of genes whose heat scores should be contained in the returned dict
+    
+    """
+    filtered_heat = dict()
+    excluded_genes = list()
+    for gene in gene2heat:
+        if gene in genes_to_preserve:
+            filtered_heat[gene] = gene2heat[gene]
+        else:
+            excluded_genes.append(gene)
+    return filtered_heat, excluded_genes

@@ -221,3 +221,46 @@ def load_music_scores(scores_file):
     # Output parsing info
     print "\t- Loaded %s genes." % len(gene2music)
     return gene2music
+
+################################################################################
+# Data saving functions
+
+def write_components_as_tsv(output_file, ccs):
+    """Save connected components to file where each line represents a connected component and genes
+    within each CC are delimited by tabs.
+    
+    Arguments:
+    output_file -- path to which the output file should be written
+    ccs -- list of lists of gene names representing connected components
+    
+    """
+    with open(output_file, 'w') as out_f:
+        for cc in ccs:
+            out_f.write('\t'.join(cc) + '\n')
+            
+def write_significance_as_tsv(output_file, sizes2stats):
+    """Save significance information to tab-separated file.
+    
+    Arguments:
+    output_file -- path to which the output file should be written
+    sizes2stats -- dict mapping a CC size to a dict with the expected number of CCs of at least
+                   that size based on permuted data, the observed number of CCs of at least that
+                   size in the real data, and the p-value for the observed number
+    
+    """
+    with open(output_file, 'w') as out_f:
+        out_f.write("Size\tExpected\tActual\tp-value\n")
+        for size, stats in sizes2stats.iteritems():
+            out_f.write("%s\t%s\t%s\t%s\n" % (size, stats["expected"], stats["observed"], stats["pval"]))
+
+def write_gene_list(output_file, genelist):
+    """Save a list of genes to a file, one gene per line.
+    
+    Arguments:
+    output_file -- path to which the output file should be written
+    genelist -- iterable of genes that should be included in the output file
+    
+    """
+    with open(output_file, 'w') as out_f:
+        for gene in genelist:
+            out_f.write(gene+'\n')
