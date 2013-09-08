@@ -78,13 +78,12 @@ def run(args):
     heat, addtl_genes, args.min_heat_score = hnheat.filter_heat(heat, args.min_heat_score)
 
     #find smallest delta 
-#     deltas = ft.get_deltas_for_network(args.permuted_networks_path, heat, INFMAT_NAME,
-#                                        infmat_index, MAX_CC_SIZE, MAX_CC_SIZES, False,
-#                                        args.num_permutations, args.parallel)
+    deltas = ft.get_deltas_for_network(args.permuted_networks_path, heat, INFMAT_NAME,
+                                       infmat_index, MAX_CC_SIZE, MAX_CC_SIZES, False,
+                                       args.num_permutations, args.parallel)
     
     #and run HotNet with the median delta for each size
-    #run_deltas = [np.median(deltas[size]) for size in deltas]
-    run_deltas = [0.003604534983717687]
+    run_deltas = [np.median(deltas[size]) for size in deltas]
     M, gene_index = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
     h = hn.heat_vec(heat, gene_index)
     sim = hn.similarity_matrix(M, h)
