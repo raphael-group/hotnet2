@@ -85,13 +85,18 @@ def parse_args(raw_args):
     #if l not specified, set default based on test statistic 
     args = parser.parse_args(raw_args)
     if not args.sizes:
-        args.sizes = [5,10,15,20] if args.test_statistic == "max_cc_size" else [3]
+        args.sizes = [5,10,15,20] if args.test_statistic == MAX_CC_SIZE else [3]
     return args
 
 def run(args):
+    #disallow finding delta by # of CCs of size >= l for HotNet2, since this is not currently
+    #implemented correctly (and is non-trivial to implement)
+    if not args.classic and args.test_statistic != MAX_CC_SIZE:
+        raise ValueError("For HotNet2, the largest CC size test statistic must be used.")
+    
     infmat_index = hnio.load_index(args.infmat_index_file)
     heat, heat_params = hnio.load_heat_json(args.heat_file)
-    
+
     if args.perm_type == "heat":
         infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
         addtl_genes = hnio.load_genes(args.permutation_genes_file) if args.permutation_genes_file else None
