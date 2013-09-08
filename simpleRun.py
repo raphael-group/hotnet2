@@ -12,9 +12,8 @@ import os
 import json
 from constants import *
 
-MIN_CC_SIZE = 3
-MAX_CC_SIZE = 25
-INFMAT_NAME = "Li"
+MAX_CC_SIZES = [5, 10, 15, 20]
+INFMAT_NAME = "PPR"
 
 def parse_args(raw_args): 
     description = "Helper script for simple runs of generalized HotNet2, including automated\
@@ -39,6 +38,10 @@ def parse_args(raw_args):
                               min_heat_score to 0).')
     parser.add_argument('-ccs', '--min_cc_size', type=int, default=3,
                         help='Minimum size connected components that should be returned.')
+    parser.add_argument('-pnp', '--permuted_networks_path', required=True,
+                        help='Path to influence matrices for permuted networks.\
+                                      Include ' + ITERATION_REPLACEMENT_TOKEN + ' in the\
+                                      path to be replaced with the iteration number')
     parser.add_argument('-n', '--num_permutations', type=int, default=100,
                         help='Number of permutations that should be used for parameter selection\
                               and statistical significance testing.')
@@ -74,25 +77,18 @@ def run(args):
     #filter out genes with heat score less than min_heat_score
     heat, addtl_genes, args.min_heat_score = hnheat.filter_heat(heat, args.min_heat_score)
 
-    #find delta that maximizes # CCs of size >= MIN_SIZE for each permuted data set
-    deltas = ft.get_deltas_for_heat(infmat, infmat_index, heat, addtl_genes, args.num_permutations,
-                                    NUM_CCS, [MIN_CC_SIZE], True, args.parallel)
-
-    #find the multiple of the median delta s.t. the size of the largest CC in the real data
-    #is <= MAX_CC_SIZE
-    medianDelta = np.median(deltas[MIN_CC_SIZE])
+    #find smallest delta 
+#     deltas = ft.get_deltas_for_network(args.permuted_networks_path, heat, INFMAT_NAME,
+#                                        infmat_index, MAX_CC_SIZE, MAX_CC_SIZES, False,
+#                                        args.num_permutations, args.parallel)
+    
+    #and run HotNet with the median delta for each size
+    #run_deltas = [np.median(deltas[size]) for size in deltas]
+    run_deltas = [0.003604534983717687]
     M, gene_index = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
     h = hn.heat_vec(heat, gene_index)
     sim = hn.similarity_matrix(M, h)
     
-    for i in range(1, 11):
-        G = hn.weighted_graph(sim, gene_index, i*medianDelta)
-        max_cc_size = max([len(cc) for cc in hn.connected_components(G)])
-        if max_cc_size <= MAX_CC_SIZE:
-            break
-    
-    #and run HotNet with that multiple and the next 4 multiples
-    run_deltas = [i*medianDelta for i in range(i, i+5)]
     for delta in run_deltas: 
         #create output directory
         delta_out_dir = args.output_directory + "/delta_" + str(delta)
@@ -100,7 +96,7 @@ def run(args):
             os.mkdir(delta_out_dir)
         
         #find connected components
-        G = hn.weighted_graph(sim, gene_index, delta, directed=False)
+        G = hn.weighted_graph(sim, gene_index, delta, directed=True)
         ccs = hn.connected_components(G, args.min_cc_size)
         
         # calculate significance (using all genes with heat scores)
@@ -110,7 +106,7 @@ def run(args):
         print "\t- Using no. of components >= k (k \\in",
         print "[%s, %s]) as statistic" % (min(sizes), max(sizes))
         sizes2counts = stats.calculate_permuted_cc_counts(infmat, infmat_index, heat_permutations,
-                                                          delta, sizes, False, args.parallel)
+                                                          delta, sizes, True, args.parallel)
         real_counts = stats.num_components_min_size(G, sizes)
         size2real_counts = dict(zip(sizes, real_counts))
         sizes2stats = stats.compute_statistics(size2real_counts, sizes2counts, args.num_permutations)

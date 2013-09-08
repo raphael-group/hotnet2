@@ -10,3 +10,5 @@ MAX_CC_SIZE = 'max_cc_size'
 NUM_CCS = 'num_ccs'
 
 Mutation = namedtuple("Mutation", ["sample", "gene", "mut_type"])
+
+ITERATION_REPLACEMENT_TOKEN = '##NUM##'

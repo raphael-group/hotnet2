@@ -8,8 +8,6 @@ import json
 import scipy.io
 from constants import *
 
-ITERATION_REPLACEMENT_TOKEN = '##NUM##'
-
 def parse_args(raw_args):
     description = "Runs HotNet threshold-finding procedure.\
                    Note that some or all parameters can be specified via a configuration file by\
@@ -127,22 +125,6 @@ def get_deltas_for_network(permuted_networks_path, heat, infmat_name, index2gene
 
     return delta.network_delta_selection(permuted_network_paths, infmat_name, index2gene, heat,
                                          sizes, not classic, parallel, delta_selection_fn)
-    
-def get_deltas_for_network_old(args, heat):
-    print "* Performing permuted network delta selection..."
-    
-    #construct list of paths to the first num_permutations     
-    permuted_network_paths = [args.permuted_networks_path.replace(ITERATION_REPLACEMENT_TOKEN, str(i))
-                              for i in range(1, args.num_permutations+1)]
-
-    index2gene = hnio.load_index(args.infmat_index_file)
-    delta_selection_fn = delta.find_best_delta_by_largest_cc if args.test_statistic == "max_cc_size" else delta.find_best_delta_by_num_ccs 
-
-    deltas = delta.network_delta_selection(permuted_network_paths, args.infmat_name, index2gene,
-                                           heat, args.sizes, not args.classic, args.parallel,
-                                           delta_selection_fn)
-    
-    return deltas
 
 def get_deltas_for_heat(infmat, index2gene, gene2heat, addtl_genes, num_permutations, test_statistic,
                         sizes, classic, parallel):
