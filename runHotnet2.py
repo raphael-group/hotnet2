@@ -34,7 +34,7 @@ def parse_args(raw_args):
                         help='Minimum size connected components that should be returned.')
     parser.add_argument('-c', '--classic', default=False, action='store_true',
                         help='Run classic (instead of directed) HotNet.')
-    parser.add_argument('-o', '--output_directory', default='hotnet_output',
+    parser.add_argument('-o', '--output_directory', required=True,
                         help='Output directory. Files results.json, components.txt, and\
                               significance.txt will be generated in subdirectories for each delta.')
     
@@ -99,6 +99,29 @@ def run(args):
     h = hn.heat_vec(heat, gene_index)
     sim = hn.similarity_matrix(M, h, not args.classic)
     
+    # only calculate permuted data sets for significance testing once
+    if args.permutation_type != "none":
+        if args.permutation_type == "heat":
+            print "* Generating heat permutations for statistical significance testing" 
+            extra_genes = hnio.load_genes(args.permutation_genes_file) if args.permutation_genes_file \
+                            else None
+            heat_permutations = permutations.permute_heat(heat, args.num_permutations, extra_genes,
+                                                          args.parallel)
+        elif args.permutation_type == "mutations":
+            if heat_params["heat_fn"] != "load_mutation_heat":
+                    raise RuntimeError("Heat scores must be based on mutation data to perform\
+                                        significance testing based on mutation data permutation.")
+            print "* Generating mutation permutations for statistical significance testing"
+            heat_permutations = permutations.generate_mutation_permutation_heat(
+                                    heat_params["heat_fn"], heat_params["sample_file"],
+                                    heat_params["gene_file"], infmat_index.values(),
+                                    heat_params["snv_file"], args.gene_length_file, args.bmr,
+                                    args.bmr_file, heat_params["cna_file"], args.gene_order_file,
+                                    heat_params["cna_filter_threshold"], heat_params["min_freq"],
+                                    args.num_permutations, args.parallel)
+        else:
+            raise ValueError("Unrecognized permutation type %s" % (args.permutation_type))
+    
     for delta in args.deltas:
         delta_out_dir = args.output_directory + "/delta_" + str(delta)
         if not os.path.isdir(delta_out_dir):
@@ -109,15 +132,7 @@ def run(args):
         
         # calculate significance
         if args.permutation_type != "none":
-            if args.permutation_type == "heat":
-                sizes2stats = heat_permutation_significance(args, heat, infmat, infmat_index, G)
-            elif args.permutation_type == "mutations":
-                if heat_params["heat_fn"] != "load_mutation_heat":
-                    raise RuntimeError("Heat scores must be based on mutation data to perform\
-                                        significance testing based on mutation data permutation.")
-                sizes2stats = mutation_permutation_significance(args, infmat, infmat_index, G, heat_params)
-            else:
-                raise ValueError("Unrecognized permutation type %s" % (args.permutation_type))
+            sizes2stats = calculate_significance(args, infmat, infmat_index, G, delta, heat_permutations)
         
         #sort ccs list such that genes within components are sorted alphanumerically, and components
         #are sorted first by length, then alphanumerically by name of the first gene in the component 
@@ -139,26 +154,7 @@ def run(args):
         json.dump(output_dict, json_out, indent=4)
         json_out.close()
 
-def heat_permutation_significance(args, heat, infmat, infmat_index, G):
-    print "* Performing permuted heat statistical significance..."
-     
-    extra_genes = hnio.load_genes(args.permutation_genes_file) if args.permutation_genes_file else None
-    heat_permutations = permutations.permute_heat(heat, args.num_permutations, extra_genes, args.parallel)
-    return calculate_significance(args, infmat, infmat_index, G, heat_permutations)
-
-def mutation_permutation_significance(args, infmat, infmat_index, G, heat_params):
-    print "* Performing permuted mutation data statistical significance..."
-    
-    heat_permutations = permutations.generate_mutation_permutation_heat(
-                            heat_params["heat_fn"], heat_params["sample_file"],
-                            heat_params["gene_file"], infmat_index.values(), heat_params["snv_file"],
-                            args.gene_length_file, args.bmr, args.bmr_file, heat_params["cna_file"],
-                            args.gene_order_file, heat_params["cna_filter_threshold"],
-                            heat_params["min_freq"], args.num_permutations, args.parallel)
-
-    return calculate_significance(args, infmat, infmat_index, G, heat_permutations)
-
-def calculate_significance(args, infmat, infmat_index, G, heat_permutations):
+def calculate_significance(args, infmat, infmat_index, G, delta, heat_permutations):
     sizes = range(args.cc_start_size, args.cc_stop_size+1)
     
     print "\t- Using no. of components >= k (k \\in",
@@ -166,7 +162,7 @@ def calculate_significance(args, infmat, infmat_index, G, heat_permutations):
 
     #size2counts is dict(size -> (list of counts, 1 per permutation))
     sizes2counts = stats.calculate_permuted_cc_counts(infmat, infmat_index, heat_permutations,
-                                                      args.delta, sizes, not args.classic,
+                                                      delta, sizes, not args.classic,
                                                       args.parallel)
     real_counts = stats.num_components_min_size(G, sizes)
     size2real_counts = dict(zip(sizes, real_counts))
