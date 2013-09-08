@@ -24,8 +24,6 @@ def parse_args(raw_args):
                         help='Path to tab-separated file containing an index in the first column\
                               and the name of the gene represented at that index in the second\
                               column of each line.')
-    parser.add_argument('-ef', '--edge_list_file', default=None,
-                        help='Edge list file for the PPI underlying the influence matrix')
     parser.add_argument('-hf', '--heat_file', required=True,
                         help='JSON heat score file generated via generateHeat.py')
     parser.add_argument('-d', '--delta', type=float, required=True,

@@ -1,0 +1,123 @@
+{
+    "heat_parameters": {
+        "min_freq": 1, 
+        "cna_filter_threshold": 0.9, 
+        "sample_file": "/data/compbio/datasets/MutationMatrices/AML/2012-07-18/mutated_samples.txt", 
+        "gene_file": "/data/compbio/datasets/HotNet_RequiredFiles/testGeneFiles/2012-07-19/genes_with_length_and_position.txt", 
+        "output_file": "results/aml/aml-heat.json", 
+        "cna_file": "/data/compbio/datasets/MutationMatrices/AML/2012-09-21/mutAML0921_focal.cna", 
+        "snv_file": "/data/compbio/datasets/MutationMatrices/AML/2012-10-08/mutAML1116_snvfusion_Hotnet.snv", 
+        "heat_fn": "load_mutation_heat"
+    }, 
+    "statistics": {
+        "2": {
+            "expected": 0.77, 
+            "pval": 0.0, 
+            "observed": 7
+        }, 
+        "3": {
+            "expected": 0.08, 
+            "pval": 0.0, 
+            "observed": 6
+        }, 
+        "4": {
+            "expected": 0.02, 
+            "pval": 0.0, 
+            "observed": 3
+        }, 
+        "5": {
+            "expected": 0.0, 
+            "pval": 0.0, 
+            "observed": 2
+        }, 
+        "6": {
+            "expected": 0.0, 
+            "pval": 0.0, 
+            "observed": 2
+        }, 
+        "7": {
+            "expected": 0.0, 
+            "pval": 1.0, 
+            "observed": 0
+        }, 
+        "8": {
+            "expected": 0.0, 
+            "pval": 1.0, 
+            "observed": 0
+        }, 
+        "9": {
+            "expected": 0.0, 
+            "pval": 1.0, 
+            "observed": 0
+        }, 
+        "10": {
+            "expected": 0.0, 
+            "pval": 1.0, 
+            "observed": 0
+        }
+    }, 
+    "components": [
+        [
+            "DNMT1", 
+            "DNMT3A", 
+            "DNMT3B", 
+            "EED", 
+            "EZH2", 
+            "MYC"
+        ], 
+        [
+            "NUMA1", 
+            "RAD21", 
+            "SMC1A", 
+            "SMC3", 
+            "STAG2", 
+            "WAPAL"
+        ], 
+        [
+            "KRAS", 
+            "NRAS", 
+            "PLCE1", 
+            "RAP1GDS1"
+        ], 
+        [
+            "CBFB", 
+            "ELF4", 
+            "RUNX1"
+        ], 
+        [
+            "FLT3", 
+            "FLT3LG", 
+            "INPP5D"
+        ], 
+        [
+            "MECR", 
+            "NSD1", 
+            "RARA"
+        ]
+    ], 
+    "parameters": {
+        "gene_order_file": "/data/compbio/datasets/HotNet_RequiredFiles/orderedFiles/order_genes_hg19_gistic.txt", 
+        "infmat_file": "/nbu/compbio/heat_kernels/HPRD/hprd_expo_10_v9.mat", 
+        "cc_stop_size": 10, 
+        "bmr": 2.97e-07, 
+        "classic": true, 
+        "heat_file": "results/aml/aml-heat.json", 
+        "output_file": "results/aml/aml-hprd-significance.json", 
+        "cc_start_size": 2, 
+        "num_permutations": 100, 
+        "infmat_name": "Li", 
+        "permutation_type": "mutations", 
+        "bmr_file": null, 
+        "runname": "AML on HPRD w/Significance Testing (Mutation Permutation)", 
+        "gene_length_file": "/data/compbio/datasets/HotNet_RequiredFiles/geneLengthFiles/ID_length_20120712.txt", 
+        "delta": 0.001, 
+        "min_cc_size": 3, 
+        "infmat_index_file": "/nbu/compbio/heat_kernels/HPRD/index_genes_hprd_v9.txt", 
+        "parallel": true
+    }, 
+    "sizes": {
+        "3": 3, 
+        "4": 1, 
+        "6": 2
+    }
+}
