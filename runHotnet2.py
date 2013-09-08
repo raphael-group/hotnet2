@@ -7,6 +7,8 @@ import stats
 import sys
 import scipy.io
 import json
+import os
+from constants import *
 
 def parse_args(raw_args): 
     description = "Runs generalized HotNet2.\
@@ -18,7 +20,7 @@ def parse_args(raw_args):
     parser.add_argument('-r', '--runname', help='Name of run / disease.')
     parser.add_argument('-mf', '--infmat_file', required=True,
                         help='Path to .mat file containing influence matrix')
-    parser.add_argument('-mn', '--infmat_name', required=True, default='Li',
+    parser.add_argument('-mn', '--infmat_name', default='Li',
                         help='Variable name of the influence matrix in the .mat file')
     parser.add_argument('-if', '--infmat_index_file', required=True,
                         help='Path to tab-separated file containing an index in the first column\
@@ -32,8 +34,9 @@ def parse_args(raw_args):
                         help='Minimum size connected components that should be returned.')
     parser.add_argument('-c', '--classic', default=False, action='store_true',
                         help='Run classic (instead of directed) HotNet.')
-    parser.add_argument('-o', '--output_file', help='Output file.  If none given, output will be\
-                                                     written to stdout.')
+    parser.add_argument('-o', '--output_directory', default='hotnet_output',
+                        help='Output directory. Files results.json, components.txt, and\
+                              significance.txt will be generated in subdirectories for each delta.')
     
     #parent parser for arguments common to all permutation types
     parent_parser = hnap.HotNetArgParser(add_help=False, fromfile_prefix_chars='@')
@@ -79,6 +82,13 @@ def parse_args(raw_args):
     return parser.parse_args(raw_args)
 
 def run(args):
+    # create output directory if doesn't exist; warn if it exists and is not empty
+    if not os.path.exists(args.output_directory):
+        os.makedirs(args.output_directory)
+    if len(os.listdir(args.output_directory)) > 0:
+        print("WARNING: Output directory is not empty. Any conflicting files will be overwritten. "
+              "(Ctrl-c to cancel).")
+    
     # load data
     infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]  
     infmat_index = hnio.load_index(args.infmat_index_file)
@@ -88,6 +98,12 @@ def run(args):
     M, gene_index = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
     h = hn.heat_vec(heat, gene_index)
     sim = hn.similarity_matrix(M, h, not args.classic)
+    
+    delta = args.delta
+    delta_out_dir = args.output_directory + "/delta_" + str(delta)
+    if not os.path.isdir(delta_out_dir):
+        os.mkdir(delta_out_dir)
+    
     G = hn.weighted_graph(sim, gene_index, args.delta, not args.classic)
     ccs = hn.connected_components(G, args.min_cc_size)
     
@@ -109,15 +125,19 @@ def run(args):
     ccs.sort(key=lambda comp: comp[0])
     ccs.sort(key=len, reverse=True)
     
-    # write output
+    #write output
+    hnio.write_components_as_tsv(os.path.abspath(delta_out_dir) + "/" + COMPONENTS_TSV, ccs)
+    
     output_dict = {"parameters": vars(args), "heat_parameters": heat_params,
                    "sizes": hn.component_sizes(ccs), "components": ccs}
     if args.permutation_type != "none":
         output_dict["statistics"] = sizes2stats
+        hnio.write_significance_as_tsv(os.path.abspath(delta_out_dir) + "/" + SIGNIFICANCE_TSV,
+                                       sizes2stats)
     
-    output_file = open(args.output_file, 'w') if args.output_file else sys.stdout
-    json.dump(output_dict, output_file, indent=4)
-    if (args.output_file): output_file.close()
+    json_out = open(os.path.abspath(delta_out_dir) + "/" + JSON_OUTPUT, 'w')
+    json.dump(output_dict, json_out, indent=4)
+    json_out.close()
 
 def heat_permutation_significance(args, heat, infmat, infmat_index, G):
     print "* Performing permuted heat statistical significance..."

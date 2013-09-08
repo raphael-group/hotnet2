@@ -55,10 +55,6 @@ def parse_args(raw_args):
     
     return parser.parse_args(raw_args)
 
-JSON_OUTPUT = "results.json"
-COMPONENTS_TSV = "components.txt"
-SIGNIFICANCE_TSV = "significance.txt"
-
 def run(args):
     # create output directory if doesn't exist; warn if it exists and is not empty
     if not os.path.exists(args.output_directory):
