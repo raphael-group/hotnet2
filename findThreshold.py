@@ -108,7 +108,7 @@ def run(args):
     elif args.perm_type == "network":
         deltas = get_deltas_for_network(args.permuted_networks_path, heat, args.infmat_name,
                                          infmat_index, args.test_statistic, args.sizes,
-                                         args.classic, args.parallel)
+                                         args.classic, args.num_permutations, args.parallel)
     else:
         raise ValueError("Invalid mutation permutation type: %s" % args.perm_type)
     
