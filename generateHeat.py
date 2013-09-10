@@ -41,7 +41,7 @@ def parse_args(raw_args):
                                        column of each line is a sample ID and subsequent columns\
                                        contain the names of genes with SNVs in that sample. Lines\
                                        starting with "#" will be ignored.')
-    mutation_parser.add_argument('--cna_file', required=True,
+    mutation_parser.add_argument('--cna_file',
                                  help='Path to a tab-separated file containing CNAs where the first\
                                        column of each line is a sample ID and subsequent columns\
                                        contain gene names followed by "(A)" or "(D)" indicating an\
@@ -127,7 +127,7 @@ def load_mutation_heat(args):
     samples = hnio.load_samples(args.sample_file) if args.sample_file else None
     genes = hnio.load_genes(args.gene_file) if args.gene_file else None
     snvs = hnio.load_snvs(args.snv_file, genes, samples)
-    cnas = hnio.load_cnas(args.cna_file, genes, samples)
+    cnas = hnio.load_cnas(args.cna_file, genes, samples) if args.cna_file else []
     if args.cna_filter_threshold:
         cnas = hnheat.filter_cnas(cnas, args.cna_filter_threshold)
     
