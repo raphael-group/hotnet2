@@ -36,7 +36,7 @@ For more details, please refer to the publications listed at the end of this REA
 
 Simple runs
 ------------------------
-To get started running HotNet quickly and easily, use the `simpleRun.py` Python script.  You must
+To get started running HotNet2 quickly and easily, use the `simpleRun.py` Python script.  You must
 provide the following parameters:
 
         =====================================================================================
@@ -52,11 +52,14 @@ provide the following parameters:
         |                        |first column and the heat score for that gene in the      |
         |                        |second column of each line.                               |
         -------------------------------------------------------------------------------------
-        
+        |-pnp/                   |Path to influence matrices for permuted networks.  Include|
+        |--permuted_networks_path|'NUM' in the path to be replaced with the iteration number|
+        -------------------------------------------------------------------------------------
+
 Running with only the parameters specified above will create a 'hotnet_output' directory in your
-current working directory that contains 5 subdirectories each prefixed with `delta_`. Each of these
+current working directory that contains 4 subdirectories each prefixed with `delta_`. Each of these
 subdirectories contains results files for a different value of the delta parameter used by the
-HotNet algorithm. The output files are:
+HotNet2 algorithm. The output files are:
 
 * `components.txt`: Lists subnetworks identified as significantly altered, one per line. Genes
   within each subnetwork are separated by tabs.
@@ -65,12 +68,6 @@ HotNet algorithm. The output files are:
   for the observed number of subnetworks.
 * `results.json`: Contains all of the above information plus the parameters used for the run in
   JSON format to faciliate further automated processing
-
-To see an example, first make sure you have downloaded the influence matrices from
-[http://compbio.cs.brown.edu/projects/hotnet/](http://compbio.cs.brown.edu/projects/hotnet/)
-and saved them in the `influence_matrices` directory, then run:
-
-    python simpleRun.py @example/configs/simple.config
 
 When using `simpleRun.py`, you may also optionally provide any or all of the parameters listed
 below. If one of these parameters is not provided, it will be set to the default value shown below.
@@ -100,6 +97,35 @@ below. If one of these parameters is not provided, it will be set to the default
         --------------------------------------------------------------------------------------------------------
         |-o/--output_directory   | hotnet_output    |Output directory.                                         |
         --------------------------------------------------------------------------------------------------------
+
+For simple runs on classic HotNet, use the `simpleRunClassic.py' Python script.  The following
+parameters are required:
+
+        =====================================================================================
+        | PARAMETER NAME         | DESCRIPTION                                              |
+        =====================================================================================
+        |-mf/--infmat_file       |Path to .mat file containing influence matrix downloaded  |
+        |                        |from http://compbio.cs.brown.edu/projects/hotnet/         |
+        -------------------------------------------------------------------------------------
+        |-if/--infmat_index_file |Path to gene-index mapping file downloaded from           |
+        |                        |http://compbio.cs.brown.edu/projects/hotnet/              |
+        -------------------------------------------------------------------------------------
+        |-hf/--heat_file         |Path to a tab-separated file containing a gene name in the|
+        |                        |first column and the heat score for that gene in the      |
+        |                        |second column of each line.                               |
+        -------------------------------------------------------------------------------------
+
+Running with only the parameters specified above will create a 'hotnet_output' directory in your
+current working directory that contains 5 subdirectories each prefixed with `delta_`. Each of these
+subdirectories contains results files for a different value of the delta parameter used by the
+classic HotNet algorithm.  The contents of the directories are identical to those described above
+for simple runs of HotNet2 algorithm using `simpleRun.py'.
+
+To see an example, first make sure you have downloaded the influence matrices from
+[http://compbio.cs.brown.edu/projects/hotnet/](http://compbio.cs.brown.edu/projects/hotnet/)
+and saved them in the `influence_matrices` directory, then run:
+
+    python simpleRun.py @example/configs/simple.config
 
 
 HotNet algorithm & code
