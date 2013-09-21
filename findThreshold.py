@@ -30,9 +30,10 @@ def parse_args(raw_args):
                                 help='Number of permuted data sets to generate')
     parent_parser.add_argument('-s', '--test_statistic', choices=[MAX_CC_SIZE, NUM_CCS],
                                default=MAX_CC_SIZE,
-                               help='If max_cc_size, select smallest delta such that the size of\
-                               the largest CC size is >= k. If num_ccs, select median delta that\
-                               maximizes the number of CCs of size >= k.')
+                               help='If ' + MAX_CC_SIZE +', select smallest delta for each permuted\
+                                     dataset such that the size of the largest CC is <= l. If ' +
+                                     NUM_CCS + 'select for each permuted dataset the delta that \
+                                     maximizes the number of CCs of size >= l.')
     parent_parser.add_argument('-l', '--sizes', nargs='+', type=int, help='See test_statistic')
     parent_parser.add_argument('--parallel', dest='parallel', action='store_true',
                                help='Run permutation tests in parallel. Only recommended for machines\
