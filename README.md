@@ -1,6 +1,107 @@
 HotNet2
 =======================
 
+HotNet is an algorithm for finding significantly altered subnetworks in a large gene interaction
+network. While originally developed for use with cancer mutation data, the current release of
+HotNet also supports the application in which scores can be assigned to genes in the network
+(previously called generalizedHotNet).
+
+Requirements
+------------------------
+
+* Linux/Unix
+* [Python 2.7](http://python.org/)
+* [NumPy 1.6.2](http://www.numpy.org/)
+* [SciPy 0.10.1](http://www.scipy.org/)
+* [NetworkX 1.7](http://networkx.github.io/)
+
+HotNet will likely work with additional versions of Python, NetworkX, NumPy, and SciPy, but
+alternative configurations have not been tested.
+
+Support
+------------------------
+For support using HotNet, please visit the [HotNet Google Group](https://groups.google.com/forum/#!forum/hotnet-users).
+
+HotNet2 vs. Classic HotNet
+------------------------
+This distribution contains two related algorithms for finding significantly altered subnetworks in
+a large gene interaction network: the original HotNet algorithm "classic HotNet", and an updated
+version "HotNet2".  HotNet2 differs from classic HotNet in several important ways.  First, HotNet2 
+ses a new heat diffusion kernel analogous to random walk with restart that better captures the
+local topology of the interaction network surrounding a protein compared to the general heat
+diffusion process used by HotNet.  HotNet2 also uses an asymmetric influence score and different
+permutation testing and parameter selection procedures.
+
+For more details, please refer to the publications listed at the end of this README.
+
+Simple runs
+------------------------
+To get started running HotNet quickly and easily, use the `simpleRun.py` Python script.  You must
+provide the following parameters:
+
+        =====================================================================================
+        | PARAMETER NAME         | DESCRIPTION                                              |
+        =====================================================================================
+        |-mf/--infmat_file       |Path to .mat file containing influence matrix downloaded  |
+        |                        |from http://compbio.cs.brown.edu/projects/hotnet/         |
+        -------------------------------------------------------------------------------------
+        |-if/--infmat_index_file |Path to gene-index mapping file downloaded from           |
+        |                        |http://compbio.cs.brown.edu/projects/hotnet/              |
+        -------------------------------------------------------------------------------------
+        |-hf/--heat_file         |Path to a tab-separated file containing a gene name in the|
+        |                        |first column and the heat score for that gene in the      |
+        |                        |second column of each line.                               |
+        -------------------------------------------------------------------------------------
+        
+Running with only the parameters specified above will create a 'hotnet_output' directory in your
+current working directory that contains 5 subdirectories each prefixed with `delta_`. Each of these
+subdirectories contains results files for a different value of the delta parameter used by the
+HotNet algorithm. The output files are:
+
+* `components.txt`: Lists subnetworks identified as significantly altered, one per line. Genes
+  within each subnetwork are separated by tabs.
+* `significance.txt`: For k from 2 - 10, lists the number of subnetworks of size >= k found in the
+  real data, the expected number of subnetworks of size >= k based on permuted data, and the p-value
+  for the observed number of subnetworks.
+* `results.json`: Contains all of the above information plus the parameters used for the run in
+  JSON format to faciliate further automated processing
+
+To see an example, first make sure you have downloaded the influence matrices from
+[http://compbio.cs.brown.edu/projects/hotnet/](http://compbio.cs.brown.edu/projects/hotnet/)
+and saved them in the `influence_matrices` directory, then run:
+
+    python simpleRun.py @example/configs/simple.config
+
+When using `simpleRun.py`, you may also optionally provide any or all of the parameters listed
+below. If one of these parameters is not provided, it will be set to the default value shown below.
+
+        ========================================================================================================
+        | PARAMETER NAME         | DEFAULT          | DESCRIPTION                                              |
+        ========================================================================================================
+        |-r/--runname            | None             |Name of run/disease. This is only for the user's          |
+        |                        |                  |record-keeping convenience; the parameter is not used by  |
+        |                        |                  |the HotNet algorithm.                                     |
+        --------------------------------------------------------------------------------------------------------
+        |-ccs/--min_cc_size      | 3                |Minimum size connected components that should be returned.|
+        --------------------------------------------------------------------------------------------------------
+        |-ms/--min_heat_score    | See description  |Minimum heat score for a gene to be eligible for inclusion|
+        |                        |                  |in a returned connected component. By default, all genes  |
+        |                        |                  |with positive heat scores will be included. (To include   |
+        |                        |                  |genes with score zero, set min_heat_score to 0).          |
+        --------------------------------------------------------------------------------------------------------
+        |-n/--num_permutations   | 100              |Number of permutations that should be used for parameter  |
+        |                        |                  |selection and statistical significance testing            |
+        --------------------------------------------------------------------------------------------------------
+        |--parallel              | Not default      |Include flag to run permutation tests in parallel. Only   |
+        |                        |                  |recommended for machines with at least 8 cores.           |
+        --------------------------------------------------------------------------------------------------------
+        |--no-parallel           | Default          |Include flag to run permutation tests sequentially.       |
+        |                        |                  |Recommended for machines with fewer than 8 cores.         |
+        --------------------------------------------------------------------------------------------------------
+        |-o/--output_directory   | hotnet_output    |Output directory.                                         |
+        --------------------------------------------------------------------------------------------------------
+
+
 HotNet algorithm & code
 ------------------------
 The HotNet algorithm, whether classic or directed, has 4 basic steps:
