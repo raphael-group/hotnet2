@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import math
 import random
 import string
+import numpy as np
 
 RWL = 5
 def randomword(length):
@@ -13,16 +14,19 @@ def e(node1, node2, weight):
     return (node1, node2, {"weight": str(weight)+'_'+randomword(RWL)})
 
 def get_index(edges, weight):
-    weight = float(weight.split('_')[0])
+    weight = get_as_float(weight)
     index = -1
     for i in range(len(edges)):
-        if float(edges[i][2]['weight'].split('_')[0]) <= weight:
+        if get_as_float(edges[i][2]['weight']) <= weight:
             index = i
-    print 'index', index
+        #if float(edges[i][2]['weight'].split('_')[0]) <= weight:
+        #    index = i
+    #print 'index', index
     return index
 
 def sort_key(node):
-    return float(node[2]['weight'].split('_')[0])
+    return get_as_float(node[2]['weight'])
+    #return float(node[2]['weight'].split('_')[0])
 
 def condensation(G, sccs):
     edges = sorted(G.edges(data=True), key=sort_key)
@@ -39,24 +43,25 @@ def condensation(G, sccs):
             C.add_edge(names[mapping[edge[0]]], names[mapping[edge[1]]], {'weight': edge[2]['weight']})
     return C
 
-def is_int(s):
+def is_float(s):
     try:
-        int(s)
+        float(s)
         return True
     except ValueError:
         return False
 
-def get_as_int(s):
-    if type(s) == int:
+def get_as_float(s):
+    if type(s) == float or type(s) == int or type(s) == np.float64:
         return s
-    return int(s.split('_')[0])
+    return float(s.split('_')[0])
 
 def get_root(G):
-    root = -1
+    root = float('-inf')
     for node in G.nodes():
-        if (type(node) == int or is_int(node.split('_')[0])) and get_as_int(node) > get_as_int(root):
+        #print node
+        if (type(node) == float or type(node) == np.float64 or is_float(node.split('_')[0])) and get_as_float(node) > get_as_float(root):
             root = node
-    if root == -1:
+    if root == float('-inf'):
         raise ValueError()
     return root
 
@@ -64,9 +69,9 @@ def tarjan(G, edges, i):
     if len(nx.strongly_connected_components(G)) != 1:
         raise ValueError("G must be strongly connected")
     
-    print '\n', G.nodes(), ' - ', edges, ' - ', i
+    #print '\n', G.nodes(), ' - ', edges, ' - ', i
     if len(edges) - (i+1) == 1 or len(edges) - (i+1) == 0:
-        print "in base case"
+        #print "in base case"
         root = edges[-1][2]['weight']
         T = nx.DiGraph()
         T.add_edges_from([(root, node) for node in G.nodes()])
@@ -77,8 +82,8 @@ def tarjan(G, edges, i):
         G_j = nx.DiGraph()
         G_j.add_nodes_from(G.nodes())
         G_j.add_edges_from(edges[:j])
-        print "Gj nodes", G_j.nodes()
-        print "Gj edges", G_j.edges(data=True)
+        #print "Gj nodes", G_j.nodes()
+        #print "Gj edges", G_j.edges(data=True)
         scc_graphs = nx.strongly_connected_component_subgraphs(G_j)
         if len(scc_graphs) == 1:
             return tarjan(G_j, edges[:j], i)
@@ -90,15 +95,15 @@ def tarjan(G, edges, i):
                     scc_index = get_index(scc_edges, edges[i][2]['weight']) if i > -1 else -1
                     subgraph_trees[''.join(scc_graph.nodes())] = tarjan(scc_graph, scc_edges, scc_index)
         C = condensation(G, [scc_graph.nodes() for scc_graph in scc_graphs])
-        print C.nodes()
-        print C.edges(data=True)
+        #print C.nodes()
+        #print C.edges(data=True)
         c_edges = sorted(C.edges(data=True), key=sort_key)
         c_index = get_index(c_edges, edges[j-1][2]['weight'])
         T_c = tarjan(C, c_edges, c_index)
         root = get_root(T_c)
-        print root
+        #print root
         to_return = nx.DiGraph()
-        print "keys:", subgraph_trees.keys()
+        #print "keys:", subgraph_trees.keys()
         for edge in T_c.edges():
             if edge[1] in subgraph_trees:
                 subgraph_tree = subgraph_trees[edge[1]]
@@ -106,54 +111,64 @@ def tarjan(G, edges, i):
                 to_return.add_edges_from(subgraph_tree.edges())
             else:
                 to_return.add_edge(edge[0], edge[1])
-        print "to_return:", to_return.nodes(), to_return.edges()
+        #print "to_return:", to_return.nodes(), to_return.edges()
         return to_return
 
 def draw(G):
     nx.draw(G)
     plt.show()
+    
+def write(G, out_file):
+    out = open(out_file, 'w')
+    out.write(str(G.edges()))
+    out.close()
 
-# testEdges = [e('a', 'b', 1), e('b', 'a', 2)]
+def run():
+    # testEdges = [e('a', 'b', 1), e('b', 'a', 2)]
+    
+    # testEdges = [e('a', 'b', 1), e('b', 'a', 1)]
+    
+    # testEdges = [e('a', 'b', 1), e('b', 'a', 2), e('b', 'c', 3), e('c', 'a', 4)]
+    
+    # testEdges = [e('a', 'b', 1), e('b', 'a', 1), e('b', 'c', 2), e('c', 'b', 2)]
+    
+    # testEdges = [e('a', 'b', 1), e('b', 'a', 1), e('c', 'd', 2), e('d', 'c', 2),
+    #             e('a', 'c', 3), e('c', 'a', 3)]
+    
+    # testEdges = [e('a', 'b', 1), e('b', 'a', 1), e('c', 'd', 1), e('d', 'c', 1),
+    #             e('a', 'c', 3), e('c', 'a', 3)]
+    
+    # testEdges = [e('a', 'b', 1), e('b', 'a', 1), e('c', 'd', 2), e('d', 'c', 2),
+    #              e('e', 'f', 3), e('f', 'e', 3), e('a', 'c', 4), e('c', 'a', 4),
+    #              e('e', 'c', 5), e('c', 'e', 5)]
+    
+    # testEdges = [e('a', 'b', 1), e('b', 'a', 1), e('c', 'd', 1), e('d', 'c', 1),
+    #              e('e', 'f', 1), e('f', 'e', 1), e('a', 'c', 3), e('c', 'a', 3),
+    #              e('e', 'd', 3), e('d', 'e', 3)]
+    
+    #########################
+    
+    # testEdges = [e('a', 'b', 10),  e('a', 'g', 15), e('b', 'a', 12),  e('g', 'b', 35), e('b', 'c', 30),
+    #              e('c', 'g', 45)]
+    
+#     testEdges = [e('a', 'b', 10),  e('a', 'g', 15), e('b', 'a', 12), e('b', 'c', 30), e('c', 'g', 45),
+#                  e('d', 'c', 6), e('d', 'e', 16), e('d', 'g', 14), e('e', 'd', 13), e('e', 'f', 8),
+#                  e('f', 'a', 26), e('f', 'g', 20), e('g', 'b', 35), e('g', 'c', 22), e('g', 'e', 50)]
+    
+    #########################
+    
+    testEdges = [e('a', 'b', 10), e('b', 'a', 10), e('b', 'c', 5), e('c', 'a', 5)]
+    
+#     testEdges = [e('a', 'b', -10), e('b', 'a', -10), e('b', 'c', -5), e('c', 'a', -5)]
+    
+    testG = nx.DiGraph()
+    testG.add_edges_from(testEdges)
+    
+    # draw(testG)
+    
+    T = tarjan(testG, sorted(testEdges, key=sort_key), -1)
+    write(T, 'OUTFILE')
+    draw(T)
 
-# testEdges = [e('a', 'b', 1), e('b', 'a', 1)]
-
-# testEdges = [e('a', 'b', 1), e('b', 'a', 2), e('b', 'c', 3), e('c', 'a', 4)]
-
-# testEdges = [e('a', 'b', 1), e('b', 'a', 1), e('b', 'c', 2), e('c', 'b', 2)]
-
-# testEdges = [e('a', 'b', 1), e('b', 'a', 1), e('c', 'd', 2), e('d', 'c', 2),
-#             e('a', 'c', 3), e('c', 'a', 3)]
-
-# testEdges = [e('a', 'b', 1), e('b', 'a', 1), e('c', 'd', 1), e('d', 'c', 1),
-#             e('a', 'c', 3), e('c', 'a', 3)]
-
-# testEdges = [e('a', 'b', 1), e('b', 'a', 1), e('c', 'd', 2), e('d', 'c', 2),
-#              e('e', 'f', 3), e('f', 'e', 3), e('a', 'c', 4), e('c', 'a', 4),
-#              e('e', 'c', 5), e('c', 'e', 5)]
-
-# testEdges = [e('a', 'b', 1), e('b', 'a', 1), e('c', 'd', 1), e('d', 'c', 1),
-#              e('e', 'f', 1), e('f', 'e', 1), e('a', 'c', 3), e('c', 'a', 3),
-#              e('e', 'd', 3), e('d', 'e', 3)]
-
-#########################
-
-# testEdges = [e('a', 'b', 10),  e('a', 'g', 15), e('b', 'a', 12),  e('g', 'b', 35), e('b', 'c', 30),
-#              e('c', 'g', 45)]
-
-testEdges = [e('a', 'b', 10),  e('a', 'g', 15), e('b', 'a', 12), e('b', 'c', 30), e('c', 'g', 45),
-             e('d', 'c', 6), e('d', 'e', 16), e('d', 'g', 14), e('e', 'd', 13), e('e', 'f', 8),
-             e('f', 'a', 26), e('f', 'g', 20), e('g', 'b', 35), e('g', 'c', 22), e('g', 'e', 50)]
-
-#########################
-
-# testEdges = [e('a', 'b', 10), e('b', 'a', 10), e('b', 'c', 5), e('c', 'a', 5)]
-
-# testEdges = [e('a', 'b', -10), e('b', 'a', -10), e('b', 'c', -5), e('c', 'a', -5)]
-
-testG = nx.DiGraph()
-testG.add_edges_from(testEdges)
-
-# draw(testG)
-
-T = tarjan(testG, sorted(testEdges, key=sort_key), -1)
-draw(T)
+if __name__ == "__main__": 
+    run()
