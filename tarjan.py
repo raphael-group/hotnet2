@@ -5,23 +5,27 @@ import math
 import random
 import string
 
-RWL = 4
+RWL = 5
 def randomword(length):
     return ''.join(random.choice(string.lowercase) for _ in range(length))
 
 def e(node1, node2, weight):
-    return (node1, node2, {"weight": weight})
+    return (node1, node2, {"weight": str(weight)+'_'+randomword(RWL)})
 
 def get_index(edges, weight):
+    weight = float(weight.split('_')[0])
     index = -1
     for i in range(len(edges)):
-        if edges[i][2]['weight'] <= weight:
+        if float(edges[i][2]['weight'].split('_')[0]) <= weight:
             index = i
     print 'index', index
     return index
 
+def sort_key(node):
+    return float(node[2]['weight'].split('_')[0])
+
 def condensation(G, sccs):
-    edges = sorted(G.edges(data=True), key=lambda x: x[2]['weight'], reverse=True)
+    edges = sorted(G.edges(data=True), key=sort_key)
     mapping = {}
     names = defaultdict(str)
     for i, component in enumerate(sccs):
@@ -42,10 +46,15 @@ def is_int(s):
     except ValueError:
         return False
 
+def get_as_int(s):
+    if type(s) == int:
+        return s
+    return int(s.split('_')[0])
+
 def get_root(G):
     root = -1
     for node in G.nodes():
-        if type(node) == int or is_int(node.split('_')[0]):
+        if (type(node) == int or is_int(node.split('_')[0])) and get_as_int(node) > get_as_int(root):
             root = node
     if root == -1:
         raise ValueError()
@@ -59,7 +68,6 @@ def tarjan(G, edges, i):
     if len(edges) - (i+1) == 1 or len(edges) - (i+1) == 0:
         print "in base case"
         root = edges[-1][2]['weight']
-        #root = str(edges[-1][2]['weight']) + '_' + randomword(RWL)
         T = nx.DiGraph()
         T.add_edges_from([(root, node) for node in G.nodes()])
         return T
@@ -78,13 +86,13 @@ def tarjan(G, edges, i):
             subgraph_trees = {}
             for scc_graph in scc_graphs:
                 if len(scc_graph) > 1:
-                    scc_edges = sorted(scc_graph.edges(data=True), key=lambda x: x[2]['weight'])
+                    scc_edges = sorted(scc_graph.edges(data=True), key=sort_key)
                     scc_index = get_index(scc_edges, edges[i][2]['weight']) if i > -1 else -1
                     subgraph_trees[''.join(scc_graph.nodes())] = tarjan(scc_graph, scc_edges, scc_index)
         C = condensation(G, [scc_graph.nodes() for scc_graph in scc_graphs])
         print C.nodes()
         print C.edges(data=True)
-        c_edges = sorted(C.edges(data=True), key=lambda x: x[2]['weight'])
+        c_edges = sorted(C.edges(data=True), key=sort_key)
         c_index = get_index(c_edges, edges[j-1][2]['weight'])
         T_c = tarjan(C, c_edges, c_index)
         root = get_root(T_c)
@@ -147,5 +155,5 @@ testG.add_edges_from(testEdges)
 
 # draw(testG)
 
-T = tarjan(testG, sorted(testEdges, key=lambda x: x[2]['weight']), -1)
+T = tarjan(testG, sorted(testEdges, key=sort_key), -1)
 draw(T)
