@@ -31,8 +31,8 @@ def parse_args(raw_args):
     heat_parser.add_argument('-e', '--excluded_genes_output_file',
                              help='File path to which the list of genes that were excluded from\
                                    the heat score output due to the specified filtering parameters\
-                                   should be written, one gene per line. If no genes were filtered,\
-                                   the file will be empty.')
+                                   should be written, one gene per line. If no genes were filtered\
+                                   and a path is specified, the resulting file will be empty.')
     heat_parser.set_defaults(heat_fn=load_direct_heat)
     
     mutation_parser = subparsers.add_parser('mutation', help='Mutation data', parents=[parent_parser])
