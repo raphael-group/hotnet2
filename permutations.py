@@ -28,7 +28,7 @@ def permute_heat(heat, num_permutations, addtl_genes=None, parallel=True):
     
     """
     if parallel:
-        pool = mp.Pool()
+        pool = mp.Pool(25)
         map_fn = pool.map
     else:
         map_fn = map
@@ -117,7 +117,7 @@ def generate_mutation_permutation_heat(heat_fn, sample_file, gene_file, genes_in
     genes = set(genes).intersection(genes_in_network)
     
     if parallel:
-        pool = mp.Pool()
+        pool = mp.Pool(25)
         map_fn = pool.map
     else:
         map_fn = map

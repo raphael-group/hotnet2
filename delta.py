@@ -156,7 +156,7 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
     
     """
     if parallel:
-        pool = mp.Pool()
+        pool = mp.Pool(25)
         map_fn = pool.map
     else:
         map_fn = map
@@ -205,7 +205,7 @@ def heat_delta_selection(infmat, index2gene, heat_permutations, sizes, directed=
     
     """
     if parallel:
-        pool = mp.Pool()
+        pool = mp.Pool(25)
         map_fn = pool.map
     else:
         map_fn = map

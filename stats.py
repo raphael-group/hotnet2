@@ -41,7 +41,7 @@ def calculate_permuted_cc_counts(infmat, index2gene, heat_permutations, delta,
     
     """
     if parallel:
-        pool = mp.Pool()
+        pool = mp.Pool(25)
         map_fn = pool.map
     else:
         map_fn = map
