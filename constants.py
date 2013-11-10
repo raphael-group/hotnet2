@@ -4,6 +4,7 @@ from collections import namedtuple
 SNV = "snv"
 AMP = "amp"
 DEL = "del"
+INACTIVE_SNV = "inactive_snv"
 
 #test statistics
 MAX_CC_SIZE = 'max_cc_size'

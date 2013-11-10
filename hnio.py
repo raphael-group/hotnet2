@@ -126,6 +126,7 @@ def load_snvs(snv_file, gene_wlst=None, sample_wlst=None):
     Arguments:
     snv_file -- path to TSV file containing SNVs where the first column of each line is a sample ID
                 and subsequent columns contain the names of SNVs with mutations in that sample.
+                Lines starting with "#" will be ignored.
     gene_wlist -- whitelist of allowed genes (default None). Genes not in this list will be ignored.
                   If None, all mutated genes will be included.
     sample_wlist -- whitelist of allowed samples (default None). Samples not in this list will be
@@ -135,6 +136,24 @@ def load_snvs(snv_file, gene_wlst=None, sample_wlst=None):
     arrs = [l.rstrip().split("\t") for l in open(snv_file) if not l.startswith("#")]
     return [Mutation(arr[0], gene, SNV) for arr in arrs if include(arr[0], sample_wlst)
             for gene in arr[1:] if include(gene, gene_wlst)]
+
+def load_inactivating_snvs(inactivating_snvs_file, gene_wlst=None, sample_wlst=None):
+    """Load inactivating SNVs from a file and return as a list of Mutation tuples with
+    mut_type == INACTIVE_SNV.
+ 
+    Arguments:
+    inactivating_snvs_file -- path to TSV file listing inactivating SNVs where the first column of
+                              each line is a gene name and the second column is a sample ID.
+                              Lines starting with "#" will be ignored.
+    gene_wlist -- whitelist of allowed genes (default None). Genes not in this list will be ignored.
+                  If None, all mutated genes will be included.
+    sample_wlist -- whitelist of allowed samples (default None). Samples not in this list will be
+                    ignored.  If None, all samples will be included.
+
+    """
+    arrs = [line.split() for line in open(inactivating_snvs_file) if not line.startswith("#")]
+    return [Mutation(arr[1], arr[0], INACTIVE_SNV)
+            for arr in arrs if include(arr[1], sample_wlst) and include(arr[0], gene_wlst)]
 
 def load_cnas(cna_file, gene_wlst=None, sample_wlst=None):
     """Load CNA data from a file and return as a list of Mutation tuples with mut_type == AMP or DEL.
@@ -154,6 +173,14 @@ def load_cnas(cna_file, gene_wlst=None, sample_wlst=None):
     return [Mutation(arr[0], cna.split("(")[0], get_mut_type(cna))
             for arr in arrs if include(arr[0], sample_wlst)
             for cna in arr[1:] if include(cna.split("(")[0], gene_wlst)]
+
+def load_sample_types(type_file):
+    """Load sample type informaiton from a file and return as a dict mapping sample ID to type string
+    
+    Arguments:
+    type_file -- Path to tab-separated file listing sample types where the first column of each
+                 line is a sample ID and the second column is a type.
+    """
 
 def get_mut_type(cna):
     if cna.endswith("(A)"): return AMP
