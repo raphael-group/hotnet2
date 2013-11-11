@@ -181,6 +181,8 @@ def load_sample_types(type_file):
     type_file -- Path to tab-separated file listing sample types where the first column of each
                  line is a sample ID and the second column is a type.
     """
+    arrs = [line.split() for line in open(type_file)]
+    return dict([(arr[0], arr[1]) for arr in arrs])
 
 def get_mut_type(cna):
     if cna.endswith("(A)"): return AMP
