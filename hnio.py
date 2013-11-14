@@ -174,8 +174,34 @@ def load_cnas(cna_file, gene_wlst=None, sample_wlst=None):
             for arr in arrs if include(arr[0], sample_wlst)
             for cna in arr[1:] if include(cna.split("(")[0], gene_wlst)]
 
+def load_fusions(fusion_file, gene_wlst=None, sample_wlst=None, ):
+    """Load fusion information from a file and return as a list of Fusion objects.
+    
+    Arguments:
+    fusion_file -- path to TSV file containing a sample ID in the first column and gene names in
+                   the second two columns of each line. Lines starting with "#" will be ignored.
+    gene_wlist -- whitelist of allowed genes (default None). Genes not in this list will be ignored.
+                  If None, all mutated genes will be included. If only one gene of a fusion is in
+                  the allowed whitelist, an exception is raised.
+    sample_wlist -- whitelist of allowed samples (default None). Samples not in this list will be
+                    ignored.  If None, all samples will be included.
+    """
+    arrs = [line.split() for line in open(fusion_file) if not line.startswith("#")]
+    return [Fusion(arr[0], (arr[1], arr[2])) for arr in arrs
+            if include_fusion(sample_wlst, gene_wlst, *arr[:4])]
+
+def include_fusion(sample_wlst, gene_wlst, sample, gene1, gene2):
+    if sample_wlst and sample not in sample_wlst: return False
+    if not gene_wlst: return True
+    if gene1 not in gene_wlst and gene2 not in gene_wlst: return False
+    elif (gene1 in gene_wlst and not gene2 in gene_wlst) or \
+         (gene2 in gene_wlst and not gene1 in gene_wlst):
+        raise ValueError('Genes %s and %s are in a fusion, but one is disallowed by the gene\
+                          whitelist' % (gene1, gene2))
+    return True 
+
 def load_sample_types(type_file):
-    """Load sample type informaiton from a file and return as a dict mapping sample ID to type string
+    """Load sample type information from a file and return as a dict mapping sample ID to type string
     
     Arguments:
     type_file -- Path to tab-separated file listing sample types where the first column of each
