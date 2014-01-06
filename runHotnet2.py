@@ -86,6 +86,13 @@ def parse_args(raw_args):
                                       Include ' + ITERATION_REPLACEMENT_TOKEN + ' in the\
                                       path to be replaced with the iteration number')
     
+    precomp_parser = subparsers.add_parser('precomputed', help='Use precomputed datasets',
+                                           parents=[parent_parser])
+    precomp_parser.add_argument('-dp', '--datasets_path', required=True,
+                                help='Path to datasets to use for significance testing. Include ' +
+                                      ITERATION_REPLACEMENT_TOKEN + ' in the path to be replaced\
+                                      with the iteration number.')
+    
     return parser.parse_args(raw_args)
 
 def run(args):
@@ -128,6 +135,10 @@ def run(args):
                                     args.num_permutations, args.parallel)
         elif args.permutation_type == "network":
             pass    #nothing to do right now
+        elif args.permutation_type == "precomputed":
+            heat_file_paths = [args.datasets_path.replace(ITERATION_REPLACEMENT_TOKEN, str(i))
+                               for i in range(1, args.num_permutations+1)]
+            heat_permutations = [hnio.load_heat_tsv(heat_file) for heat_file in heat_file_paths]
         else:
             raise ValueError("Unrecognized permutation type %s" % (args.permutation_type))
     
@@ -166,9 +177,6 @@ def run(args):
         json_out = open(os.path.abspath(delta_out_dir) + "/" + JSON_OUTPUT, 'w')
         json.dump(output_dict, json_out, indent=4)
         json_out.close()
-
-# def calculate_permuted_cc_counts_network(network_paths, infmat_name, index2gene, heat, delta,
-#                                          sizes=range(2,11), directed=True, parallel=True):
 
 def calculate_significance_network(args, permuted_networks_path, index2gene, G, heat, delta, num_permutations):
     sizes = range(args.cc_start_size, args.cc_stop_size+1)
