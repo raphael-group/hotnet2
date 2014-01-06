@@ -53,7 +53,8 @@ provide the following parameters:
         |                        |second column of each line.                               |
         -------------------------------------------------------------------------------------
         |-pnp/                   |Path to influence matrices for permuted networks.  Include|
-        |--permuted_networks_path|'NUM' in the path to be replaced with the iteration number|
+        |--permuted_networks_path|'##NUM##' in the path to be replaced with the iteration   |
+        |                        |number                                                    |
         -------------------------------------------------------------------------------------
 
 Running with only the parameters specified above will create a 'hotnet_output' directory in your
@@ -276,7 +277,8 @@ The steps of the algorithm and the code provided for each step are described bel
         |                        |                  |is 3.                                                     |
         --------------------------------------------------------------------------------------------------------
         |-pnp/                   | REQUIRED         |Path to influence matrices for permuted networks.  Include|
-        |--permuted_networks_path|                  |'NUM' in the path to be replaced with the iteration number|
+        |--permuted_networks_path|                  |'##NUM##' in the path to be replaced with the iteration   |
+        |                        |                  |number                                                    |
         --------------------------------------------------------------------------------------------------------
         |-n/--num_permutations   | REQUIRED         |Number of permuted data sets to generate.                 |
         --------------------------------------------------------------------------------------------------------
