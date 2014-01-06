@@ -2,6 +2,7 @@
 import hotnet2 as hn
 import networkx as nx
 import multiprocessing as mp
+import scipy.io
 strong_ccs = nx.strongly_connected_components
 
 def num_components_min_size(G, sizes):
@@ -21,6 +22,40 @@ def significance_wrapper((infmat, index2gene, heat_permutation, delta, sizes, di
     sim_mat = hn.similarity_matrix(M, h, directed)
     G = hn.weighted_graph(sim_mat, index2gene, delta, directed)
     return num_components_min_size(G, sizes)
+
+def network_significance_wrapper((network_path, infmat_name, index2gene, heat, delta, sizes, directed)):
+    permuted_mat = scipy.io.loadmat(network_path)[infmat_name]   
+    M, gene_index = hn.induce_infmat(permuted_mat, index2gene, sorted(heat.keys()))
+    h = hn.heat_vec(heat, gene_index)
+    sim = hn.similarity_matrix(M, h, directed)
+    G = hn.weighted_graph(sim, index2gene, delta, directed)
+    return num_components_min_size(G, sizes)
+
+def calculate_permuted_cc_counts_network(network_paths, infmat_name, index2gene, heat, delta,
+                                         sizes=range(2,11), directed=True, parallel=True):
+    """Return a dict mapping a CC size to a list of the number of CCs of that size or greater in
+    each permutation.
+    """
+    if parallel:
+        pool = mp.Pool(25)
+        map_fn = pool.map
+    else:
+        map_fn = map
+    
+    args = [(network_path, infmat_name, index2gene, heat, delta, sizes, directed)
+            for network_path in network_paths] 
+    all_counts = map_fn(network_significance_wrapper, args)
+    
+    if parallel:
+        pool.close()
+        pool.join()
+
+    # Parse the results into a map of k -> counts
+    size2counts = dict([(s, []) for s in sizes])
+    for counts in all_counts:
+        for size, count in zip(sizes, counts): size2counts[size].append( count )            
+
+    return size2counts
 
 def calculate_permuted_cc_counts(infmat, index2gene, heat_permutations, delta,
                                  sizes=range(2,11), directed=True, parallel=True):

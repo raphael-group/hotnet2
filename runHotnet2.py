@@ -79,6 +79,13 @@ def parse_args(raw_args):
                                  help='File listing gene-specific BMRs. If none, the default BMR\
                                        will be used for all genes.')
     
+    #create subparser for options for permuting networks
+    network_parser = subparsers.add_parser('network', help='Permute networks', parents=[parent_parser])
+    network_parser.add_argument('-pnp', '--permuted_networks_path', required=True,
+                                help='Path to influence matrices for permuted networks.\
+                                      Include ' + ITERATION_REPLACEMENT_TOKEN + ' in the\
+                                      path to be replaced with the iteration number')
+    
     return parser.parse_args(raw_args)
 
 def run(args):
@@ -119,6 +126,8 @@ def run(args):
                                     args.bmr_file, heat_params["cna_file"], args.gene_order_file,
                                     heat_params["cna_filter_threshold"], heat_params["min_freq"],
                                     args.num_permutations, args.parallel)
+        elif args.permutation_type == "network":
+            pass    #nothing to do right now
         else:
             raise ValueError("Unrecognized permutation type %s" % (args.permutation_type))
     
@@ -132,7 +141,11 @@ def run(args):
         
         # calculate significance
         if args.permutation_type != "none":
-            sizes2stats = calculate_significance(args, infmat, infmat_index, G, delta, heat_permutations)
+            if args.permutation_type == "network":
+                sizes2stats = calculate_significance_network(args, args.permuted_networks_path,
+                                                             gene_index, G, heat, delta, args.num_permutations)
+            else:
+                sizes2stats = calculate_significance(args, infmat, infmat_index, G, delta, heat_permutations)
         
         #sort ccs list such that genes within components are sorted alphanumerically, and components
         #are sorted first by length, then alphanumerically by name of the first gene in the component 
@@ -153,6 +166,27 @@ def run(args):
         json_out = open(os.path.abspath(delta_out_dir) + "/" + JSON_OUTPUT, 'w')
         json.dump(output_dict, json_out, indent=4)
         json_out.close()
+
+# def calculate_permuted_cc_counts_network(network_paths, infmat_name, index2gene, heat, delta,
+#                                          sizes=range(2,11), directed=True, parallel=True):
+
+def calculate_significance_network(args, permuted_networks_path, index2gene, G, heat, delta, num_permutations):
+    sizes = range(args.cc_start_size, args.cc_stop_size+1)
+    
+    print "\t- Using no. of components >= k (k \\in",
+    print "[%s, %s]) as statistic" % (min(sizes), max(sizes))
+    
+    permuted_network_paths = [permuted_networks_path.replace(ITERATION_REPLACEMENT_TOKEN, str(i))
+                              for i in range(1, num_permutations+1)]
+
+    #size2counts is dict(size -> (list of counts, 1 per permutation))
+    sizes2counts = stats.calculate_permuted_cc_counts_network(permuted_network_paths, args.infmat_name,
+                                                        index2gene, heat, delta, sizes,
+                                                        not args.classic, args.parallel)
+    
+    real_counts = stats.num_components_min_size(G, sizes)
+    size2real_counts = dict(zip(sizes, real_counts))
+    return stats.compute_statistics(size2real_counts, sizes2counts, args.num_permutations)
 
 def calculate_significance(args, infmat, infmat_index, G, delta, heat_permutations):
     sizes = range(args.cc_start_size, args.cc_stop_size+1)
