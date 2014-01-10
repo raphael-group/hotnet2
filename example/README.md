@@ -25,14 +25,17 @@ To run an example using mutation data, first create the directory `example/outpu
 
 1. Generate the heat file from the mutation data.
        
-       python generateHeat.py @example/configs/heat.config
+        python generateHeat.py @example/configs/heat.config
+
 2. Perform delta selection.
 
-       python findThreshold.py @example/configs/delta.config
+        python findThreshold.py @example/configs/delta.config
+        
    (Note that `findThreshold.py` will output a file that contains a distribution of deltas. In practice, you would use this distribution to choose the delta for running HotNet2 (e.g. by taking the median), and then update the `delta` parameter of `example/configs/significance.config` and `example/configs/run.config`)
 3. Run HotNet2 (without significance testing).
 
-       python runHotNet2.py @example/configs/run.config
+        python runHotNet2.py @example/configs/run.config
+        
 4. Run HotNet2 (with significance testing).
 
-       python runHotNet2.py @example/configs/significance.config
+        python runHotNet2.py @example/configs/significance.config
