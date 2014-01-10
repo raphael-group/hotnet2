@@ -2,8 +2,8 @@
 import sys
 import json
 import scipy.io
-from hotnet import hnap, hnio, delta, permutations
-from hotnet.constants import *
+from hotnet2 import hnap, hnio, delta, permutations
+from hotnet2.constants import *
 
 def parse_args(raw_args):
     description = "Runs HotNet threshold-finding procedure.\

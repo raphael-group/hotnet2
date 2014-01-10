@@ -65,7 +65,7 @@ You must provide the following parameters:
         |                        |number                                                    |
         -------------------------------------------------------------------------------------
 
-Running with only the parameters specified above will create a 'hotnet_output' directory in your
+Running with only the parameters specified above will create a 'hotnet2_output' directory in your
 current working directory that contains 4 subdirectories each prefixed with `delta_`. Each of these
 subdirectories contains results files for a different value of the delta parameter used by the
 HotNet2 algorithm. The output files are:
@@ -124,7 +124,7 @@ below. If one of these parameters is not provided, it will be set to the default
         |--no-parallel           | Default          |Include flag to run permutation tests sequentially.       |
         |                        |                  |Recommended for machines with fewer than 8 cores.         |
         --------------------------------------------------------------------------------------------------------
-        |-o/--output_directory   | hotnet_output    |Output directory.                                         |
+        |-o/--output_directory   | hotnet2_output    |Output directory.                                        |
         --------------------------------------------------------------------------------------------------------
 
 Advanced use
@@ -486,6 +486,11 @@ PPR matrices for the following interaction networks:
 
 See above for instructions on using these files and the provided Python scripts to create the
 required PPR matrices.
+
+Example data
+------------------------
+In the `example` directory, we provide example heat, interaction network, and mutation data files, as well as example HotNet2 configuration files. Please consult `example/README.md` for further details.
+
 
 Citation
 ------------------------

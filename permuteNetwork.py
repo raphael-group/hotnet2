@@ -2,7 +2,7 @@
 
 # Load required modules
 import sys, os, networkx as nx
-from hotnet import hnap
+from hotnet2 import hnap
 
 # Parse arguments
 def parse_args(raw_args):

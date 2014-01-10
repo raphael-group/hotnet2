@@ -4,10 +4,10 @@ import shutil
 import os
 import argparse
 import json
-from hotnet import hnio, hnap
-from hotnet.viz import *
-from hotnet.constants import *
-import hotnet
+from hotnet2 import hnio, hnap
+from hotnet2.viz import *
+from hotnet2.constants import *
+import hotnet2
 
 def parse_args(raw_args):
     description = 'Creates a website showing the subnetworks output by HotNet2.'

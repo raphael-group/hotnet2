@@ -4,9 +4,9 @@ import sys
 import shutil
 import scipy.io
 import numpy as np
-import hotnet
-from hotnet import hnap, findThreshold as ft, heat as hnheat, hnio, hotnet2 as hn, permutations as p, stats, viz
-from hotnet.constants import *
+import hotnet2
+from hotnet2 import hnap, findThreshold as ft, heat as hnheat, hnio, hotnet2 as hn, permutations as p, stats, viz
+from hotnet2.constants import *
 
 MAX_CC_SIZES = [5, 10, 15, 20]
 INFMAT_NAME = "PPR"
@@ -41,7 +41,7 @@ def parse_args(raw_args):
     parser.add_argument('-n', '--num_permutations', type=int, default=100,
                         help='Number of permutations that should be used for parameter selection\
                               and statistical significance testing.')
-    parser.add_argument('-o', '--output_directory', default='hotnet_output',
+    parser.add_argument('-o', '--output_directory', default='hotnet2_output',
                         help='Output directory. Files results.json, components.txt, and\
                               significance.txt will be generated in subdirectories for each delta.')
     parser.add_argument('--parallel', dest='parallel', action='store_true',
@@ -90,8 +90,8 @@ def run(args):
 
     # load interaction network edges and determine location of static HTML files for visualization
     edges = hnio.load_ppi_edges(args.edge_file) if args.edge_file else None
-    index_file = '%s/viz_files/%s' % (hotnet.__file__.rsplit('/', 1)[0], VIZ_INDEX)
-    subnetworks_file = '%s/viz_files/%s' % (hotnet.__file__.rsplit('/', 1)[0], VIZ_SUBNETWORKS)
+    index_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_INDEX)
+    subnetworks_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_SUBNETWORKS)
     gene2index = dict([(gene, index) for index, gene in gene_index.iteritems()])
 
     for delta in run_deltas: 

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import os
 import sys
-from hotnet import hnap
+from hotnet2 import hnap
 sys.path.append('influence_matrices')
 import createPPRMat as ppr
 import permuteNetwork as permute
@@ -69,7 +69,7 @@ def run(args):
         output_dir = '%s/%s' % (perm_dir, i)
         if not os.path.exists(output_dir): os.makedirs(output_dir)
         pargs = '-e %s -i %s -o %s -p %s -s %s -a %s %s' % (edgelist_file, args.gene_index_file, output_dir,
-                                                            args.prefix, args.index_file_start_index, args.alpha,
+                                                            i, args.index_file_start_index, args.alpha,
                                                             '--matlab' if args.matlab else '')
         ppr.run(ppr.parse_args(pargs.split()))
         os.remove(edgelist_file)
