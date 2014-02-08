@@ -80,7 +80,7 @@ def run(args):
     # find smallest delta 
     deltas = ft.get_deltas_for_network(args.permuted_networks_path, heat, INFMAT_NAME,
                                        infmat_index, MAX_CC_SIZES, 
-                                       args.num_permutations, args.parallel)
+				                       args.num_permutations, args.parallel)
     
     # and run HotNet with the median delta for each size
     run_deltas = [np.median(deltas[size]) for size in deltas]
@@ -92,7 +92,7 @@ def run(args):
     edges = hnio.load_ppi_edges(args.edge_file) if args.edge_file else None
     index_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_INDEX)
     subnetworks_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_SUBNETWORKS)
-    gene2index = dict([(gene, index) for index, gene in gene_index.iteritems()])
+    gene2index = dict([(gene, index) for index, gene in infmat_index.iteritems()])
 
     for delta in run_deltas: 
         # create output directory

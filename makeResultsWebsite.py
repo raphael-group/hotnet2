@@ -27,8 +27,8 @@ def parse_args(raw_args):
     return args
 
 def run(args):
-    index_file = '%s/viz_files/%s' % (hotnet.__file__.rsplit('/', 1)[0], VIZ_INDEX)
-    subnetworks_file = '%s/viz_files/%s' % (hotnet.__file__.rsplit('/', 1)[0], VIZ_SUBNETWORKS)
+    index_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_INDEX)
+    subnetworks_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_SUBNETWORKS)
 
     # create output directory if doesn't exist; warn if it exists and is not empty
     outdir = args.output_directory
