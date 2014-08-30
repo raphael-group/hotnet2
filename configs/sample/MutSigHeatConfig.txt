@@ -1,2 +1,0 @@
-mutsig
---mutsig_score_file /data/compbio/datasets/TCGA/PanCancer/Broad/mutsig/scores/U8.pvals.qvals.txt
