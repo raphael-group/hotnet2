@@ -1,6 +1,6 @@
 import json
 from collections import defaultdict
-from constants import *
+from constants import SNV, AMP, DEL, INACTIVE_SNV, Mutation, Fusion
 
 ################################################################################
 # Data loading functions
@@ -20,7 +20,7 @@ def load_ppi_edges(edge_list_file):
     """Load PPI edges from file and return as a set of 2-tuples of gene indices.
     
     Arguments:
-    edge_list_file -- path to TSV file containing edges with a gene name in each of the first
+    edge_list_file -- path to TSV file containing edges with a gene index in each of the first
                       two columns
                       
     Note that edges are undirected, but each edge is represented as a single tuple in the
@@ -51,6 +51,16 @@ def load_heat_tsv(heat_file):
     
     """
     arrs = [l.split() for l in open(heat_file)]
+    return dict([(arr[0], float(arr[1])) for arr in arrs])
+
+def load_display_score_tsv(d_score_file):
+    """Load scores from a file and return a dict mapping gene names to display scores.
+
+    Arguements
+    d_score_file -- path to TSV file with gene names in the first column and heat scores in the second
+
+    """
+    arrs = [l.split() for l in open(d_score_file)]
     return dict([(arr[0], float(arr[1])) for arr in arrs])
 
 def load_genes(gene_file):
@@ -319,3 +329,13 @@ def write_gene_list(output_file, genelist):
     with open(output_file, 'w') as out_f:
         for gene in genelist:
             out_f.write(gene+'\n')
+
+
+def load_file(file_path):
+    with open(file_path) as f:
+        return f.read()
+
+def write_file(file_path, text):
+    with open(file_path, 'w') as f:
+        f.write(text)
+    f.close()
