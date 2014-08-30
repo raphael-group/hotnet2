@@ -1,14 +1,10 @@
 # -*- coding: iso-8859-1 -*-
-import hnap
-import hnio
-import hotnet2 as hn
-import permutations
-import stats
-import sys
-import scipy.io
 import json
 import os
-from constants import *
+import sys
+import scipy.io
+from hotnet2 import hnap, hnio, hotnet2 as hn, permutations as p, stats
+from hotnet2.constants import ITERATION_REPLACEMENT_TOKEN, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV
 
 def parse_args(raw_args): 
     description = "Runs generalized HotNet2.\
@@ -119,14 +115,14 @@ def run(args):
             print "* Generating heat permutations for statistical significance testing" 
             extra_genes = hnio.load_genes(args.permutation_genes_file) if args.permutation_genes_file \
                             else None
-            heat_permutations = permutations.permute_heat(heat, args.num_permutations, extra_genes,
-                                                          args.parallel)
+            heat_permutations = p.permute_heat(heat, args.num_permutations, extra_genes,
+                                               args.parallel)
         elif args.permutation_type == "mutations":
             if heat_params["heat_fn"] != "load_mutation_heat":
                     raise RuntimeError("Heat scores must be based on mutation data to perform\
                                         significance testing based on mutation data permutation.")
             print "* Generating mutation permutations for statistical significance testing"
-            heat_permutations = permutations.generate_mutation_permutation_heat(
+            heat_permutations = p.generate_mutation_permutation_heat(
                                     heat_params["heat_fn"], heat_params["sample_file"],
                                     heat_params["gene_file"], infmat_index.values(),
                                     heat_params["snv_file"], args.gene_length_file, args.bmr,

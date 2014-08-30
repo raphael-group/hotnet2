@@ -1,12 +1,9 @@
 # -*- coding: iso-8859-1 -*-
-import hnap
-import hnio
-import delta
-import permutations
-import sys
 import json
 import scipy.io
-from constants import *
+import sys
+from hotnet2 import delta, hnap, hnio, permutations
+from hotnet2.constants import MAX_CC_SIZE, NUM_CCS, ITERATION_REPLACEMENT_TOKEN
 
 def parse_args(raw_args):
     description = "Runs HotNet threshold-finding procedure.\

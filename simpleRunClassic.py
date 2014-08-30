@@ -1,16 +1,10 @@
-import sys
-import hnap
-import hnio
-import scipy.io
-import numpy as np
-import findThreshold as ft
-import heat as hnheat
-import hotnet2 as hn
-import permutations as p
-import stats
-import os
 import json
-from constants import *
+import numpy as np
+import os
+import scipy.io
+import sys
+from hotnet2 import findThreshold as ft, heat as hnheat, hnap, hnio, hotnet2 as hn, permutations as p, stats
+from hotnet2.constants import NUM_CCS, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV
 
 MIN_CC_SIZE = 3
 MAX_CC_SIZE = 25
