@@ -32,6 +32,7 @@ To run an example using mutation data, first create the directory `example/outpu
         python findThreshold.py @example/configs/delta.config
         
    (Note that `findThreshold.py` will output a file that contains a distribution of deltas. In practice, you would use this distribution to choose the delta for running HotNet2 (e.g. by taking the median), and then update the `delta` parameter of `example/configs/significance.config` and `example/configs/run.config`)
+
 3. Run HotNet2 (without significance testing).
 
         python runHotNet2.py @example/configs/run.config
@@ -39,3 +40,7 @@ To run an example using mutation data, first create the directory `example/outpu
 4. Run HotNet2 (with significance testing).
 
         python runHotNet2.py @example/configs/significance.config
+
+5. Make results website.
+
+		python makeResultsWebsite.py @example/configs/website.config
