@@ -1,8 +1,9 @@
 # -*- coding: iso-8859-1 -*-
-import hotnet2 as hn
-import networkx as nx
 import multiprocessing as mp
 import scipy.io
+import networkx as nx
+import hotnet2 as hn
+
 strong_ccs = nx.strongly_connected_components
 
 def num_components_min_size(G, sizes):

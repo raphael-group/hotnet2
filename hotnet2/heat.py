@@ -1,7 +1,7 @@
-from math import log10
 from collections import defaultdict
+from math import log10
 import scipy
-from constants import *
+from constants import SNV, AMP, DEL
 
 def filter_heat(heat, min_score):
     """Returns (1) a dict mapping gene names to heat scores that contains only entries with heat

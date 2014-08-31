@@ -1,9 +1,10 @@
+from collections import defaultdict, namedtuple
+import multiprocessing as mp
 import random
-from collections import defaultdict
-from constants import *
+from constants import Mutation, SNV
 import heat
 import hnio
-import multiprocessing as mp
+
 
 ################################################################################
 # Heat permutation

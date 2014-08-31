@@ -1,7 +1,8 @@
 # -*- coding: iso-8859-1 -*-
-import networkx as nx, scipy as sp, numpy as np
-strong_ccs = nx.strongly_connected_components
 from collections import defaultdict
+import networkx as nx, numpy as np, scipy as sp
+
+strong_ccs = nx.strongly_connected_components
 
 ################################################################################
 # Influence and similarity matrix functions

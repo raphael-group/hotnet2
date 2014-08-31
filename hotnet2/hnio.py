@@ -1,5 +1,5 @@
-import json
 from collections import defaultdict
+import json
 from constants import SNV, AMP, DEL, INACTIVE_SNV, Mutation, Fusion
 
 ################################################################################

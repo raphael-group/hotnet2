@@ -1,13 +1,14 @@
 # -*- coding: iso-8859-1 -*-
+from collections import namedtuple, defaultdict
+import multiprocessing as mp
+import numpy as np
 import scipy as sp
 import scipy.io
-import numpy as np
-import hotnet2 as hn
 import networkx as nx
-import multiprocessing as mp
-strong_ccs = nx.strongly_connected_components
+import hotnet2 as hn
 from union_find import UnionFind
-from collections import namedtuple, defaultdict
+
+strong_ccs = nx.strongly_connected_components
 
 def get_component_sizes(arrs):
     return [len(arr) for arr in arrs]
