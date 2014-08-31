@@ -13,8 +13,9 @@ def load_index(index_file):
                   represented at that index in the second column
     
     """
-    arrs  = [l.split() for l in open(index_file)]
-    return dict((int(arr[0]), arr[1]) for arr in arrs)
+    with open(index_file) as f:
+        arrs  = [l.split() for l in f]
+        return dict((int(arr[0]), arr[1]) for arr in arrs)
 
 def load_ppi_edges(edge_list_file):
     """Load PPI edges from file and return as a set of 2-tuples of gene indices.
@@ -28,8 +29,9 @@ def load_ppi_edges(edge_list_file):
     for the presence of either ordered tuple.
     
     """
-    arrs = [l.split() for l in open(edge_list_file)]
-    return set((int(arr[0]), int(arr[1])) for arr in arrs)
+    with open(edge_list_file) as f:
+        arrs = [l.split() for l in f]
+        return set((int(arr[0]), int(arr[1])) for arr in arrs)
 
 def load_heat_json(heat_file):
     """Load heat JSON file and return a dict mapping gene names to heat scores and a dict mapping
@@ -50,8 +52,9 @@ def load_heat_tsv(heat_file):
     heat_file -- path to TSV file with gene names in the first column and heat scores in the second
     
     """
-    arrs = [l.split() for l in open(heat_file)]
-    return dict((arr[0], float(arr[1])) for arr in arrs)
+    with open(heat_file) as f:
+        arrs = [l.split() for l in f]
+        return dict((arr[0], float(arr[1])) for arr in arrs)
 
 def load_display_score_tsv(d_score_file):
     """Load scores from a file and return a dict mapping gene names to display scores.
@@ -60,8 +63,9 @@ def load_display_score_tsv(d_score_file):
     d_score_file -- path to TSV file with gene names in the first column and heat scores in the second
 
     """
-    arrs = [l.split() for l in open(d_score_file)]
-    return dict((arr[0], float(arr[1])) for arr in arrs)
+    with open(d_score_file) as f:
+        arrs = [l.split() for l in f]
+        return dict((arr[0], float(arr[1])) for arr in arrs)
 
 def load_genes(gene_file):
     """Load tested genes from a file and return as a set.
@@ -70,7 +74,8 @@ def load_genes(gene_file):
     gene_file -- path to file containing gene names, one per line
     
     """
-    return set(l.strip() for l in open(gene_file))
+    with open(gene_file) as f:
+        return set(l.strip() for l in f)
 
 def load_gene_lengths(gene_lengths_file):
     """Load gene lengths from a file and return as a dict mapping gene name to gene length.
@@ -80,8 +85,9 @@ def load_gene_lengths(gene_lengths_file):
                          of the gene in base pairs in the second column
     
     """
-    arrs = [l.split() for l in open(gene_lengths_file)]
-    return dict((arr[0], int(arr[1])) for arr in arrs)
+    with open(gene_lengths_file) as f:
+        arrs = [l.split() for l in f]
+        return dict((arr[0], int(arr[1])) for arr in arrs)
 
 def load_gene_order(gene_order_file):
     """Load gene order file and return gene->chromosome and chromosome->ordered gene list mappings.
@@ -98,11 +104,12 @@ def load_gene_order(gene_order_file):
     gene2chromo = {}
     
     cid = 0
-    for line in open(gene_order_file):
-        genes = line.split()
-        chromo2genes[cid] = genes
-        gene2chromo.update([(gene, cid) for gene in genes])
-        cid += 1
+    with open(gene_order_file) as f:
+        for line in f:
+            genes = line.split()
+            chromo2genes[cid] = genes
+            gene2chromo.update([(gene, cid) for gene in genes])
+            cid += 1
         
     return gene2chromo, chromo2genes
 
@@ -114,8 +121,9 @@ def load_gene_specific_bmrs(bmr_file):
                 for the gene in the second column
     
     """
-    arrs = [l.split() for l in open(bmr_file)]
-    return dict((arr[0], float(arr[1])) for arr in arrs)  
+    with open(bmr_file) as f:
+        arrs = [l.split() for l in f]
+        return dict((arr[0], float(arr[1])) for arr in arrs)  
 
 def load_samples(sample_file):
     """Load sample IDs from a file and return as a set.
@@ -125,7 +133,8 @@ def load_samples(sample_file):
                    will be ignored
     
     """
-    return set(l.rstrip().split()[0] for l in open(sample_file))
+    with open(sample_file) as f:
+        return set(l.rstrip().split()[0] for l in f)
 
 def include(item, whitelist):
     return item in whitelist if whitelist else True
@@ -143,9 +152,10 @@ def load_snvs(snv_file, gene_wlst=None, sample_wlst=None):
                     ignored.  If None, all samples will be included.
 
     """
-    arrs = [l.rstrip().split("\t") for l in open(snv_file) if not l.startswith("#")]
-    return [Mutation(arr[0], gene, SNV) for arr in arrs if include(arr[0], sample_wlst)
-            for gene in arr[1:] if include(gene, gene_wlst)]
+    with open(snv_file) as f:
+        arrs = [l.rstrip().split("\t") for l in f if not l.startswith("#")]
+        return [Mutation(arr[0], gene, SNV) for arr in arrs if include(arr[0], sample_wlst)
+                for gene in arr[1:] if include(gene, gene_wlst)]
 
 def load_inactivating_snvs(inactivating_snvs_file, gene_wlst=None, sample_wlst=None):
     """Load inactivating SNVs from a file and return as a list of Mutation tuples with
@@ -161,9 +171,10 @@ def load_inactivating_snvs(inactivating_snvs_file, gene_wlst=None, sample_wlst=N
                     ignored.  If None, all samples will be included.
 
     """
-    arrs = [line.split() for line in open(inactivating_snvs_file) if not line.startswith("#")]
-    return [Mutation(arr[1], arr[0], INACTIVE_SNV)
-            for arr in arrs if include(arr[1], sample_wlst) and include(arr[0], gene_wlst)]
+    with open(inactivating_snvs_file) as f:
+        arrs = [line.split() for line in f if not line.startswith("#")]
+        return [Mutation(arr[1], arr[0], INACTIVE_SNV)
+                for arr in arrs if include(arr[1], sample_wlst) and include(arr[0], gene_wlst)]
 
 def load_cnas(cna_file, gene_wlst=None, sample_wlst=None):
     """Load CNA data from a file and return as a list of Mutation tuples with mut_type == AMP or DEL.
@@ -179,10 +190,11 @@ def load_cnas(cna_file, gene_wlst=None, sample_wlst=None):
                     ignored.  If None, all samples will be included.
 
     """
-    arrs = [l.rstrip().split("\t") for l in open(cna_file) if not l.startswith("#")]
-    return [Mutation(arr[0], cna.split("(")[0], get_mut_type(cna))
-            for arr in arrs if include(arr[0], sample_wlst)
-            for cna in arr[1:] if include(cna.split("(")[0], gene_wlst)]
+    with open(cna_file) as f:
+        arrs = [l.rstrip().split("\t") for l in f if not l.startswith("#")]
+        return [Mutation(arr[0], cna.split("(")[0], get_mut_type(cna))
+                for arr in arrs if include(arr[0], sample_wlst)
+                for cna in arr[1:] if include(cna.split("(")[0], gene_wlst)]
 
 def load_fusions(fusion_file, gene_wlst=None, sample_wlst=None, ):
     """Load fusion information from a file and return as a list of Fusion objects.
@@ -196,9 +208,10 @@ def load_fusions(fusion_file, gene_wlst=None, sample_wlst=None, ):
     sample_wlist -- whitelist of allowed samples (default None). Samples not in this list will be
                     ignored.  If None, all samples will be included.
     """
-    arrs = [line.split() for line in open(fusion_file) if not line.startswith("#")]
-    return [Fusion(arr[0], (arr[1], arr[2])) for arr in arrs
-            if include_fusion(sample_wlst, gene_wlst, *arr[:4])]
+    with open(fusion_file) as f:
+        arrs = [line.split() for line in f if not line.startswith("#")]
+        return [Fusion(arr[0], (arr[1], arr[2])) for arr in arrs
+                if include_fusion(sample_wlst, gene_wlst, *arr[:4])]
 
 def include_fusion(sample_wlst, gene_wlst, sample, gene1, gene2):
     if sample_wlst and sample not in sample_wlst: return False
@@ -217,8 +230,9 @@ def load_sample_types(type_file):
     type_file -- Path to tab-separated file listing sample types where the first column of each
                  line is a sample ID and the second column is a type.
     """
-    arrs = [line.split() for line in open(type_file)]
-    return dict((arr[0], arr[1]) for arr in arrs)
+    with open(type_file) as f:
+        arrs = [line.split() for line in f]
+        return dict((arr[0], arr[1]) for arr in arrs)
 
 def get_mut_type(cna):
     if cna.endswith("(A)"): return AMP
@@ -233,21 +247,21 @@ def load_oncodrive_data(fm_scores, cis_amp_scores, cis_del_scores):
     gene2cis_amp, gene2cis_del = defaultdict(one), defaultdict(one)
     
     # Load fm scores (pvals, not z-scores)
-    arrs    = [ l.rstrip().split("\t") for l in open(fm_scores)
-                if not l.startswith("#") ]
+    arrs    = [l.rstrip().split("\t") for l in open(fm_scores)
+               if not l.startswith("#") ]
     gene2fm.update([(arr[1], float(arr[2])) for arr in arrs
                     if arr[2] != "" and arr[2] != "-0" and arr[2] != "-"])
     print "\tFM genes:", len(gene2fm.keys())
 
     # Load amplifications
-    arrs = [ l.rstrip().split("\t") for l in open(cis_amp_scores)
-             if not l.startswith("#")]
+    arrs = [l.rstrip().split("\t") for l in open(cis_amp_scores)
+            if not l.startswith("#")]
     gene2cis_amp.update([(arr[0], float(arr[-1])) for arr in arrs])
     print "\tCIS AMP genes:", len(gene2cis_amp.keys())
 
     # Load deletions
-    arrs = [ l.rstrip().split("\t") for l in open(cis_del_scores)
-             if not l.startswith("#")]
+    arrs = [l.rstrip().split("\t") for l in open(cis_del_scores)
+            if not l.startswith("#")]
     gene2cis_del.update([(arr[0], float(arr[-1])) for arr in arrs])
     print "\tCIS DEL genes:", len(gene2cis_del.keys())
     
@@ -261,31 +275,32 @@ def load_oncodrive_data(fm_scores, cis_amp_scores, cis_del_scores):
 
     return gene2heat
 
-def load_mutsig_scores( scores_file ):
-    arrs = [l.rstrip().split("\t") for l in open(scores_file)
-            if not l.startswith("#")]
-    print "* Loading MutSig scores in", len(arrs), "genes..."
-    return dict((arr[0], {"pval": float(arr[-2]), "qval": float(arr[-1])})
-                for arr in arrs)
+def load_mutsig_scores(scores_file):
+    with open(scores_file) as f:
+        arrs = [l.rstrip().split("\t") for l in f if not l.startswith("#")]
+        print "* Loading MutSig scores in", len(arrs), "genes..."
+        return dict((arr[0], {"pval": float(arr[-2]), "qval": float(arr[-1])})
+                    for arr in arrs)
 
 
 FDR_CT, FDR_LRT, FDR_FCPT = 12, 11, 10
 music_score2name = {FDR_CT: "FDR_CT", FDR_LRT: "FDR_LRT", FDR_FCPT: "FDR_FCPT"}
 def load_music_scores(scores_file):
     print "* Loading MuSiC scores using the median of the 3 q-values..."
-    # Load file and tab-split lines 
-    arrs = [l.rstrip().split("\t") for l in open(scores_file)
-            if not l.startswith("#")]
-
-    # Indices for the columns we may be interested in
-    gene2music = dict((arr[0], {"FDR_CT": float(arr[FDR_CT]),
-                                "FDR_FCPT": float(arr[FDR_FCPT]),
-                                "FDR_LRT":float(arr[FDR_LRT])})
-                      for arr in arrs)
-
-    # Output parsing info
-    print "\t- Loaded %s genes." % len(gene2music)
-    return gene2music
+    
+    with open(scores_file) as f:
+        # Load file and tab-split lines 
+        arrs = [l.rstrip().split("\t") for l in f if not l.startswith("#")]
+    
+        # Indices for the columns we may be interested in
+        gene2music = dict((arr[0], {"FDR_CT": float(arr[FDR_CT]),
+                                    "FDR_FCPT": float(arr[FDR_FCPT]),
+                                    "FDR_LRT":float(arr[FDR_LRT])})
+                          for arr in arrs)
+    
+        # Output parsing info
+        print "\t- Loaded %s genes." % len(gene2music)
+        return gene2music
 
 ################################################################################
 # Data saving functions
