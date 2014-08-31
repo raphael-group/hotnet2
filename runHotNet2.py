@@ -16,7 +16,7 @@ def parse_args(raw_args):
     parser.add_argument('-r', '--runname', help='Name of run / disease.')
     parser.add_argument('-mf', '--infmat_file', required=True,
                         help='Path to .mat file containing influence matrix')
-    parser.add_argument('-mn', '--infmat_name', default='Li',
+    parser.add_argument('-mn', '--infmat_name', default='PPR',
                         help='Variable name of the influence matrix in the .mat file')
     parser.add_argument('-if', '--infmat_index_file', required=True,
                         help='Path to tab-separated file containing an index in the first column\
