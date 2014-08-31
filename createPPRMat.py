@@ -30,7 +30,7 @@ def parse_args(raw_args):
 def run(args):
     # Load gene-index map
     arrs = [l.rstrip().split() for l in open(args.gene_index_file)]
-    index2gene = dict([(int(arr[0]), arr[1]) for arr in arrs])
+    index2gene = dict((int(arr[0]), arr[1]) for arr in arrs)
     G = nx.Graph()
     G.add_nodes_from( index2gene.values() ) # in case any nodes have degree zero
 

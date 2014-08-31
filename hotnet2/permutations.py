@@ -5,7 +5,6 @@ from constants import Mutation, SNV
 import heat
 import hnio
 
-
 ################################################################################
 # Heat permutation
 
@@ -14,7 +13,7 @@ def heat_permutation_wrapper((heat_scores, eligible_genes)):
     random.shuffle(permuted_genes)
     permuted_genes = permuted_genes[:len(heat_scores)]
 
-    permuted_heat = dict([(gene, heat) for gene, heat in zip(permuted_genes, heat_scores)])
+    permuted_heat = dict((gene, heat) for gene, heat in zip(permuted_genes, heat_scores))
 
     return permuted_heat
 

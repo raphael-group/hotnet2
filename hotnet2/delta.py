@@ -171,9 +171,9 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
         pool.join()
          
     # Parse the deltas into one dictionary
-    sizes2deltas = dict([(s, []) for s in sizes])
+    sizes2deltas = defaultdict(list)
     for size2delta in delta_maps:
-        for s in sizes: sizes2deltas[s].append( size2delta[s] )
+        for s in sizes: sizes2deltas[s].append(size2delta[s])
  
     return sizes2deltas
 

@@ -17,7 +17,7 @@ def filter_heat(heat, min_score):
     """
     if min_score is None:
         min_score = min([score for score in heat.values() if score > 0])
-    filtered_heat = dict([(gene, score) for gene, score in heat.iteritems() if score >= min_score])
+    filtered_heat = dict((gene, score) for gene, score in heat.iteritems() if score >= min_score)
     return filtered_heat, [gene for gene in heat if gene not in filtered_heat], min_score
 
 def num_snvs(mutations):
@@ -95,8 +95,8 @@ def mut_heat(num_samples, snvs, cnas, min_freq):
     print("\t- Including %s genes in %s samples at min frequency %s" %
           (len(genes2mutations), num_samples, min_freq))
     
-    return dict([(g, len(heat) / float(num_samples)) for g, heat in genes2mutations.items()
-                 if num_snvs(heat) >= min_freq or num_cnas(heat) > 0])
+    return dict((g, len(heat) / float(num_samples)) for g, heat in genes2mutations.items()
+                if num_snvs(heat) >= min_freq or num_cnas(heat) > 0)
 
 NULL = 100
 def fm_heat(gene2heat, fm_threshold, cis_threshold=0.01, CIS=False):
@@ -127,9 +127,9 @@ def fm_heat(gene2heat, fm_threshold, cis_threshold=0.01, CIS=False):
 
 def mutsig_heat(gene2mutsig, threshold=1.0):
     print "* Creating MutSig heat map..."
-    gene2heat = dict([(gene, -log10(score["qval"]))
-                      for gene, score in gene2mutsig.items()
-                      if score["qval"] < threshold])
+    gene2heat = dict((gene, -log10(score["qval"]))
+                     for gene, score in gene2mutsig.items()
+                     if score["qval"] < threshold)
     print "\t- Including", len(gene2heat), "genes at threshold", threshold
     return gene2heat
 
@@ -139,8 +139,8 @@ def music_heat(gene2music, threshold=1.0, max_heat=15):
     def music_heat(qvals):
         heat = scipy.median([ qvals["FDR_CT"], qvals["FDR_LRT"], qvals["FDR_FCPT"] ])
         return -log10(heat) if heat != 0 else max_heat
-    gene2heat = dict([(gene, music_heat(scores)) for gene, scores in gene2music.items()
-                      if scipy.median(scores.values()) < threshold])
+    gene2heat = dict((gene, music_heat(scores)) for gene, scores in gene2music.items()
+                     if scipy.median(scores.values()) < threshold)
     print "\t- Including", len(gene2heat), "genes at threshold", threshold
     return gene2heat
 

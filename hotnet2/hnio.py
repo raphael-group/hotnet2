@@ -14,7 +14,7 @@ def load_index(index_file):
     
     """
     arrs  = [l.split() for l in open(index_file)]
-    return dict([(int(arr[0]), arr[1]) for arr in arrs])
+    return dict((int(arr[0]), arr[1]) for arr in arrs)
 
 def load_ppi_edges(edge_list_file):
     """Load PPI edges from file and return as a set of 2-tuples of gene indices.
@@ -29,7 +29,7 @@ def load_ppi_edges(edge_list_file):
     
     """
     arrs = [l.split() for l in open(edge_list_file)]
-    return set([(int(arr[0]), int(arr[1])) for arr in arrs])
+    return set((int(arr[0]), int(arr[1])) for arr in arrs)
 
 def load_heat_json(heat_file):
     """Load heat JSON file and return a dict mapping gene names to heat scores and a dict mapping
@@ -51,7 +51,7 @@ def load_heat_tsv(heat_file):
     
     """
     arrs = [l.split() for l in open(heat_file)]
-    return dict([(arr[0], float(arr[1])) for arr in arrs])
+    return dict((arr[0], float(arr[1])) for arr in arrs)
 
 def load_display_score_tsv(d_score_file):
     """Load scores from a file and return a dict mapping gene names to display scores.
@@ -61,7 +61,7 @@ def load_display_score_tsv(d_score_file):
 
     """
     arrs = [l.split() for l in open(d_score_file)]
-    return dict([(arr[0], float(arr[1])) for arr in arrs])
+    return dict((arr[0], float(arr[1])) for arr in arrs)
 
 def load_genes(gene_file):
     """Load tested genes from a file and return as a set.
@@ -70,7 +70,7 @@ def load_genes(gene_file):
     gene_file -- path to file containing gene names, one per line
     
     """
-    return set([l.strip() for l in open(gene_file)])
+    return set(l.strip() for l in open(gene_file))
 
 def load_gene_lengths(gene_lengths_file):
     """Load gene lengths from a file and return as a dict mapping gene name to gene length.
@@ -81,7 +81,7 @@ def load_gene_lengths(gene_lengths_file):
     
     """
     arrs = [l.split() for l in open(gene_lengths_file)]
-    return dict([(arr[0], int(arr[1])) for arr in arrs])
+    return dict((arr[0], int(arr[1])) for arr in arrs)
 
 def load_gene_order(gene_order_file):
     """Load gene order file and return gene->chromosome and chromosome->ordered gene list mappings.
@@ -115,7 +115,7 @@ def load_gene_specific_bmrs(bmr_file):
     
     """
     arrs = [l.split() for l in open(bmr_file)]
-    return dict([(arr[0], float(arr[1])) for arr in arrs])  
+    return dict((arr[0], float(arr[1])) for arr in arrs)  
 
 def load_samples(sample_file):
     """Load sample IDs from a file and return as a set.
@@ -125,7 +125,7 @@ def load_samples(sample_file):
                    will be ignored
     
     """
-    return set([l.rstrip().split()[0] for l in open(sample_file)])
+    return set(l.rstrip().split()[0] for l in open(sample_file))
 
 def include(item, whitelist):
     return item in whitelist if whitelist else True
@@ -218,7 +218,7 @@ def load_sample_types(type_file):
                  line is a sample ID and the second column is a type.
     """
     arrs = [line.split() for line in open(type_file)]
-    return dict([(arr[0], arr[1]) for arr in arrs])
+    return dict((arr[0], arr[1]) for arr in arrs)
 
 def get_mut_type(cna):
     if cna.endswith("(A)"): return AMP
@@ -265,8 +265,8 @@ def load_mutsig_scores( scores_file ):
     arrs = [l.rstrip().split("\t") for l in open(scores_file)
             if not l.startswith("#")]
     print "* Loading MutSig scores in", len(arrs), "genes..."
-    return dict([(arr[0], {"pval": float(arr[-2]), "qval": float(arr[-1])})
-                 for arr in arrs])
+    return dict((arr[0], {"pval": float(arr[-2]), "qval": float(arr[-1])})
+                for arr in arrs)
 
 
 FDR_CT, FDR_LRT, FDR_FCPT = 12, 11, 10
@@ -278,10 +278,10 @@ def load_music_scores(scores_file):
             if not l.startswith("#")]
 
     # Indices for the columns we may be interested in
-    gene2music = dict([(arr[0], {"FDR_CT": float(arr[FDR_CT]),
-                                 "FDR_FCPT": float(arr[FDR_FCPT]),
-                                 "FDR_LRT":float(arr[FDR_LRT])})
-                       for arr in arrs])
+    gene2music = dict((arr[0], {"FDR_CT": float(arr[FDR_CT]),
+                                "FDR_FCPT": float(arr[FDR_FCPT]),
+                                "FDR_LRT":float(arr[FDR_LRT])})
+                      for arr in arrs)
 
     # Output parsing info
     print "\t- Loaded %s genes." % len(gene2music)

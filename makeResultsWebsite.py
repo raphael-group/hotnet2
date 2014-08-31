@@ -50,8 +50,8 @@ def run(args):
         gene2heat = json.load(open(results['parameters']['heat_file']))['heat']
         d_score = hnio.load_display_score_tsv(args.display_score_file) if args.display_score_file else None
         edges = hnio.load_ppi_edges(args.edge_file)
-        gene2index = dict([(gene, index) for index, gene \
-                        in hnio.load_index(results['parameters']['infmat_index_file']).iteritems()])
+        gene2index = dict((gene, index) for index, gene \
+                          in hnio.load_index(results['parameters']['infmat_index_file']).iteritems())
         delta = results['parameters']['delta']
 
         deltas.append(delta)

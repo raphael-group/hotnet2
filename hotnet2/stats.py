@@ -1,4 +1,5 @@
 # -*- coding: iso-8859-1 -*-
+from collections import defaultdict
 import multiprocessing as mp
 import scipy.io
 import networkx as nx
@@ -52,9 +53,9 @@ def calculate_permuted_cc_counts_network(network_paths, infmat_name, index2gene,
         pool.join()
 
     # Parse the results into a map of k -> counts
-    size2counts = dict([(s, []) for s in sizes])
+    size2counts = defaultdict(list)
     for counts in all_counts:
-        for size, count in zip(sizes, counts): size2counts[size].append( count )            
+        for size, count in zip(sizes, counts): size2counts[size].append(count)            
 
     return size2counts
 
@@ -91,9 +92,9 @@ def calculate_permuted_cc_counts(infmat, index2gene, heat_permutations, delta,
         pool.join()
 
     # Parse the results into a map of k -> counts
-    size2counts = dict([(s, []) for s in sizes])
+    size2counts = defaultdict(list)
     for counts in all_counts:
-        for size, count in zip(sizes, counts): size2counts[size].append( count )            
+        for size, count in zip(sizes, counts): size2counts[size].append(count)            
 
     return size2counts
 
@@ -110,11 +111,11 @@ def compute_statistics(size2counts_real, size2counts_permuted, num_permutations)
      
     """
     num_permutations = float(num_permutations)
-    size2stats = dict([(s, []) for s in size2counts_permuted.keys()])
+    size2stats = dict()
     for size, counts in size2counts_permuted.items():
         observed = size2counts_real[size]
         expected = sum(counts) / num_permutations
-        pval = len([ c for c in counts if c >= observed ]) / num_permutations
+        pval = len([c for c in counts if c >= observed]) / num_permutations
         size2stats[size] = dict(observed=observed, expected=expected, pval=pval)
     
     return size2stats

@@ -23,7 +23,7 @@ def induce_infmat(infmat, index2gene, genelist):
     
     start_index = min(index2gene.keys())
     # Reformat gene index
-    gene2index = dict([(gene, index) for index, gene in index2gene.items()])
+    gene2index = dict((gene, index) for index, gene in index2gene.items())
  
     # Identify genes in the given list that are also in the network
     genelist = [g for g in genelist if g in gene2index.keys()]
@@ -36,7 +36,7 @@ def induce_infmat(infmat, index2gene, genelist):
         M[i,] = infmat[gene2index[genelist[i]] - start_index, indices]
  
     # Create new gene index and score function
-    index2gene = dict([(i, genelist[i]) for i in range(len(genelist))])
+    index2gene = dict((i, genelist[i]) for i in range(len(genelist)))
     return M, index2gene
 
 def heat_vec(gene2heat, index2gene):
