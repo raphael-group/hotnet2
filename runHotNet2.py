@@ -26,7 +26,7 @@ def parse_args(raw_args):
                         help='JSON heat score file generated via generateHeat.py')
     parser.add_argument('-d', '--deltas', nargs='+', type=float, required=True,
                         help='Weight threshold for edge removal')
-    parser.add_argument('-ccs', '--min_cc_size', type=int, default=3,
+    parser.add_argument('-ccs', '--min_cc_size', type=int, default=2,
                         help='Minimum size connected components that should be returned.')
     parser.add_argument('-c', '--classic', default=False, action='store_true',
                         help='Run classic (instead of directed) HotNet.')

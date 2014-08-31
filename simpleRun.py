@@ -32,7 +32,7 @@ def parse_args(raw_args):
                               returned connected component. By default, all genes with positive\
                               heat scores will be included. (To include genes with score zero, set\
                               min_heat_score to 0).')
-    parser.add_argument('-ccs', '--min_cc_size', type=int, default=3,
+    parser.add_argument('-ccs', '--min_cc_size', type=int, default=2,
                         help='Minimum size connected components that should be returned.')
     parser.add_argument('-pnp', '--permuted_networks_path', required=True,
                         help='Path to influence matrices for permuted networks.\
