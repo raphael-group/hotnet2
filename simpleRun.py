@@ -98,7 +98,7 @@ def run(args):
     subnetworks_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_SUBNETWORKS)
     gene2index = dict((gene, index) for index, gene in infmat_index.iteritems())
     
-    for delta in run_deltas: 
+    for delta in run_deltas:
         # create output directory
         delta_out_dir = args.output_directory + "/delta_" + str(delta)
         if not os.path.isdir(delta_out_dir):
@@ -110,7 +110,8 @@ def run(args):
         
         # calculate significance (using all genes with heat scores)
         print "* Performing permuted heat statistical significance..."
-        heat_permutations = p.permute_heat(heat, args.num_permutations, addtl_genes, args.parallel)
+        heat_permutations = p.permute_heat(heat, gene_index.values(), args.num_permutations,
+                                           addtl_genes, args.parallel)
         sizes = range(2, 11)
         print "\t- Using no. of components >= k (k \\in",
         print "[%s, %s]) as statistic" % (min(sizes), max(sizes))

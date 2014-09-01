@@ -1,13 +1,11 @@
 #!/usr/bin/python
-import sys
-import shutil
-import os
-import argparse
 import json
-from hotnet2 import hnio, hnap
-from hotnet2.viz import *
-from hotnet2.constants import *
+import os
+import shutil
+import sys
 import hotnet2
+from hotnet2 import hnap, hnio, viz
+from hotnet2.constants import VIZ_INDEX, VIZ_SUBNETWORKS
 
 def parse_args(raw_args):
     description = 'Creates a website showing the subnetworks output by HotNet2.'
@@ -58,7 +56,8 @@ def run(args):
 
         output = {"delta": delta, 'subnetworks': list()}
         for cc in ccs:
-            output['subnetworks'].append(get_component_json(cc, gene2heat, edges, gene2index, args.network_name, d_score))
+            output['subnetworks'].append(viz.get_component_json(cc, gene2heat, edges, gene2index,
+                                                                args.network_name, d_score))
 
         # write output
         delta_dir = '%s/delta%s' % (outdir, delta)
@@ -70,7 +69,7 @@ def run(args):
 
         shutil.copy(subnetworks_file, delta_dir)
 
-    write_index_file(index_file, '%s/%s' % (outdir, VIZ_INDEX), deltas)
+    viz.write_index_file(index_file, '%s/%s' % (outdir, VIZ_INDEX), deltas)
 
 if __name__ == "__main__":
     run(parse_args(sys.argv[1:]))

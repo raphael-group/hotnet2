@@ -17,11 +17,13 @@ def heat_permutation_wrapper((heat_scores, eligible_genes)):
 
     return permuted_heat
 
-def permute_heat(heat, num_permutations, addtl_genes=None, parallel=True):
+def permute_heat(heat, network_genes, num_permutations, addtl_genes=None, parallel=True):
     """Return a list of num_permutation dicts, each mapping gene names to permuted heat scores.
     
     Arguments:
     heat -- dict mapping a gene name to the heat score for that gene
+    network_genes -- iterable of names of genes in the network
+    num_permutations -- number of heat permutations to produce
     addtl_genes -- iterable of names of genes that do not have heat scores in the real data but
                    which may have heat scores assigned in permutations. Defaults to None.
     parallel -- whether heat permtutations should be generated in parallel. Defaults to True.
@@ -34,7 +36,8 @@ def permute_heat(heat, num_permutations, addtl_genes=None, parallel=True):
         map_fn = map
 
     heat_scores = heat.values()
-    genes_eligible_for_heat = set(heat.keys()) | (set(addtl_genes) if addtl_genes else set())
+    if not addtl_genes: addtl_genes = set()
+    genes_eligible_for_heat = set(heat.keys()).union(addtl_genes).intersection(network_genes)
     
     args = [(heat_scores, genes_eligible_for_heat)] * num_permutations
     permutations = map_fn(heat_permutation_wrapper, args)

@@ -67,8 +67,8 @@ def parse_args(raw_args):
                                        the second column')
     mutation_parser.add_argument('-gof', '--gene_order_file', required=True,
                                  help='Path to file containing tab-separated lists of genes on\
-                                 each chromosme, in order of their position on the chromosome, one\
-                                  chromosome per line')
+                                 each chromosome, in order of their position on the chromosome,\
+                                 one chromosome per line')
     mutation_parser.add_argument('-b', '--bmr', type=float, required=True,
                                  help='Default background mutation rate')
     mutation_parser.add_argument('-bf', '--bmr_file',
@@ -115,8 +115,8 @@ def run(args):
             print "* Generating heat permutations for statistical significance testing" 
             extra_genes = hnio.load_genes(args.permutation_genes_file) if args.permutation_genes_file \
                             else None
-            heat_permutations = p.permute_heat(heat, args.num_permutations, extra_genes,
-                                               args.parallel)
+            heat_permutations = p.permute_heat(heat, gene_index.values(), args.num_permutations,
+                                               extra_genes, args.parallel)
         elif args.permutation_type == "mutations":
             if heat_params["heat_fn"] != "load_mutation_heat":
                     raise RuntimeError("Heat scores must be based on mutation data to perform\

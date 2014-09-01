@@ -95,7 +95,8 @@ def run(args):
         
         # calculate significance (using all genes with heat scores)
         print "* Performing permuted heat statistical significance..."
-        heat_permutations = p.permute_heat(heat, args.num_permutations, addtl_genes, args.parallel)
+        heat_permutations = p.permute_heat(heat, gene_index.values(), args.num_permutations,
+                                           addtl_genes, args.parallel)
         sizes = range(2, 11)
         print "\t- Using no. of components >= k (k \\in",
         print "[%s, %s]) as statistic" % (min(sizes), max(sizes))
