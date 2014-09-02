@@ -7,8 +7,9 @@ try:
     import fortran_bindings
     fortran_available = True
 except ImportError:
-    pass
-
+    print("WARNING: Could not import Fortran bindings module; Falling back to NumPy for "
+          "similarity matrix creation.")
+          
 strong_ccs = nx.strongly_connected_components
 
 ################################################################################
@@ -32,26 +33,28 @@ def similarity_matrix(infmat, index2gene, gene2heat, directed=True):
     gene2index = dict((gene, index) for index, gene in index2gene.iteritems())
     
     # Identify genes in the given list that are also in the network
-    genelist = sorted(gene2heat.keys().intersection(gene2index.keys()))
+    genelist = sorted(set(gene2heat.keys()).intersection(gene2index.keys()))
     index2gene = dict(enumerate(genelist))
     print "\t- Genes in list and network:", len(genelist)
 
-    h = np.array([gene2heat[g] for g in genelist])
+    h = np.array([gene2heat[g] for g in genelist], 'float64')
     
     if directed and fortran_available:
-        indices = [gene2index[g]-start_index+1 for g in genelist]         # Fortran is 1-indexed
+        indices = np.array([gene2index[g]-start_index+1 for g in genelist], 'int32')  # Fortran is 1-indexed
         sim = fortran_bindings.compute_sim(infmat, h, indices, np.shape(infmat)[0],
                                            q = np.shape(h)[0])
-    elif directed:
-        sim = infmat[np.ix_(indices, indices)] * h
     else:
         indices = [gene2index[g]-start_index for g in genelist]
-        M = infmat[np.ix_(indices, indices)]        
-        M = np.minimum(M, M.transpose())            #ensure that the influence matrix is symmetric
-        sim = np.empty_like(M)
-        for i in range(M.shape[0]):
-            for j in range(M.shape[1]):
-                sim[i][j] = max(h[i], h[j]) * M[i][j]
+        if directed:
+            sim = infmat[np.ix_(indices, indices)] * h
+        else:
+            indices = [gene2index[g]-start_index for g in genelist]
+            M = infmat[np.ix_(indices, indices)]
+            M = np.minimum(M, M.transpose())  #ensure that the influence matrix is symmetric
+            sim = np.empty_like(M)
+            for i in range(M.shape[0]):
+                for j in range(M.shape[1]):
+                    sim[i][j] = max(h[i], h[j]) * M[i][j]
      
     return sim, index2gene
 
