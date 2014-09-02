@@ -29,9 +29,10 @@ subroutine compute_sim_classic(M,infmat,h,indices,p,q)
     integer :: i, j
 
     do j=1,q
-        do i=1,q
+        do i=j,q
             M(i,j) = min(infmat(indices(i),indices(j)), infmat(indices(j), indices(i)))*max(h(i), h(j))
+            M(j,i) = M(i,j)            
         end do
     end do
-
+    
 end subroutine compute_sim_classic
