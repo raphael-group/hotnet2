@@ -129,11 +129,9 @@ def get_edges(sim, start=.05):
 def network_delta_wrapper((network_path, infmat_name, index2gene, heat, sizes, directed,
                            selection_function)):
     permuted_mat = scipy.io.loadmat(network_path)[infmat_name]   
-    M, gene_index = hn.induce_infmat(permuted_mat, index2gene, sorted(heat.keys()))
-    h = hn.heat_vec(heat, gene_index)
-    sim = hn.similarity_matrix(M, h, directed)
+    sim, index2gene = hn.similarity_matrix(permuted_mat, index2gene, heat, directed)
     if selection_function is find_best_delta_by_largest_cc:
-        return selection_function(sim, gene_index, sizes, directed)
+        return selection_function(sim, index2gene, sizes, directed)
     elif selection_function is find_best_delta_by_num_ccs:
         return selection_function(sim, sizes)
     else:
@@ -178,13 +176,11 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
     return sizes2deltas
 
 def heat_delta_wrapper((infmat, index2gene, heat_permutation, directed, sizes, selection_function)):
-    M, index2gene = hn.induce_infmat(infmat, index2gene, sorted(heat_permutation.keys()))
-    heat = hn.heat_vec(heat_permutation, index2gene)
-    sim_mat = hn.similarity_matrix(M, heat, directed)
+    sim, index2gene = hn.similarity_matrix(infmat, index2gene, heat_permutation, directed)
     if selection_function is find_best_delta_by_largest_cc:
-        return selection_function(sim_mat, index2gene, sizes, directed)
+        return selection_function(sim, index2gene, sizes, directed)
     elif selection_function is find_best_delta_by_num_ccs:
-        return selection_function(sim_mat, sizes)
+        return selection_function(sim, sizes)
     else:
         raise ValueError("Unknown delta selection function: %s" % (selection_function))
 
