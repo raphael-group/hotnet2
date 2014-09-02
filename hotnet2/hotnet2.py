@@ -39,17 +39,20 @@ def similarity_matrix(infmat, index2gene, gene2heat, directed=True):
 
     h = np.array([gene2heat[g] for g in genelist], 'float64')
     
-    if directed and fortran_available:
+    if fortran_available:
         indices = np.array([gene2index[g]-start_index+1 for g in genelist], 'int32')  # Fortran is 1-indexed
-        sim = fortran_bindings.compute_sim(infmat, h, indices, np.shape(infmat)[0],
-                                           q = np.shape(h)[0])
+        if directed:
+            sim = fortran_bindings.compute_sim(infmat, h, indices, np.shape(infmat)[0],
+                                               np.shape(h)[0])
+        else:
+            sim = fortran_bindings.compute_sim_classic(infmat, h, indices, np.shape(infmat)[0],
+                                                       np.shape(h)[0])
     else:
         indices = [gene2index[g]-start_index for g in genelist]
+        M = infmat[np.ix_(indices, indices)]
         if directed:
-            sim = infmat[np.ix_(indices, indices)] * h
+            sim = M * h
         else:
-            indices = [gene2index[g]-start_index for g in genelist]
-            M = infmat[np.ix_(indices, indices)]
             M = np.minimum(M, M.transpose())  #ensure that the influence matrix is symmetric
             sim = np.empty_like(M)
             for i in range(M.shape[0]):
