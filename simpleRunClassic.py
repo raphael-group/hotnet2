@@ -113,6 +113,7 @@ def run(args):
         ccs.sort(key=len, reverse=True)
     
         # write output
+        args.delta = delta  # include delta in parameters section of output JSON
         output_dict = {"parameters": vars(args), "sizes": hn.component_sizes(ccs),
                        "components": ccs, "statistics": sizes2stats}
         hnio.write_significance_as_tsv(os.path.abspath(delta_out_dir) + "/" + SIGNIFICANCE_TSV,

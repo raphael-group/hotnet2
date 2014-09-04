@@ -162,7 +162,7 @@ def run(args):
         
         #write output
         hnio.write_components_as_tsv(os.path.abspath(delta_out_dir) + "/" + COMPONENTS_TSV, ccs)
-        args.delta = delta
+        args.delta = delta  # include delta in parameters section of output JSON
         output_dict = {"parameters": vars(args), "heat_parameters": heat_params,
                        "sizes": hn.component_sizes(ccs), "components": ccs}
         if args.permutation_type != "none":
