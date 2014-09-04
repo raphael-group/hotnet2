@@ -108,7 +108,7 @@ def load_gene_order(gene_order_file):
         for line in f:
             genes = line.split()
             chromo2genes[cid] = genes
-            gene2chromo.update([(gene, cid) for gene in genes])
+            gene2chromo.update((gene, cid) for gene in genes)
             cid += 1
         
     return gene2chromo, chromo2genes
@@ -249,20 +249,20 @@ def load_oncodrive_data(fm_scores, cis_amp_scores, cis_del_scores):
     # Load fm scores (pvals, not z-scores)
     arrs    = [l.rstrip().split("\t") for l in open(fm_scores)
                if not l.startswith("#") ]
-    gene2fm.update([(arr[1], float(arr[2])) for arr in arrs
-                    if arr[2] != "" and arr[2] != "-0" and arr[2] != "-"])
+    gene2fm.update((arr[1], float(arr[2])) for arr in arrs
+                   if arr[2] != "" and arr[2] != "-0" and arr[2] != "-")
     print "\tFM genes:", len(gene2fm.keys())
 
     # Load amplifications
     arrs = [l.rstrip().split("\t") for l in open(cis_amp_scores)
             if not l.startswith("#")]
-    gene2cis_amp.update([(arr[0], float(arr[-1])) for arr in arrs])
+    gene2cis_amp.update((arr[0], float(arr[-1])) for arr in arrs)
     print "\tCIS AMP genes:", len(gene2cis_amp.keys())
 
     # Load deletions
     arrs = [l.rstrip().split("\t") for l in open(cis_del_scores)
             if not l.startswith("#")]
-    gene2cis_del.update([(arr[0], float(arr[-1])) for arr in arrs])
+    gene2cis_del.update((arr[0], float(arr[-1])) for arr in arrs)
     print "\tCIS DEL genes:", len(gene2cis_del.keys())
     
     # Merge data
