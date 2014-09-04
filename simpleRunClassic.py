@@ -1,16 +1,10 @@
-import sys
-import hnap
-import hnio
-import scipy.io
-import numpy as np
-import findThreshold as ft
-import heat as hnheat
-import hotnet2 as hn
-import permutations as p
-import stats
-import os
 import json
-from constants import *
+import numpy as np
+import os
+import scipy.io
+import sys
+from hotnet2 import findThreshold as ft, heat as hnheat, hnap, hnio, hotnet2 as hn, permutations as p, stats
+from hotnet2.constants import NUM_CCS, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV
 
 MIN_CC_SIZE = 3
 MAX_CC_SIZE = 25
@@ -37,7 +31,7 @@ def parse_args(raw_args):
                               returned connected component. By default, all genes with positive\
                               heat scores will be included. (To include genes with score zero, set\
                               min_heat_score to 0).')
-    parser.add_argument('-ccs', '--min_cc_size', type=int, default=3,
+    parser.add_argument('-ccs', '--min_cc_size', type=int, default=2,
                         help='Minimum size connected components that should be returned.')
     parser.add_argument('-n', '--num_permutations', type=int, default=100,
                         help='Number of permutations that should be used for parameter selection\
@@ -64,25 +58,24 @@ def run(args):
               "(Ctrl-c to cancel).")
     
     infmat = scipy.io.loadmat(args.infmat_file)[INFMAT_NAME]
-    infmat_index = hnio.load_index(args.infmat_index_file)
+    full_index2gene = hnio.load_index(args.infmat_index_file)
     heat = hnio.load_heat_tsv(args.heat_file)
     
     #filter out genes with heat score less than min_heat_score
     heat, addtl_genes, args.min_heat_score = hnheat.filter_heat(heat, args.min_heat_score)
 
     #find delta that maximizes # CCs of size >= MIN_SIZE for each permuted data set
-    deltas = ft.get_deltas_for_heat(infmat, infmat_index, heat, addtl_genes, args.num_permutations,
+    deltas = ft.get_deltas_for_heat(infmat, full_index2gene, heat, addtl_genes, args.num_permutations,
                                     NUM_CCS, [MIN_CC_SIZE], True, args.parallel)
 
     #find the multiple of the median delta s.t. the size of the largest CC in the real data
     #is <= MAX_CC_SIZE
     medianDelta = np.median(deltas[MIN_CC_SIZE])
-    M, gene_index = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
-    h = hn.heat_vec(heat, gene_index)
-    sim = hn.similarity_matrix(M, h)
+
+    sim, index2gene = hn.similarity_matrix(infmat, full_index2gene, heat, False)
     
     for i in range(1, 11):
-        G = hn.weighted_graph(sim, gene_index, i*medianDelta)
+        G = hn.weighted_graph(sim, index2gene, i*medianDelta)
         max_cc_size = max([len(cc) for cc in hn.connected_components(G)])
         if max_cc_size <= MAX_CC_SIZE:
             break
@@ -96,16 +89,17 @@ def run(args):
             os.mkdir(delta_out_dir)
         
         #find connected components
-        G = hn.weighted_graph(sim, gene_index, delta, directed=False)
+        G = hn.weighted_graph(sim, index2gene, delta, directed=False)
         ccs = hn.connected_components(G, args.min_cc_size)
         
         # calculate significance (using all genes with heat scores)
         print "* Performing permuted heat statistical significance..."
-        heat_permutations = p.permute_heat(heat, args.num_permutations, addtl_genes, args.parallel)
+        heat_permutations = p.permute_heat(heat, full_index2gene.values(), args.num_permutations,
+                                           addtl_genes, args.parallel)
         sizes = range(2, 11)
         print "\t- Using no. of components >= k (k \\in",
         print "[%s, %s]) as statistic" % (min(sizes), max(sizes))
-        sizes2counts = stats.calculate_permuted_cc_counts(infmat, infmat_index, heat_permutations,
+        sizes2counts = stats.calculate_permuted_cc_counts(infmat, full_index2gene, heat_permutations,
                                                           delta, sizes, False, args.parallel)
         real_counts = stats.num_components_min_size(G, sizes)
         size2real_counts = dict(zip(sizes, real_counts))
@@ -118,6 +112,7 @@ def run(args):
         ccs.sort(key=len, reverse=True)
     
         # write output
+        args.delta = delta  # include delta in parameters section of output JSON
         output_dict = {"parameters": vars(args), "sizes": hn.component_sizes(ccs),
                        "components": ccs, "statistics": sizes2stats}
         hnio.write_significance_as_tsv(os.path.abspath(delta_out_dir) + "/" + SIGNIFICANCE_TSV,

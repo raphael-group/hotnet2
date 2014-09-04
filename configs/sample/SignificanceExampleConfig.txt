@@ -1,9 +1,0 @@
---runname DirectedSignificanceTest
---infmat_file /data/compbio/datasets/HeatKernels/pagerank/MultiNet/1.0/multinet_ppr_0.50.mat
---infmat_name PPR
---infmat_index_file /data/compbio/datasets/HeatKernels/pagerank/MultiNet/1.0/multinet_index_genes
---heat_file /research/compbio/users/jeldridg/TestFiles/prefiltered_significance_heat.txt
---delta 0.00028515
---min_cc_size 4
---num_permutations 1
---permutation_genes_file /research/compbio/users/jeldridg/TestFiles/min-frequency-0-genes.txt

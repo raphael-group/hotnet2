@@ -1,6 +1,0 @@
-oncodrive
---fm_scores /data/compbio/datasets/TCGA/PanCancer/UPF-Barcelona/oncodrive/pan12_oncoFM_z_values_abr2013_zscores.tsv
---cis_amp_scores /data/compbio/datasets/TCGA/PanCancer/UPF-Barcelona/oncodrive/cis/2013-06-06/filtered/pan12_OncodriveCIS_Over.txt
---cis_del_scores /data/compbio/datasets/TCGA/PanCancer/UPF-Barcelona/oncodrive/cis/2013-06-06/filtered/pan12_OncodriveCIS_Under.txt
---cis
-

@@ -1,9 +1,7 @@
-import hnap
-import hnio
-import heat as hnheat
-import sys
-import json
 import argparse
+import json
+import sys
+from hotnet2 import heat as hnheat, hnap, hnio
 
 def parse_args(raw_args): 
     description = "Generates a JSON heat file for input to runHotNet2."

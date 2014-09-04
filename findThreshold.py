@@ -1,12 +1,9 @@
 # -*- coding: iso-8859-1 -*-
-import hnap
-import hnio
-import delta
-import permutations
-import sys
 import json
 import scipy.io
-from constants import *
+import sys
+from hotnet2 import delta, hnap, hnio, permutations
+from hotnet2.constants import MAX_CC_SIZE, NUM_CCS, ITERATION_REPLACEMENT_TOKEN
 
 def parse_args(raw_args):
     description = "Runs HotNet threshold-finding procedure.\
@@ -18,7 +15,7 @@ def parse_args(raw_args):
     #create parent parser for arguments common to both permutation types
     parent_parser = hnap.HotNetArgParser(add_help=False, fromfile_prefix_chars='@')
     parent_parser.add_argument('-r', '--runname', help='Name of run / disease.')
-    parent_parser.add_argument('-mn', '--infmat_name', default='Li',
+    parent_parser.add_argument('-mn', '--infmat_name', default='PPR',
                                help='Variable name of the influence matrices in the .mat files')
     parent_parser.add_argument('-if', '--infmat_index_file', required=True, default=None,
                                help='Path to tab-separated file containing an index in the first\
