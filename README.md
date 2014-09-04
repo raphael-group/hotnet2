@@ -14,9 +14,17 @@ Requirements
 * [NumPy 1.6.2](http://www.numpy.org/)
 * [SciPy 0.10.1](http://www.scipy.org/)
 * [NetworkX 1.7](http://networkx.github.io/)
+* Fortran compiler (optional but recommended for performance)
 
 HotNet will likely work with additional versions of Python, NetworkX, NumPy, and SciPy, but
 alternative configurations have not been tested.
+
+Setup
+------------------------
+For best performance, install a Fortran complier and the below command prior to running HotNet for
+the first time:
+
+    f2py -c --f90flags="-fPIC -O3 -funroll-loops" fortran_bindings.f95 -m fortran_bindings
 
 Support
 ------------------------

@@ -2,76 +2,64 @@
 from collections import defaultdict
 import networkx as nx, numpy as np, scipy as sp
 
+fortran_available = False
+try:
+    import fortran_bindings
+    fortran_available = True
+except ImportError:
+    print("WARNING: Could not import Fortran bindings module; Falling back to NumPy for "
+          "similarity matrix creation.")
+          
 strong_ccs = nx.strongly_connected_components
 
 ################################################################################
 # Influence and similarity matrix functions
 
-def induce_infmat(infmat, index2gene, genelist):		
-    """Create and return induced influence matrix containing influence scores only for those genes
-    in the given gene list and a index to gene mapping for the returned matrix.
+def similarity_matrix(infmat, index2gene, gene2heat, directed=True):
+    """Create and return a similarity matrix and index to gene mapping for the given influence
+    matrix and heat. Only genes with heat that are in the network will be included in the returned
+    similarity matrix and index to gene mapping.
     
     Arguments:
     infmat -- 2D ndarray representing the full influence matrix
     index2gene -- dict mapping an index in the matrix to the name of the gene represented at that
                   index in the influence matrix
-    genelist -- list of genes for which influence scores should be preserved in the returned matrix.
-                This should be the genes that have heat scores.
-     
-    """
-    print "* Inducing infmat..."
-    
-    start_index = min(index2gene.keys())
-    # Reformat gene index
-    gene2index = dict((gene, index) for index, gene in index2gene.items())
- 
-    # Identify genes in the given list that are also in the network
-    genelist = [g for g in genelist if g in gene2index.keys()]
-    indices = [gene2index[g]-start_index for g in genelist]
-    print "\t- Genes in list and network:", len( indices )
- 
-    # Create an induced influence matrix
-    M = np.zeros( (len(genelist), len(genelist)) )
-    for i in range(len(indices)):
-        M[i,] = infmat[gene2index[genelist[i]] - start_index, indices]
- 
-    # Create new gene index and score function
-    index2gene = dict((i, genelist[i]) for i in range(len(genelist)))
-    return M, index2gene
-
-def heat_vec(gene2heat, index2gene):
-    """Create and return a linear ndarray of heat scores ordered by gene index.
-    
-    Arguments:
     gene2heat -- dict mapping a gene name to the heat score for that gene
-    index2gene -- dict mapping an index in the matrix to the name of the gene represented at that
-                  index in the influence matrix. Heat scores will only be included in the returned
-                  ndarray for entries in this dict.
-    
-    """
-    v = [gene2heat[gene] for _, gene in sorted(index2gene.iteritems())]
-    return np.array(v)
-
-def similarity_matrix(M, heat, directed=True):
-    """Create and return a similarity matrix from the given influence matrix and heat vector.
-    
-    Arguments:
-    M -- 2D ndarray representing the induced influence matrix obtained from induce_infmat
-    heat -- 1D ndarray representing the heat score vector obtained from heat_vec
     directed -- if True, sim[i][j] = inf(i,j)*heat[i] and sim[i][j] != sim[j][i]
                 if False, sim[i][j] = min(inf(i,j), inf(j,i))*max(heat(i), heat(j))
     
     """
-    if directed:
-        sim = M * heat
-    else:
-        M = np.minimum(M, M.transpose())            #ensure that the influence matrix is symmetric
-        sim = np.empty_like(M)
-        for i in range(M.shape[0]):
-            for j in range(M.shape[1]):
-                sim[i][j] = max(heat[i], heat[j]) * M[i][j]
+    start_index = min(index2gene.keys())
+    gene2index = dict((gene, index) for index, gene in index2gene.iteritems())
     
-    return sim
+    # Identify genes in the given list that are also in the network
+    genelist = sorted(set(gene2heat.keys()).intersection(gene2index.keys()))
+    index2gene = dict(enumerate(genelist))
+    print "\t- Genes in list and network:", len(genelist)
+
+    h = np.array([gene2heat[g] for g in genelist], 'float64')
+    
+    if fortran_available:
+        indices = np.array([gene2index[g]-start_index+1 for g in genelist], 'int32')  # Fortran is 1-indexed
+        if directed:
+            sim = fortran_bindings.compute_sim(infmat, h, indices, np.shape(infmat)[0],
+                                               np.shape(h)[0])
+        else:
+            sim = fortran_bindings.compute_sim_classic(infmat, h, indices, np.shape(infmat)[0],
+                                                       np.shape(h)[0])
+    else:
+        indices = [gene2index[g]-start_index for g in genelist]
+        M = infmat[np.ix_(indices, indices)]
+        if directed:
+            sim = M * h
+        else:
+            M = np.minimum(M, M.transpose())  #ensure that the influence matrix is symmetric
+            sim = np.empty_like(M)
+            for i in range(M.shape[0]):
+                for j in range(M.shape[1]):
+                    sim[i][j] = max(h[i], h[j]) * M[i][j]
+     
+    return sim, index2gene
 
 ################################################################################
 # Weighted graph functions

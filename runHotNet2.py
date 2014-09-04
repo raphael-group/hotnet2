@@ -2,6 +2,7 @@
 import json
 import os
 import sys
+import numpy as np
 import scipy.io
 from hotnet2 import hnap, hnio, hotnet2 as hn, permutations as p, stats
 from hotnet2.constants import ITERATION_REPLACEMENT_TOKEN, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV
@@ -100,23 +101,21 @@ def run(args):
               "(Ctrl-c to cancel).")
     
     # load data
-    infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]  
-    infmat_index = hnio.load_index(args.infmat_index_file)
+    infmat = np.array(scipy.io.loadmat(args.infmat_file)[args.infmat_name])
+    full_index2gene = hnio.load_index(args.infmat_index_file)
     heat, heat_params = hnio.load_heat_json(args.heat_file)
   
-    # compute similarity matrix and extract connected components
-    M, gene_index = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
-    h = hn.heat_vec(heat, gene_index)
-    sim = hn.similarity_matrix(M, h, not args.classic)
+    # compute similarity matrix
+    sim, index2gene = hn.similarity_matrix(infmat, full_index2gene, heat, not args.classic)
     
     # only calculate permuted data sets for significance testing once
     if args.permutation_type != "none":
         if args.permutation_type == "heat":
             print "* Generating heat permutations for statistical significance testing" 
-            extra_genes = hnio.load_genes(args.permutation_genes_file) if args.permutation_genes_file \
-                            else None
-            heat_permutations = p.permute_heat(heat, gene_index.values(), args.num_permutations,
-                                               extra_genes, args.parallel)
+            extra_genes = hnio.load_genes(args.permutation_genes_file) \
+                            if args.permutation_genes_file else None
+            heat_permutations = p.permute_heat(heat, full_index2gene.values(),
+                                               args.num_permutations, extra_genes, args.parallel)
         elif args.permutation_type == "mutations":
             if heat_params["heat_fn"] != "load_mutation_heat":
                     raise RuntimeError("Heat scores must be based on mutation data to perform\
@@ -124,7 +123,7 @@ def run(args):
             print "* Generating mutation permutations for statistical significance testing"
             heat_permutations = p.generate_mutation_permutation_heat(
                                     heat_params["heat_fn"], heat_params["sample_file"],
-                                    heat_params["gene_file"], infmat_index.values(),
+                                    heat_params["gene_file"], full_index2gene.values(),
                                     heat_params["snv_file"], args.gene_length_file, args.bmr,
                                     args.bmr_file, heat_params["cna_file"], args.gene_order_file,
                                     heat_params["cna_filter_threshold"], heat_params["min_freq"],
@@ -143,16 +142,18 @@ def run(args):
         if not os.path.isdir(delta_out_dir):
             os.mkdir(delta_out_dir)
         
-        G = hn.weighted_graph(sim, gene_index, delta, not args.classic)
+        G = hn.weighted_graph(sim, index2gene, delta, not args.classic)
         ccs = hn.connected_components(G, args.min_cc_size)
         
         # calculate significance
         if args.permutation_type != "none":
             if args.permutation_type == "network":
                 sizes2stats = calculate_significance_network(args, args.permuted_networks_path,
-                                                             gene_index, G, heat, delta, args.num_permutations)
+                                                             full_index2gene, G, heat, delta,
+                                                             args.num_permutations)
             else:
-                sizes2stats = calculate_significance(args, infmat, infmat_index, G, delta, heat_permutations)
+                sizes2stats = calculate_significance(args, infmat, full_index2gene, G, delta,
+                                                     heat_permutations)
         
         #sort ccs list such that genes within components are sorted alphanumerically, and components
         #are sorted first by length, then alphanumerically by name of the first gene in the component 

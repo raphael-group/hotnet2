@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # Load required modules
-import sys, os, networkx as nx
+import sys, networkx as nx
 from hotnet2 import hnap
 
 # Parse arguments

@@ -26,7 +26,7 @@ def permute_heat(heat, network_genes, num_permutations, addtl_genes=None, parall
     num_permutations -- number of heat permutations to produce
     addtl_genes -- iterable of names of genes that do not have heat scores in the real data but
                    which may have heat scores assigned in permutations. Defaults to None.
-    parallel -- whether heat permtutations should be generated in parallel. Defaults to True.
+    parallel -- whether heat permutations should be generated in parallel. Defaults to True.
     
     """
     if parallel:

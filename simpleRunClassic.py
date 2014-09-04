@@ -58,25 +58,24 @@ def run(args):
               "(Ctrl-c to cancel).")
     
     infmat = scipy.io.loadmat(args.infmat_file)[INFMAT_NAME]
-    infmat_index = hnio.load_index(args.infmat_index_file)
+    full_index2gene = hnio.load_index(args.infmat_index_file)
     heat = hnio.load_heat_tsv(args.heat_file)
     
     #filter out genes with heat score less than min_heat_score
     heat, addtl_genes, args.min_heat_score = hnheat.filter_heat(heat, args.min_heat_score)
 
     #find delta that maximizes # CCs of size >= MIN_SIZE for each permuted data set
-    deltas = ft.get_deltas_for_heat(infmat, infmat_index, heat, addtl_genes, args.num_permutations,
+    deltas = ft.get_deltas_for_heat(infmat, full_index2gene, heat, addtl_genes, args.num_permutations,
                                     NUM_CCS, [MIN_CC_SIZE], True, args.parallel)
 
     #find the multiple of the median delta s.t. the size of the largest CC in the real data
     #is <= MAX_CC_SIZE
     medianDelta = np.median(deltas[MIN_CC_SIZE])
-    M, gene_index = hn.induce_infmat(infmat, infmat_index, sorted(heat.keys()))
-    h = hn.heat_vec(heat, gene_index)
-    sim = hn.similarity_matrix(M, h)
+
+    sim, index2gene = hn.similarity_matrix(infmat, full_index2gene, heat, False)
     
     for i in range(1, 11):
-        G = hn.weighted_graph(sim, gene_index, i*medianDelta)
+        G = hn.weighted_graph(sim, index2gene, i*medianDelta)
         max_cc_size = max([len(cc) for cc in hn.connected_components(G)])
         if max_cc_size <= MAX_CC_SIZE:
             break
@@ -90,17 +89,17 @@ def run(args):
             os.mkdir(delta_out_dir)
         
         #find connected components
-        G = hn.weighted_graph(sim, gene_index, delta, directed=False)
+        G = hn.weighted_graph(sim, index2gene, delta, directed=False)
         ccs = hn.connected_components(G, args.min_cc_size)
         
         # calculate significance (using all genes with heat scores)
         print "* Performing permuted heat statistical significance..."
-        heat_permutations = p.permute_heat(heat, gene_index.values(), args.num_permutations,
+        heat_permutations = p.permute_heat(heat, full_index2gene.values(), args.num_permutations,
                                            addtl_genes, args.parallel)
         sizes = range(2, 11)
         print "\t- Using no. of components >= k (k \\in",
         print "[%s, %s]) as statistic" % (min(sizes), max(sizes))
-        sizes2counts = stats.calculate_permuted_cc_counts(infmat, infmat_index, heat_permutations,
+        sizes2counts = stats.calculate_permuted_cc_counts(infmat, full_index2gene, heat_permutations,
                                                           delta, sizes, False, args.parallel)
         real_counts = stats.num_components_min_size(G, sizes)
         size2real_counts = dict(zip(sizes, real_counts))

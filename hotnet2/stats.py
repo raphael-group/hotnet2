@@ -19,17 +19,13 @@ def num_components_min_size(G, sizes):
     return [len([ cc for cc in ccs if len(cc) >= s]) for s in sizes]
 
 def significance_wrapper((infmat, index2gene, heat_permutation, delta, sizes, directed)):
-    M, index2gene = hn.induce_infmat(infmat, index2gene, sorted(heat_permutation.keys()))
-    h = hn.heat_vec(heat_permutation, index2gene)
-    sim_mat = hn.similarity_matrix(M, h, directed)
-    G = hn.weighted_graph(sim_mat, index2gene, delta, directed)
+    sim, index2gene = hn.similarity_matrix(infmat, index2gene, heat_permutation, directed)
+    G = hn.weighted_graph(sim, index2gene, delta, directed)
     return num_components_min_size(G, sizes)
 
 def network_significance_wrapper((network_path, infmat_name, index2gene, heat, delta, sizes, directed)):
     permuted_mat = scipy.io.loadmat(network_path)[infmat_name]   
-    M, gene_index = hn.induce_infmat(permuted_mat, index2gene, sorted(heat.keys()))
-    h = hn.heat_vec(heat, gene_index)
-    sim = hn.similarity_matrix(M, h, directed)
+    sim, index2gene = hn.similarity_matrix(permuted_mat, index2gene, heat, directed)
     G = hn.weighted_graph(sim, index2gene, delta, directed)
     return num_components_min_size(G, sizes)
 
