@@ -79,13 +79,7 @@ def run(args):
     if not args.matlab:
         ## Create PPR matrix using Python
         from scipy.linalg import inv
-        Z = inv( sp.eye(n) - args.alpha*W )
-        PPR = sp.zeros( (n, n) )
-        for i in range(n):
-            X_i = sp.zeros( n )
-            X_i[i] = 1
-            PPR[i, ] = sp.dot( Z, (1-args.alpha)*X_i )
-            
+        PPR = (1.0-args.alpha)*inv(sp.eye(n)-args.alpha*sp.transpose(W))            
         scipy.io.savemat( pprfile, dict(PPR=PPR), oned_as='column')
         
     else:
