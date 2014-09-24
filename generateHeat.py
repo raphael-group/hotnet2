@@ -3,7 +3,7 @@ import json
 import sys
 from hotnet2 import heat as hnheat, hnap, hnio
 
-def parse_args(raw_args): 
+def get_parser():
     description = "Generates a JSON heat file for input to runHotNet2."
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
     
@@ -101,7 +101,7 @@ def parse_args(raw_args):
                                        If present, all other heat scores will be discarded.')
     music_parser.set_defaults(heat_fn=load_music_heat)
     
-    return parser.parse_args(raw_args)
+    return parser
 
 def valid_cna_filter_thresh(string):
         value = float(string)
@@ -166,4 +166,4 @@ def run(args):
     if (args.output_file): output_file.close()
 
 if __name__ == "__main__": 
-    run(parse_args(sys.argv[1:]))
+    run(get_parser().parse_args(sys.argv[1:]))

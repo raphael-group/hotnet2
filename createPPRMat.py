@@ -5,7 +5,7 @@ import sys, os, networkx as nx, scipy as sp, scipy.io
 from hotnet2 import hnap
 
 # Parse arguments
-def parse_args(raw_args):
+def get_parser():
     description = 'Create the personalized pagerank matrix for the given '\
                   'network and restart probability beta.'
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
@@ -24,8 +24,7 @@ def parse_args(raw_args):
     parser.add_argument("--matlab", default=False, action="store_true",
 	                help="Create the PPR matrix using an external call "\
                              "to a MATLAB script instead of Scipy.")
-
-    return parser.parse_args(raw_args)
+    return parser
 
 def run(args):
     # Load gene-index map
@@ -94,4 +93,4 @@ def run(args):
 
 
 if __name__ == "__main__":
-    run(parse_args(sys.argv[1:]))
+    run(get_parser().parse_args(sys.argv[1:]))

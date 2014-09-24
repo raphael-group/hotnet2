@@ -5,7 +5,7 @@ import sys, networkx as nx
 from hotnet2 import hnap
 
 # Parse arguments
-def parse_args(raw_args):
+def get_parser():
     description = 'Creates permuted versions of the given network, where each '\
                   'node retains its degree.'
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
@@ -24,7 +24,7 @@ def parse_args(raw_args):
     parser.add_argument('-n', '--num_permutations', default=100, type=int,
                         help='Number of permuted networks to create.')
 
-    return parser.parse_args(raw_args)
+    return parser
 
 def permute_network( G, Q, num_edges, output_file ):
     # Permutes network by swapping edges Q * num_edges times
@@ -69,4 +69,4 @@ def run(args):
     print "* Avg. No. Swaps Made: {}".format(avg_swaps)
             
 if __name__ == "__main__":
-    run(parse_args(sys.argv[1:]))
+    run(get_parser().parse_args(sys.argv[1:]))
