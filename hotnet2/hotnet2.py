@@ -3,12 +3,12 @@ from collections import defaultdict
 import networkx as nx, numpy as np, scipy as sp
 
 try:
-    import fortran_module
+    import fortran_routines
     fortran_available = True
 except ImportError:
     fortran_available = False
     try:
-        import c_module
+        import c_routines
         fortran_unavailable_c_available = True
     except ImportError:
         print("WARNING: Could not import either Fortran or C modules;"
