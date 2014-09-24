@@ -2,13 +2,18 @@
 from collections import defaultdict
 import networkx as nx, numpy as np, scipy as sp
 
-fortran_available = False
 try:
-    import fortran_bindings
+    import fortran_module
     fortran_available = True
 except ImportError:
-    print("WARNING: Could not import Fortran bindings module; Falling back to NumPy for "
-          "similarity matrix creation.")
+    fortran_available = False
+    try:
+        import c_module
+        fortran_unavailable_c_available = True
+    except ImportError:
+        print("WARNING: Could not import either Fortran or C modules;"
+              "falling back to NumPy for similarity matrix creation.")
+        fortran_unavailable_c_available = False              
           
 strong_ccs = nx.strongly_connected_components
 
@@ -37,27 +42,41 @@ def similarity_matrix(infmat, index2gene, gene2heat, directed=True):
     index2gene = dict(enumerate(genelist))
     print "\t- Genes in list and network:", len(genelist)
 
-    h = np.array([gene2heat[g] for g in genelist], 'float64')
+    h = np.array([gene2heat[g] for g in genelist],dtype=np.float)
     
     if fortran_available:
-        indices = np.array([gene2index[g]-start_index+1 for g in genelist], 'int32')  # Fortran is 1-indexed
+    
+        if infmat.dtype != np.float:
+            infmat = np.array(infmat,dtype=np.float)  
+        indices = np.array([gene2index[g]-start_index+1 for g in genelist],dtype=np.int)  # Fortran is 1-indexed
         if directed:
-            sim = fortran_bindings.compute_sim(infmat, h, indices, np.shape(infmat)[0],
-                                               np.shape(h)[0])
+            sim = fortran_routines.compute_sim(infmat, h, indices, np.shape(infmat)[0], np.shape(h)[0])
         else:
-            sim = fortran_bindings.compute_sim_classic(infmat, h, indices, np.shape(infmat)[0],
-                                                       np.shape(h)[0])
+            sim = fortran_routines.compute_sim_classic(infmat, h, indices, np.shape(infmat)[0], np.shape(h)[0])
+            
+    elif fortran_unavailable_c_available:
+    
+        if infmat.dtype != np.float:
+            infmat = np.array(infmat,dtype=np.float)
+        indices = np.array([gene2index[g]-start_index for g in genelist],dtype=np.int)
+        if directed:
+            sim = c_routines.compute_sim(infmat, h, indices, np.shape(infmat)[0], np.shape(h)[0])
+        else:
+            sim = c_routines.compute_sim_classic(infmat, h, indices, np.shape(infmat)[0], np.shape(h)[0])      
+              
     else:
+    
         indices = [gene2index[g]-start_index for g in genelist]
         M = infmat[np.ix_(indices, indices)]
         if directed:
             sim = M * h
         else:
-            M = np.minimum(M, M.transpose())  #ensure that the influence matrix is symmetric
+            M = np.minimum(M, M.transpose())  # Ensure that the influence matrix is symmetric
             sim = np.empty_like(M)
             for i in range(M.shape[0]):
-                for j in range(M.shape[1]):
+                for j in range(i,M.shape[1]):
                     sim[i][j] = max(h[i], h[j]) * M[i][j]
+                    sim[j][i] = sim[i][j]
      
     return sim, index2gene
 
