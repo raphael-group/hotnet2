@@ -14,18 +14,23 @@ Requirements
 * [NumPy 1.6.2](http://www.numpy.org/)
 * [SciPy 0.10.1](http://www.scipy.org/)
 * [NetworkX 1.7](http://networkx.github.io/)
-* MATLAB, Fortran or C compiler (optional but recommended for performance)
+* MATLAB (optional but recommended for performance)
+* Fortran or C compiler (optional but recommended for performance)
 
 HotNet will likely work with additional versions of Python, NetworkX, NumPy, and SciPy, but
 alternative configurations have not been tested.
 
 Setup
 ------------------------
-For best performance, install MATLAB and a Fortran or C complier and run one of the following commands 
+For best performance, install as a Fortran or C complier and run one of the following commands 
 (or some appropriate variation of them) prior to running HotNet for the first time:
 
+With a Fortran compiler:
     f2py -c fortran_routines.f95 -m fortran_routines
-    gcc -shared -pthread -fPIC -fwrapv -O3 -Wall -fno-strict-aliasing -I/usr/include/python2.7 cython_routines.c -o c_routines.so
+
+With a C compiler:
+    cython cython_routines.pyx -o c_routines.c
+    gcc -shared -pthread -fPIC -fwrapv -O3 -Wall -fno-strict-aliasing -I/usr/include/python2.7 c_routines.c -o c_routines.so
     
 
 Support
