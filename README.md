@@ -26,9 +26,11 @@ For best performance, install as a Fortran or C complier and run one of the foll
 (or some appropriate variation of them) prior to running HotNet for the first time:
 
 With a Fortran compiler:
+
     f2py -c fortran_routines.f95 -m fortran_routines
 
 With a C compiler:
+
     cython cython_routines.pyx -o c_routines.c
     gcc -shared -pthread -fPIC -fwrapv -O3 -Wall -fno-strict-aliasing -I/usr/include/python2.7 c_routines.c -o c_routines.so
     
