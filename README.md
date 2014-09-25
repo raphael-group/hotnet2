@@ -22,7 +22,7 @@ alternative configurations have not been tested.
 
 Setup
 ------------------------
-For best performance, install as a Fortran or C complier and run one of the following commands 
+For best performance, install a Fortran or C complier and run one of the following commands 
 (or some appropriate variation of them) prior to running HotNet for the first time:
 
 With a Fortran compiler:
