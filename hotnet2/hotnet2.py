@@ -53,7 +53,7 @@ def similarity_matrix(infmat, index2gene, gene2heat, directed=True):
 
     h = np.array([gene2heat[g] for g in genelist],dtype=np.float)
     
-    if choice_creation_similarity_matrix == 1
+    if choice_creation_similarity_matrix == 1:
     
         if infmat.dtype != np.float:
             infmat = np.array(infmat,dtype=np.float)  
