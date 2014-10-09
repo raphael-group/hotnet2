@@ -1,12 +1,12 @@
 #!/usr/bin/python
 
 import networkx as nx, sys, os, scipy.io
-from hotnet2 import hnap
+from hotnet2 import hnap, hnio
 
 def get_parser():                                                             
     description = 'Creates a heat diffusion influence matrix from an input graph.'
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
-    parser.add_argument('-e', '--input_edgelist', required=True, help='Input edge list.')
+    parser.add_argument('-e', '--edgelist_file', required=True, help='Input edge list.')
     parser.add_argument('-i', '--gene_index_file', required=True, help='Input gene index file.')
     parser.add_argument('-o', '--output_dir', required=True, help='Path to output dir.')
     parser.add_argument('-p', '--prefix', required=True, help='Output prefix.')
@@ -18,11 +18,11 @@ def run(args):
     # Load input graph
     print "* Loading input graph..."
     G = nx.Graph()
-    G.add_edges_from([map(int, l.rstrip().split()[:2]) for l in open(args.input_edgelist)])
+    G.add_edges_from([map(int, l.rstrip().split()[:2]) for l in open(args.edgelist_file)])
     print "\t{} nodes with {} edges".format(len(G.nodes()), len(G.edges()))
 
-    # Remove self-loops, zero degree nodes, and
-    # restricting to the largest connected component
+    # Remove self-loops and zero degree nodes, and
+    # restrict to the largest connected component
     print "* Removing self-loops, zero degree nodes, and ",
     print "restricting to the largest connected component"
     G.remove_edges_from([(u,v) for u, v in G.edges() if u == v])
@@ -32,11 +32,12 @@ def run(args):
     print "\t{} nodes with {} edges remaining".format(len(G.nodes()), len(G.edges()))
 
     # Load gene index
-    arrs = [l.rstrip().split() for l in open(args.gene_index_file)]
-    index2gene = dict([(int(arr[0]), arr[1]) for arr in arrs])
+    index2gene = hnio.load_index(args.gene_index_file)
 
     # Compute and save Laplacian
-    os.system( 'mkdir -p ' + args.output_dir )
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+    
     print "* Computing Laplacian..."
     L = nx.laplacian_matrix(G)
     scipy.io.savemat("{}/{}_laplacian.mat".format(args.output_dir, args.prefix),
@@ -51,9 +52,9 @@ def run(args):
     # Save the index to gene mapping
     index_output_file = "{}/{}_index_genes".format(args.output_dir, args.prefix)
     nodes = G.nodes()
-    gene_index_output = ["{} {}".format(i + args.start_index, index2gene[nodes[i]])
-                         for i in range(len(nodes))]
-    open(index_output_file, "w").write("\n".join(gene_index_output))
+    gene_index_output = ["{} {}".format(i+args.start_index, index2gene[node])
+                         for i, node in enumerate(nodes)]
+    hnio.write_file(index_output_file, "\n".join(gene_index_output))
 
     # Create edge list with revised indices
     edge_indices = []
@@ -63,7 +64,7 @@ def run(args):
         edge_indices.append( sorted([i, j]) )
     edge_output_file = "{}/{}_edge_list".format(args.output_dir, args.prefix)
     edge_output = ["{} {} 1".format(u, v) for u, v in edge_indices]
-    open(edge_output_file, "w").write( "\n".join(edge_output) )
+    hnio.write_file(edge_output_file, "\n".join(edge_output))
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))
