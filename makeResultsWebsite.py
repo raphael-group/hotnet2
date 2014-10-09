@@ -7,7 +7,7 @@ import hotnet2
 from hotnet2 import hnap, hnio, viz
 from hotnet2.constants import VIZ_INDEX, VIZ_SUBNETWORKS
 
-def parse_args(raw_args):
+def get_parser():
     description = 'Creates a website showing the subnetworks output by HotNet2.'
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
     parser.add_argument('-r', '--results_files', nargs='+', required=True,
@@ -24,9 +24,7 @@ def parse_args(raw_args):
                         help='Display name for the interaction network.')
     parser.add_argument('-o', '--output_directory', required=True,
                         help='Output directory in which the website should be generated.')
-    args = parser.parse_args(raw_args)
-
-    return args
+    return parser
 
 def run(args):
     index_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_INDEX)
@@ -72,4 +70,4 @@ def run(args):
     viz.write_index_file(index_file, '%s/%s' % (outdir, VIZ_INDEX), deltas)
 
 if __name__ == "__main__":
-    run(parse_args(sys.argv[1:]))
+    run(get_parser().parse_args(sys.argv[1:]))

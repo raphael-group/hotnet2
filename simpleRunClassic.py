@@ -10,7 +10,7 @@ MIN_CC_SIZE = 3
 MAX_CC_SIZE = 25
 INFMAT_NAME = "Li"
 
-def parse_args(raw_args): 
+def get_parser():
     description = "Helper script for simple runs of generalized HotNet2, including automated\
                    parameter selection."
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
@@ -47,7 +47,7 @@ def parse_args(raw_args):
                               with fewer than 8 cores.')
     parser.set_defaults(parallel=False)
     
-    return parser.parse_args(raw_args)
+    return parser
 
 def run(args):
     # create output directory if doesn't exist; warn if it exists and is not empty
@@ -126,4 +126,4 @@ def run(args):
     
     
 if __name__ == "__main__": 
-    run(parse_args(sys.argv[1:]))
+    run(get_parser().parse_args(sys.argv[1:]))

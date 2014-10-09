@@ -7,7 +7,7 @@ import scipy.io
 from hotnet2 import hnap, hnio, hotnet2 as hn, permutations as p, stats
 from hotnet2.constants import ITERATION_REPLACEMENT_TOKEN, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV
 
-def parse_args(raw_args): 
+def get_parser():
     description = "Runs generalized HotNet2.\
                    Note that some or all parameters can be specified via a configuration file by\
                    passing '@<ConfigFileName>' as a command-line parameter, e.g.\
@@ -90,7 +90,7 @@ def parse_args(raw_args):
                                       ITERATION_REPLACEMENT_TOKEN + ' in the path to be replaced\
                                       with the iteration number.')
     
-    return parser.parse_args(raw_args)
+    return parser
 
 def run(args):
     # create output directory if doesn't exist; warn if it exists and is not empty
@@ -208,4 +208,4 @@ def calculate_significance(args, infmat, infmat_index, G, delta, heat_permutatio
     return stats.compute_statistics(size2real_counts, sizes2counts, args.num_permutations)
 
 if __name__ == "__main__": 
-    run(parse_args(sys.argv[1:]))
+    run(get_parser().parse_args(sys.argv[1:]))

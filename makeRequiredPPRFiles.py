@@ -6,7 +6,7 @@ sys.path.append('influence_matrices')
 import createPPRMat as ppr
 import permuteNetwork as permute
 
-def parse_args(raw_args):
+def get_parser():
     description = 'Create the personalized pagerank matrix and 100 permuted PPR matrices for the\
                    given network and restart probability beta.'
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
@@ -34,7 +34,7 @@ def parse_args(raw_args):
                         help="Create the PPR matrix using an external call "\
                              "to a MATLAB script instead of Scipy.")
 
-    return parser.parse_args(raw_args)
+    return parser
 
 def run(args):
     # create output directory if doesn't exist; warn if it exists and is not empty
@@ -49,7 +49,7 @@ def run(args):
     margs = '-e %s -i %s -o %s -p %s -s %s -a %s %s' % (args.edgelist_file, args.gene_index_file, args.output_dir,
                                                         args.prefix, args.index_file_start_index, args.alpha,
                                                         '--matlab' if args.matlab else '')
-    ppr.run(ppr.parse_args(margs.split()))
+    ppr.run(ppr.get_parser().parse_args(margs.split()))
 
     # get the output edge list and index files (for the largest connected component) for permutations
     largest_cc_edgelist_file = '%s/%s_edge_list' % (args.output_dir, args.prefix)
@@ -75,8 +75,8 @@ def run(args):
         pargs = '-e %s -i %s -o %s -p %s -s %s -a %s %s' % (edgelist_file, largest_cc_index_file, output_dir,
                                                             args.prefix, args.index_file_start_index, args.alpha,
                                                             '--matlab' if args.matlab else '')
-        ppr.run(ppr.parse_args(pargs.split()))
+        ppr.run(ppr.get_parser().parse_args(pargs.split()))
         os.remove(edgelist_file)
 
 if __name__ == "__main__":
-    run(parse_args(sys.argv[1:]))
+    run(get_parser().parse_args(sys.argv[1:]))

@@ -11,7 +11,7 @@ from hotnet2.constants import ITERATION_REPLACEMENT_TOKEN, MAX_CC_SIZE, HEAT_JSO
 MAX_CC_SIZES = [5, 10, 15, 20]
 INFMAT_NAME = "PPR"
 
-def parse_args(raw_args): 
+def get_parser():
     description = "Helper script for simple runs of generalized HotNet2, including automated\
                    parameter selection."
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
@@ -64,7 +64,7 @@ def parse_args(raw_args):
                               visualizations)')
     parser.set_defaults(parallel=False)
     
-    return parser.parse_args(raw_args)
+    return parser
 
 def run(args):
     # create output directory if doesn't exist; warn if it exists and is not empty
@@ -167,4 +167,4 @@ def run(args):
         viz.write_index_file(index_file, '%s/viz/%s' % (args.output_directory, VIZ_INDEX), run_deltas)
     
 if __name__ == "__main__": 
-    run(parse_args(sys.argv[1:]))
+    run(get_parser().parse_args(sys.argv[1:]))

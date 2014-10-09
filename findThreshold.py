@@ -5,7 +5,7 @@ import sys
 from hotnet2 import delta, hnap, hnio, permutations
 from hotnet2.constants import MAX_CC_SIZE, NUM_CCS, ITERATION_REPLACEMENT_TOKEN
 
-def parse_args(raw_args):
+def get_parser():
     description = "Runs HotNet threshold-finding procedure.\
                    Note that some or all parameters can be specified via a configuration file by\
                    passing '@<ConfigFileName>' as a command-line parameter, e.g.\
@@ -79,14 +79,13 @@ def parse_args(raw_args):
     mutation_parser.add_argument('-bf', '--bmr_file',
                                  help='File listing gene-specific BMRs. If none, the default BMR\
                                        will be used for all genes.')
+    return parser
     
+def run(args):
     #if l not specified, set default based on test statistic 
-    args = parser.parse_args(raw_args)
     if not args.sizes:
         args.sizes = [5,10,15,20] if args.test_statistic == MAX_CC_SIZE else [3]
-    return args
-
-def run(args):
+    
     #disallow finding delta by # of CCs of size >= l for HotNet2, since this is not currently
     #implemented correctly (and is non-trivial to implement)
     if not args.classic and args.test_statistic != MAX_CC_SIZE:
@@ -160,4 +159,4 @@ def get_deltas_from_heat_permutations(infmat, gene_index, heat_permutations, tes
     return deltas
 
 if __name__ == "__main__": 
-    run(parse_args(sys.argv[1:]))
+    run(get_parser().parse_args(sys.argv[1:]))
