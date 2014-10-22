@@ -4,8 +4,6 @@ import networkx as nx, numpy as np, scipy as sp
 
 # Try Fortran first, C second, Cython third, and NumPy fourth.
 
-choice_creation_similarity_matrix = 4
-            
 try:
     import fortran_routines
     choice_creation_similarity_matrix = 1
@@ -14,15 +12,9 @@ except ImportError:
         import c_routines
         choice_creation_similarity_matrix = 2
     except ImportError:
-        try:
-            import pyximport
-            pyximport.install()
-            import cython_routines
-            choice_creation_similarity_matrix = 3   
-        except ImportError:
-            print("WARNING: Could not import either Fortran or C/Cython modules; "
-                  "falling back to NumPy for similarity matrix creation.")           
-            choice_creation_similarity_matrix = 4
+        print("WARNING: Could not import either Fortran or C/Cython modules; "
+              "falling back to NumPy for similarity matrix creation.")           
+        choice_creation_similarity_matrix = 3
             
 strong_ccs = nx.strongly_connected_components
 
@@ -73,16 +65,6 @@ def similarity_matrix(infmat, index2gene, gene2heat, directed=True):
         else:
             sim = c_routines.compute_sim_classic(infmat, h, indices, np.shape(infmat)[0], np.shape(h)[0])      
 
-    elif choice_creation_similarity_matrix == 3:
-    
-        if infmat.dtype != np.float:
-            infmat = np.array(infmat,dtype=np.float)
-        indices = np.array([gene2index[g]-start_index for g in genelist],dtype=np.int)
-        if directed:
-            sim = cython_routines.compute_sim(infmat, h, indices, np.shape(infmat)[0], np.shape(h)[0])
-        else:
-            sim = cython_routines.compute_sim_classic(infmat, h, indices, np.shape(infmat)[0], np.shape(h)[0])   
-                          
     else:
     
         indices = [gene2index[g]-start_index for g in genelist]

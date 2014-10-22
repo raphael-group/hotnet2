@@ -15,7 +15,7 @@ Requirements
 * [SciPy 0.10.1](http://www.scipy.org/)
 * [NetworkX 1.7](http://networkx.github.io/)
 * MATLAB (optional but recommended for performance)
-* Fortran, C compiler, or Cython combined with a C compiler (optional but recommended for performance)
+* Fortran or C compiler (optional but recommended for performance)
 
 HotNet will likely work with additional versions of Python, NetworkX, NumPy, and SciPy, but
 alternative configurations have not been tested.
