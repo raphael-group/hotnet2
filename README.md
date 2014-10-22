@@ -31,9 +31,7 @@ With a Fortran compiler:
 
 With a C compiler:
 
-    cython cython_routines.pyx -o c_routines.c
-    gcc -shared -pthread -fPIC -fwrapv -O3 -Wall -fno-strict-aliasing -I/usr/include/python2.7 c_routines.c -o c_routines.so
-    
+    python setup.py build_src build_ext --inplace
 
 Support
 ------------------------
