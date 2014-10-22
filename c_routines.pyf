@@ -1,0 +1,14 @@
+python module c_routines
+interface
+  subroutine compute_sim(infmat, h, indices, p, q, M)
+    intent(c) compute_sim         ! foo is a C function
+    intent(c)                     ! all foo arguments are 
+                                  ! considered as C based
+    integer, intent(in) :: p, q
+    integer*8, intent(in) :: indices(q)
+    double precision, intent(in) :: infmat(p,p), h(q)
+    double precision, intent(out) :: M(q,q)
+
+  end subroutine foo
+end interface
+end python module m
