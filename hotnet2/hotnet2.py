@@ -12,7 +12,7 @@ except ImportError:
         import c_routines
         choice_creation_similarity_matrix = 2
     except ImportError:
-        print("WARNING: Could not import either Fortran or C/Cython modules; "
+        print("WARNING: Could not import either Fortran or C modules; "
               "falling back to NumPy for similarity matrix creation.")           
         choice_creation_similarity_matrix = 3
             
