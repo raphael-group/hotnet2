@@ -2,8 +2,6 @@ def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
     config = Configuration('',parent_package,top_path)
 
-    config.add_extension('fortran_routines',
-                         sources = ['fortran_routines.f95'])
     config.add_extension('c_routines',
                          sources = ['c_routines.pyf','c_routines.c'])
     return config

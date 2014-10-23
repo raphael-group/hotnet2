@@ -27,11 +27,11 @@ For best performance, install a Fortran or C complier and run one of the followi
 
 With a Fortran compiler:
 
-    f2py -c fortran_routines.f95 -m fortran_routines
+    python setup_fortran.py build_src build_ext --inplace
 
 With a C compiler:
 
-    python setup.py build_src build_ext --inplace
+    python setup_c.py build_src build_ext --inplace
 
 Support
 ------------------------
