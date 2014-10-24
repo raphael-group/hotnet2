@@ -83,17 +83,16 @@ interaction network you wish to use. If possible, use the `--matlab` flag for im
 
 Simple runs
 ------------------------
-To get started running HotNet2 quickly and easily, use the `simpleRun.py` Python script.  You must
-provide the following parameters:
+Once you have performed the influence matrix creation step described above, you can use the
+`simpleRun.py` to get started running HotNet2 quickly and easily. You must provide the following
+parameters:
 
         =====================================================================================
         | PARAMETER NAME         | DESCRIPTION                                              |
         =====================================================================================
-        |-mf/--infmat_file       |Path to .mat file containing influence matrix downloaded  |
-        |                        |from http://compbio.cs.brown.edu/projects/hotnet/         |
+        |-mf/--infmat_file       |Path to .mat file containing influence matrix             |
         -------------------------------------------------------------------------------------
-        |-if/--infmat_index_file |Path to gene-index mapping file downloaded from           |
-        |                        |http://compbio.cs.brown.edu/projects/hotnet/              |
+        |-if/--infmat_index_file |Path to gene-index mapping file                           |
         -------------------------------------------------------------------------------------
         |-hf/--heat_file         |Path to a tab-separated file containing a gene name in the|
         |                        |first column and the heat score for that gene in the      |
@@ -117,6 +116,25 @@ HotNet2 algorithm. The output files are:
 * `results.json`: Contains all of the above information plus the parameters used for the run in
   JSON format to faciliate further automated processing
 
+The `simpleRun.py` script can also be used to create a web visualization of the output subnetworks.
+To do so, include the `--edge_file` parameter:
+
+        ========================================================================================================
+        | PARAMETER NAME         | DEFAULT          | DESCRIPTION                                              |
+        ========================================================================================================
+        |-ef/--edge_file         | None             |Path to TSV file listing edges of the interaction network,|
+        |                        |                  |where each row contains the indices of two genes that are |
+        |                        |                  |connected in the network. This is used to create          |
+        |                        |                  |subnetwork visualizations; if not provided, visualizations|
+        |                        |                  |will not be made.                                         |
+        --------------------------------------------------------------------------------------------------------
+        |-nn/--network_name      | Network          |Display name for the interaction network.                 |
+        --------------------------------------------------------------------------------------------------------
+
+This will result in a a `viz` subdirectory of the output directory. To view the visualizations,
+navigate to the `viz` directory and run `python -m SimpleHTTPServer`, then visit `http://localhost:8000`
+in a browser.
+
 When using `simpleRun.py`, you may also optionally provide any or all of the parameters listed
 below. If one of these parameters is not provided, it will be set to the default value shown below.
 
@@ -137,11 +155,9 @@ below. If one of these parameters is not provided, it will be set to the default
         |-n/--num_permutations   | 100              |Number of permutations that should be used for parameter  |
         |                        |                  |selection and statistical significance testing            |
         --------------------------------------------------------------------------------------------------------
-        |--parallel              | Not default      |Include flag to run permutation tests in parallel. Only   |
-        |                        |                  |recommended for machines with at least 8 cores.           |
+        |--parallel              | Not default      |Include flag to run permutation tests in parallel.        |
         --------------------------------------------------------------------------------------------------------
         |--no-parallel           | Default          |Include flag to run permutation tests sequentially.       |
-        |                        |                  |Recommended for machines with fewer than 8 cores.         |
         --------------------------------------------------------------------------------------------------------
         |-o/--output_directory   | hotnet_output    |Output directory.                                         |
         --------------------------------------------------------------------------------------------------------
@@ -152,11 +168,9 @@ parameters are required:
         =====================================================================================
         | PARAMETER NAME         | DESCRIPTION                                              |
         =====================================================================================
-        |-mf/--infmat_file       |Path to .mat file containing influence matrix downloaded  |
-        |                        |from http://compbio.cs.brown.edu/projects/hotnet/         |
+        |-mf/--infmat_file       |Path to .mat file containing influence matrix             |
         -------------------------------------------------------------------------------------
-        |-if/--infmat_index_file |Path to gene-index mapping file downloaded from           |
-        |                        |http://compbio.cs.brown.edu/projects/hotnet/              |
+        |-if/--infmat_index_file |Path to gene-index mapping file                           |
         -------------------------------------------------------------------------------------
         |-hf/--heat_file         |Path to a tab-separated file containing a gene name in the|
         |                        |first column and the heat score for that gene in the      |
@@ -167,7 +181,8 @@ Running with only the parameters specified above will create a 'hotnet_output' d
 current working directory that contains 5 subdirectories each prefixed with `delta_`. Each of these
 subdirectories contains results files for a different value of the delta parameter used by the
 classic HotNet algorithm.  The contents of the directories are identical to those described above
-for simple runs of HotNet2 algorithm using `simpleRun.py`.
+for simple runs of HotNet2 algorithm using `simpleRun.py`. Similarily, the `simpleRunClassic.py`
+script accepts the same optional parameters as the `simpleRun.py` script.
 
 
 Advanced use
