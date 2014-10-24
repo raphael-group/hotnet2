@@ -38,6 +38,8 @@ For support using HotNet, please visit the [HotNet Google Group](https://groups.
 
 Setup
 ------------------------
+
+## Compilation
 For best performance, install a Fortran or C complier and run one of the following commands 
 (or some appropriate variation of them) prior to running HotNet for the first time:
 
@@ -49,23 +51,35 @@ With a C compiler:
 
     python setup_c.py build_src build_ext --inplace
 
-Support
-------------------------
-For support using HotNet, please visit the [HotNet Google Group](https://groups.google.com/forum/#!forum/hotnet-users).
+If you are unable to perform these steps, the code will transparently fall back to a pure Python
+implementation.
 
-HotNet2 vs. Classic HotNet
-------------------------
-This distribution contains two related algorithms for finding significantly altered subnetworks in
-a large gene interaction network: the original HotNet algorithm "classic HotNet", and an updated
-version "HotNet2".  HotNet2 differs from classic HotNet in several important ways.  First, HotNet2 
-ses a new heat diffusion kernel analogous to random walk with restart that better captures the
-local topology of the interaction network surrounding a protein compared to the general heat
-diffusion process used by HotNet.  HotNet2 also uses an asymmetric influence score and different
-permutation testing and parameter selection procedures.  Although classic HotNet is included for
-completeness, we recommend using HotNet2.
+## Influence matrix creation
 
-For more details on the two algorithms, please refer to the publications listed at the end of this
-README.
+For each gene-gene interaction network you want to use with HotNet2, you must perform a one-time
+step to generate the corresponding influence matrix. Use the provided `makeRequiredPPRFiles.py`
+script to create the real and permuted personalized pagerank influence matrices. We have included
+configuration files for creating the required matrices for the HPRD and iRefIndex PPI networks,
+which you can run as follows:
+
+    python makeRequiredPPRFiles.py @influence_matrices/hprd.config
+
+    python makeRequiredPPRFiles.py @influence_matrices/irefindex.config
+
+This will create the following files in the `influence_matrices/hprd` / `influence_matrices/irefindex`
+directories:
+
+* `{hprd/iref}_index_genes`: Gene-index file for the largest component in the given network.
+* `{hprd/iref}_edge_list`: Edge list file for the largest component in the given network.
+* `{hprd/iref}_ppr_{alpha}.mat`: Personalized page-rank influence matrix in MATLAB .mat format.
+* `permuted`: directory containing 100 subdirectories with the above files for permuted matrices
+
+For other networks, and for creating influence matrices for use with the classic HotNet algorithm,
+see the "Advanced use" section below.
+
+Note that this step will take a long time. Fortunately, though, you only need to do it once per
+interaction network you wish to use. If possible, use the `--matlab` flag for improved performance.
+
 
 Simple runs
 ------------------------
