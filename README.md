@@ -599,12 +599,21 @@ will be used.
 
 Influence matrices
 ------------------------
-Pre-computed influence matrices will be provided but are not yet available.
+In the `influence_matrices` directory, we provide edge list and gene index files for computing the
+PPR matrices for the following interaction networks:
+
+* HPRD v9 (http://www.hprd.org/)
+* iRefIndex v9 (http://irefindex.org)
+
+See above for instructions on using these files and the provided Python scripts to create the
+required PPR matrices.
 
 
-Sample data
+Example data
 ------------------------
-Example files will be provided but are not yet available.
+In the `example` directory, we provide example heat, interaction network, and mutation data files,
+as well as example HotNet2 configuration files. Please consult `example/README.md` for further
+details.
 
 
 Citation
