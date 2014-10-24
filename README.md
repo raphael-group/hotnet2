@@ -242,6 +242,32 @@ The steps of the algorithm and the code provided for each step are described bel
 
     If desired, the scripts `createPPRMat.py` and `permuteNetwork.py` can be used to performed the
     infividual steps of creating influence matrices and permuting edge lists, respectively.
+
+    ####Classic HotNet influence matrices####
+    Classic HotNet does not use permuted influence matrices, and thus requires only the single real
+    influence matrix. This can be created using the `createClassicInfmat.py` script. The required
+    and optional parameters to the script are as follows:
+
+    =============================================================================================================
+    | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
+    =============================================================================================================
+    |-e/--edgelist_file       | REQUIRED           |Path to TSV file listing edges of the interaction network,  |
+    |                         |                    |where each row contains the indices of two genes that are   |
+    |                         |                    |connected in the network.                                   |
+    -------------------------------------------------------------------------------------------------------------
+    |-i/--gene_index_file     | REQUIRED           |Path to tab-separated file containing an index in the first |
+    |                         |                    |column and the name of the gene represented at that index   |
+    |                         |                    |in the second column of each line.                          |
+    -------------------------------------------------------------------------------------------------------------
+    |-o/--output_dir          | REQUIRED           |Path to output directory.                                   |
+    -------------------------------------------------------------------------------------------------------------
+    |-p/--prefix              | REQUIRED           |Output prefix.                                              |
+    -------------------------------------------------------------------------------------------------------------
+    |-s/--start_index         | 1                  |Minimum index in the index file.                            |
+    -------------------------------------------------------------------------------------------------------------
+    |-t/--time                | REQUIRED           |Diffusion time.                                             |
+    -------------------------------------------------------------------------------------------------------------
+
     
 2. ###Heat score generation###
 

@@ -6,11 +6,18 @@ from hotnet2 import hnap, hnio
 def get_parser():                                                             
     description = 'Creates a heat diffusion influence matrix from an input graph.'
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
-    parser.add_argument('-e', '--edgelist_file', required=True, help='Input edge list.')
-    parser.add_argument('-i', '--gene_index_file', required=True, help='Input gene index file.')
-    parser.add_argument('-o', '--output_dir', required=True, help='Path to output dir.')
+    parser.add_argument('-e', '--edgelist_file', required=True,
+                        help='Path to TSV file listing edges of the interaction network, where\
+                              each row contains the indices of two genes that are connected in the\
+                              network.')
+    parser.add_argument('-i', '--gene_index_file', required=True,
+                        help='Path to tab-separated file containing an index in the first column\
+                              and the name of the gene represented at that index in the second\
+                              column of each line.')
+    parser.add_argument('-o', '--output_dir', required=True, help='Path to output directory.')
     parser.add_argument('-p', '--prefix', required=True, help='Output prefix.')
-    parser.add_argument('-s', '--start_index', default=1, type=int, help='Start index.')
+    parser.add_argument('-s', '--start_index', default=1, type=int,
+                        help='Minimum index in the index file.')
     parser.add_argument('-t', '--time', required=True, type=float, help='Diffusion time.')
     return parser                                                               
 
