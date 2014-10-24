@@ -39,7 +39,7 @@ For support using HotNet, please visit the [HotNet Google Group](https://groups.
 Setup
 ------------------------
 
-## Compilation
+### Compilation
 For best performance, install a Fortran or C complier and run one of the following commands 
 (or some appropriate variation of them) prior to running HotNet for the first time:
 
@@ -54,7 +54,7 @@ With a C compiler:
 If you are unable to perform these steps, the code will transparently fall back to a pure Python
 implementation.
 
-## Influence matrix creation
+### Influence matrix creation
 
 For each gene-gene interaction network you want to use with HotNet2, you must perform a one-time
 step to generate the corresponding influence matrix. Use the provided `makeRequiredPPRFiles.py`
