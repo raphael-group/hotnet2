@@ -272,7 +272,8 @@ The steps of the algorithm and the code provided for each step are described bel
 2. ###Heat score generation###
 
     This step creates a JSON file containing heat scores on each gene required in subsequent steps.
-    Heat scores can either be specified directly or calculated 
+    Heat scores can either be specified directly or calculated from mutation, MutSig, MuSic, or
+    Oncodrive data.
 
     The Python script `generateHeat.py` can be used to create the JSON heat file. The required and
     optional parameters to the script are described below.
@@ -298,7 +299,7 @@ The steps of the algorithm and the code provided for each step are described bel
         |                        |                  |preserved. If present, heat scores for all genes not      |
         |                        |                  |listed in the file will be discarded.                     |
         --------------------------------------------------------------------------------------------------------
-        |-egf/--gene_filter_file | None             |File path to which the list of genes that were excluded   |
+        |-egf/                   | None             |File path to which the list of genes that were excluded   |
         |--excluded_genes_output_file               |from the heat score output due to the specified filtering |
         |                        |                  |parameters should be writte, on gene per line. If no genes|
         |                        |                  |were filtered and a path is specified, the resulting file |
@@ -356,6 +357,76 @@ The steps of the algorithm and the code provided for each step are described bel
         --------------------------------------------------------------------------------------------------------
         |-o/--output_file        | None             |Output file. If none, output will be written to stdout.   |
         --------------------------------------------------------------------------------------------------------
+
+    If heat scores are to be calculated from MutSig data, the first argument to `generateHeat.py`
+    should be `mutsig`, e.g.:
+
+            python generateHeat.py mutsig <additional_parameters>
+
+        =============================================================================================================
+        | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
+        =============================================================================================================
+        |--mutsig_score_file      | REQUIRED           |MutSig score file (gene to q-value).                        |
+        -------------------------------------------------------------------------------------------------------------
+        |--threshold              | 1.0                |Maximum q-value threshold.                                  |
+        -------------------------------------------------------------------------------------------------------------
+        |--gene_filter_file       | None               |File listing genes whose heat scores should be preserved.   |
+        |                         |                    |If present, all other heat scores will be discarded.        |
+        -------------------------------------------------------------------------------------------------------------
+        |-o/--output_file         | None               |Output file. If none given, output will be written to       |
+        |                         |                    |stdout.                                                     |
+        -------------------------------------------------------------------------------------------------------------
+
+    If heat scores are to be calculated from MuSiC data, the first argument to `generateHeat.py`
+    should be `music`, e.g.:
+
+            python generateHeat.py music <additional_parameters>
+
+        =============================================================================================================
+        | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
+        =============================================================================================================
+        |--music_score_file       | REQUIRED           |MuSiC score file (gene to q-value).                         |
+        -------------------------------------------------------------------------------------------------------------
+        |--threshold              | 1.0                |Maximum q-value threshold.                                  |
+        -------------------------------------------------------------------------------------------------------------
+        |--max_heat               | 15                 |Max heat                                                    |
+        -------------------------------------------------------------------------------------------------------------
+        |--gene_filter_file       | None               |File listing genes whose heat scores should be preserved.   |
+        |                         |                    |If present, all other heat scores will be discarded.        |
+        -------------------------------------------------------------------------------------------------------------
+        |-o/--output_file         | None               |Output file. If none given, output will be written to       |
+        |                         |                    |stdout.                                                     |
+        -------------------------------------------------------------------------------------------------------------
+
+    If heat scores are to be calculated from Oncodrive data, the first argument to `generateHeat.py`
+    should be `oncodrive`, e.g.:
+
+            python generateHeat.py oncodrive <additional_parameters>
+
+        =============================================================================================================
+        | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
+        =============================================================================================================
+        |--fm_scores              | REQUIRED           |Oncodrive-FM scores (gene to q-value).                      |
+        -------------------------------------------------------------------------------------------------------------
+        |--cis_amp_scores         | REQUIRED           |Oncodrive-CIS scores (gene to q-value); amplifications      |
+        |                         |                    |only.                                                       |
+        -------------------------------------------------------------------------------------------------------------
+        |--cis                    | False              |Flag whether to include Oncodrive-CIS scores when           |
+        |                         |                    |generating the Oncodrive heat file.                         |
+        -------------------------------------------------------------------------------------------------------------
+        |--cis_del_scores         | REQUIRED           |Oncodrive-CIS scores (gene to q-value); deletions only.     |
+        -------------------------------------------------------------------------------------------------------------
+        |--fm_threshold           | 0.2                |Maximum Oncodrive-FM q-value threshold                      |
+        -------------------------------------------------------------------------------------------------------------
+        |--cis_threshold          | 0.2                |Maximum Oncodrive-CIS q-value threshold                     |
+        -------------------------------------------------------------------------------------------------------------
+        |--gene_filter_file       | None               |File listing genes whose heat scores should be preserved.   |
+        |                         |                    |If present, all other heat scores will be discarded.        |
+        -------------------------------------------------------------------------------------------------------------
+        |-o/--output_file         | None               |Output file. If none given, output will be written to       |
+        |                         |                    |stdout.                                                     |
+        -------------------------------------------------------------------------------------------------------------
+
 
 3. ###Delta selection###
 
