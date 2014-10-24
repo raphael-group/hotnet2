@@ -45,9 +45,11 @@ version "HotNet2".  HotNet2 differs from classic HotNet in several important way
 ses a new heat diffusion kernel analogous to random walk with restart that better captures the
 local topology of the interaction network surrounding a protein compared to the general heat
 diffusion process used by HotNet.  HotNet2 also uses an asymmetric influence score and different
-permutation testing and parameter selection procedures.
+permutation testing and parameter selection procedures.  Although classic HotNet is included for
+completeness, we recommend using HotNet2.
 
-For more details, please refer to the publications listed at the end of this README.
+For more details on the two algorithms, please refer to the publications listed at the end of this
+README.
 
 Simple runs
 ------------------------
