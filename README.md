@@ -206,39 +206,39 @@ The steps of the algorithm and the code provided for each step are described bel
     The script `makeRequiredPPRFiles.py` can be used to create the real and permuted matrices.
     The required and optional parameters to the script are as follows:
 
-    =============================================================================================================
-    | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
-    =============================================================================================================
-    |-e/--edgelist_file       | REQUIRED           |Path to TSV file listing edges of the interaction network,  |
-    |                         |                    |where each row contains the indices of two genes that are   |
-    |                         |                    |connected in the network.                                   |
-    -------------------------------------------------------------------------------------------------------------
-    |-i/--gene_index_file     | REQUIRED           |Path to tab-separated file containing an index in the first |
-    |                         |                    |column and the name of the gene represented at that index   |
-    |                         |                    |in the second column of each line.                          |
-    -------------------------------------------------------------------------------------------------------------
-    |-p/--prefix              | REQUIRED           |Output prefix.                                              |
-    -------------------------------------------------------------------------------------------------------------
-    |-is                      | 1                  |Minimum index in the index file.                            |
-    |--index_file_start_index |                    |                                                            |
-    -------------------------------------------------------------------------------------------------------------
-    |-a/--alpha               | REQUIRED           |Page Rank dampening factor, equal to 1-beta (where beta is  |
-    |                         |                    |the restart probability for insulated heat                  |
-    |                         |                    |diffusion|process).                                         |
-    -------------------------------------------------------------------------------------------------------------
-    |-q/--Q                   | 115                |Edge swap constant. The script will attempt Q*|E| edge      |
-    |                         |                    |swaps                                                       |
-    -------------------------------------------------------------------------------------------------------------
-    |-ps                      | 1                  |Index at which to start permutation file names.             |
-    |--permutation_start_index|                    |                                                            |
-    -------------------------------------------------------------------------------------------------------------
-    |-n/--num_permutations    | 100                |Number of permuted networks to create.                      |
-    -------------------------------------------------------------------------------------------------------------
-    |-o/--output_dir          | REQUIRED           |Output directory.                                           |
-    -------------------------------------------------------------------------------------------------------------
-    |--matlab                 | False              |Create the PPR matrix using an external call to a MATLAB    |
-    |                         |                    |script instead of SciPy.                                    |
-    -------------------------------------------------------------------------------------------------------------
+        =============================================================================================================
+        | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
+        =============================================================================================================
+        |-e/--edgelist_file       | REQUIRED           |Path to TSV file listing edges of the interaction network,  |
+        |                         |                    |where each row contains the indices of two genes that are   |
+        |                         |                    |connected in the network.                                   |
+        -------------------------------------------------------------------------------------------------------------
+        |-i/--gene_index_file     | REQUIRED           |Path to tab-separated file containing an index in the first |
+        |                         |                    |column and the name of the gene represented at that index   |
+        |                         |                    |in the second column of each line.                          |
+        -------------------------------------------------------------------------------------------------------------
+        |-p/--prefix              | REQUIRED           |Output prefix.                                              |
+        -------------------------------------------------------------------------------------------------------------
+        |-is                      | 1                  |Minimum index in the index file.                            |
+        |--index_file_start_index |                    |                                                            |
+        -------------------------------------------------------------------------------------------------------------
+        |-a/--alpha               | REQUIRED           |Page Rank dampening factor, equal to 1-beta (where beta is  |
+        |                         |                    |the restart probability for insulated heat                  |
+        |                         |                    |diffusion|process).                                         |
+        -------------------------------------------------------------------------------------------------------------
+        |-q/--Q                   | 115                |Edge swap constant. The script will attempt Q*|E| edge      |
+        |                         |                    |swaps                                                       |
+        -------------------------------------------------------------------------------------------------------------
+        |-ps                      | 1                  |Index at which to start permutation file names.             |
+        |--permutation_start_index|                    |                                                            |
+        -------------------------------------------------------------------------------------------------------------
+        |-n/--num_permutations    | 100                |Number of permuted networks to create.                      |
+        -------------------------------------------------------------------------------------------------------------
+        |-o/--output_dir          | REQUIRED           |Output directory.                                           |
+        -------------------------------------------------------------------------------------------------------------
+        |--matlab                 | False              |Create the PPR matrix using an external call to a MATLAB    |
+        |                         |                    |script instead of SciPy.                                    |
+        -------------------------------------------------------------------------------------------------------------
 
     If desired, the scripts `createPPRMat.py` and `permuteNetwork.py` can be used to performed the
     infividual steps of creating influence matrices and permuting edge lists, respectively.
@@ -248,25 +248,25 @@ The steps of the algorithm and the code provided for each step are described bel
     influence matrix. This can be created using the `createClassicInfmat.py` script. The required
     and optional parameters to the script are as follows:
 
-    =============================================================================================================
-    | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
-    =============================================================================================================
-    |-e/--edgelist_file       | REQUIRED           |Path to TSV file listing edges of the interaction network,  |
-    |                         |                    |where each row contains the indices of two genes that are   |
-    |                         |                    |connected in the network.                                   |
-    -------------------------------------------------------------------------------------------------------------
-    |-i/--gene_index_file     | REQUIRED           |Path to tab-separated file containing an index in the first |
-    |                         |                    |column and the name of the gene represented at that index   |
-    |                         |                    |in the second column of each line.                          |
-    -------------------------------------------------------------------------------------------------------------
-    |-o/--output_dir          | REQUIRED           |Path to output directory.                                   |
-    -------------------------------------------------------------------------------------------------------------
-    |-p/--prefix              | REQUIRED           |Output prefix.                                              |
-    -------------------------------------------------------------------------------------------------------------
-    |-s/--start_index         | 1                  |Minimum index in the index file.                            |
-    -------------------------------------------------------------------------------------------------------------
-    |-t/--time                | REQUIRED           |Diffusion time.                                             |
-    -------------------------------------------------------------------------------------------------------------
+        =============================================================================================================
+        | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
+        =============================================================================================================
+        |-e/--edgelist_file       | REQUIRED           |Path to TSV file listing edges of the interaction network,  |
+        |                         |                    |where each row contains the indices of two genes that are   |
+        |                         |                    |connected in the network.                                   |
+        -------------------------------------------------------------------------------------------------------------
+        |-i/--gene_index_file     | REQUIRED           |Path to tab-separated file containing an index in the first |
+        |                         |                    |column and the name of the gene represented at that index   |
+        |                         |                    |in the second column of each line.                          |
+        -------------------------------------------------------------------------------------------------------------
+        |-o/--output_dir          | REQUIRED           |Path to output directory.                                   |
+        -------------------------------------------------------------------------------------------------------------
+        |-p/--prefix              | REQUIRED           |Output prefix.                                              |
+        -------------------------------------------------------------------------------------------------------------
+        |-s/--start_index         | 1                  |Minimum index in the index file.                            |
+        -------------------------------------------------------------------------------------------------------------
+        |-t/--time                | REQUIRED           |Diffusion time.                                             |
+        -------------------------------------------------------------------------------------------------------------
 
     
 2. ###Heat score generation###
