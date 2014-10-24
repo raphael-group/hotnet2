@@ -1,10 +1,22 @@
 HotNet2
 =======================
 
-HotNet is an algorithm for finding significantly altered subnetworks in a large gene interaction
-network. While originally developed for use with cancer mutation data, the current release of
-HotNet also supports the application in which scores can be assigned to genes in the network
-(previously called generalizedHotNet).
+HotNet2 is an algorithm for finding significantly altered subnetworks in a large gene interaction
+network. While originally developed for use with cancer mutation data, the current release also
+supports any application in which meaningful scores can be assigned to genes in the network.
+
+HotNet2 vs. Classic HotNet
+------------------------
+This distribution contains two related algorithms: the original HotNet algorithm "classic HotNet",
+and an updated version "HotNet2". HotNet2 differs from classic HotNet in several important ways.
+First, HotNet2 uses a new heat diffusion kernel analogous to random walk with restart that better
+captures the local topology of the interaction network as compared to the general heat diffusion
+process used by classic HotNet. HotNet2 also uses an asymmetric influence score and different
+permutation testing and parameter selection procedures. Although classic HotNet is included for
+completeness, we recommend using HotNet2.
+
+For more details on the two algorithms, please refer to the publications listed at the end of this
+README.
 
 Requirements
 ------------------------
@@ -17,8 +29,12 @@ Requirements
 * MATLAB (optional but recommended for performance)
 * Fortran or C compiler (optional but recommended for performance)
 
-HotNet will likely work with additional versions of Python, NetworkX, NumPy, and SciPy, but
+HotNet2 will likely work with additional versions of Python, NetworkX, NumPy, and SciPy, but
 alternative configurations have not been tested.
+
+Support
+------------------------
+For support using HotNet, please visit the [HotNet Google Group](https://groups.google.com/forum/#!forum/hotnet-users).
 
 Setup
 ------------------------
