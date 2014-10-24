@@ -11,18 +11,23 @@ def get_parser():
                    given network and restart probability beta.'
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
     parser.add_argument('-e', '--edgelist_file', required=True,
-                        help='Location of edgelist file.')
+                        help='Path to TSV file listing edges of the interaction network, where\
+                              each row contains the indices of two genes that are connected in the\
+                              network.')
     parser.add_argument('-i', '--gene_index_file', required=True,
-                        help='Location of gene-index file.')
+                        help='Path to tab-separated file containing an index in the first column\
+                              and the name of the gene represented at that index in the second\
+                              column of each line.')
     parser.add_argument('-p', '--prefix', required=True,
                         help='Output prefix.')
     parser.add_argument('-is', '--index_file_start_index', default=1, type=int,
-                        help="Minimum index in the inde file.")
+                        help='Minimum index in the index file.')
     parser.add_argument('-a', '--alpha', required=True, type=float,
-                        help="Page Rank dampening factor.")
+                        help='Page Rank dampening factor, equal to 1-beta (where beta is the\
+                              restart probability for insulated heat diffusion|process).')
 
     parser.add_argument('-q', '--Q', default=115, type=float,
-                        help='Edge swap constant.')
+                        help='Edge swap constant. The script will attempt Q*|E| edge swaps')
     parser.add_argument('-ps', '--permutation_start_index', default=1, type=int,
                         help='Index at which to start permutation file names.')
     parser.add_argument('-n', '--num_permutations', default=100, type=int,
@@ -32,7 +37,7 @@ def get_parser():
                         help='Output directory.')
     parser.add_argument("--matlab", default=False, action="store_true",
                         help="Create the PPR matrix using an external call "\
-                             "to a MATLAB script instead of Scipy.")
+                             "to a MATLAB script instead of SciPy.")
 
     return parser
 

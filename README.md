@@ -198,9 +198,50 @@ The steps of the algorithm and the code provided for each step are described bel
 1. ###Influence matrix creation###
 
     This step creates a matrix that defines an "influence score" for each gene pair in the network
-    based on known gene interactions and a heat diffusion process. Code is not provided for
-    influence matrix creation. Instead, please use one of the pre-computed influence matrices
-    provided.
+    based on known gene interactions and a heat diffusion process. As mentioned above, this step
+    only needs to be performed *once* for each gene interaction network.
+
+    ####HotNet2 influence matrices####
+    HotNet2 requires an influence matrix and a directory of permuted influence matrices as input.
+    The script `makeRequiredPPRFiles.py` can be used to create the real and permuted matrices.
+    The required and optional parameters to the script are as follows:
+
+    =============================================================================================================
+    | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
+    =============================================================================================================
+    |-e/--edgelist_file       | REQUIRED           |Path to TSV file listing edges of the interaction network,  |
+    |                         |                    |where each row contains the indices of two genes that are   |
+    |                         |                    |connected in the network.                                   |
+    -------------------------------------------------------------------------------------------------------------
+    |-i/--gene_index_file     | REQUIRED           |Path to tab-separated file containing an index in the first |
+    |                         |                    |column and the name of the gene represented at that index   |
+    |                         |                    |in the second column of each line.                          |
+    -------------------------------------------------------------------------------------------------------------
+    |-p/--prefix              | REQUIRED           |Output prefix.                                              |
+    -------------------------------------------------------------------------------------------------------------
+    |-is                      | 1                  |Minimum index in the index file.                            |
+    |--index_file_start_index |                    |                                                            |
+    -------------------------------------------------------------------------------------------------------------
+    |-a/--alpha               | REQUIRED           |Page Rank dampening factor, equal to 1-beta (where beta is  |
+    |                         |                    |the restart probability for insulated heat                  |
+    |                         |                    |diffusion|process).                                         |
+    -------------------------------------------------------------------------------------------------------------
+    |-q/--Q                   | 115                |Edge swap constant. The script will attempt Q*|E| edge      |
+    |                         |                    |swaps                                                       |
+    -------------------------------------------------------------------------------------------------------------
+    |-ps                      | 1                  |Index at which to start permutation file names.             |
+    |--permutation_start_index|                    |                                                            |
+    -------------------------------------------------------------------------------------------------------------
+    |-n/--num_permutations    | 100                |Number of permuted networks to create.                      |
+    -------------------------------------------------------------------------------------------------------------
+    |-o/--output_dir          | REQUIRED           |Output directory.                                           |
+    -------------------------------------------------------------------------------------------------------------
+    |--matlab                 | False              |Create the PPR matrix using an external call to a MATLAB    |
+    |                         |                    |script instead of SciPy.                                    |
+    -------------------------------------------------------------------------------------------------------------
+
+    If desired, the scripts `createPPRMat.py` and `permuteNetwork.py` can be used to performed the
+    infividual steps of creating influence matrices and permuting edge lists, respectively.
     
 2. ###Heat score generation###
 
