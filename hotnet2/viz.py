@@ -25,7 +25,7 @@ def get_component_json(cc, gene2heat, edges, gene2index, networkName, d_score):
 def write_index_file(index_file, out_file, deltas):
     index = hnio.load_file(index_file)
     index += '<ul>\n'
-    for delta in deltas:
+    for delta in sorted(deltas):
         index += '<li><a href="delta%s/subnetworks.html">&delta; = %s</a></li>\n' % (delta, delta)
     index += '</ul>'
     hnio.write_file(out_file, index)
