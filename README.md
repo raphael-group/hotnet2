@@ -704,6 +704,33 @@ The steps of the algorithm and the code provided for each step are described bel
         |--no-parallel           | Default          |Include flag to run permutation tests sequentially.       |
         --------------------------------------------------------------------------------------------------------
 
+6. ###Visualization###
+
+    You can visualize the subnetworks output by HotNet2 using the `makeResultsWebsite.py` script.
+    It takes the following parameters:
+
+        ========================================================================================================
+        | PARAMETER NAME         | REQUIRED/DEFAULT | DESCRIPTION                                              |
+        ========================================================================================================
+        |-r/--results_files      | REQUIRED         |Paths to results.json files output by HotNet2. Multiple   |
+        |                        |                  |file paths may be passed.                                 |
+        --------------------------------------------------------------------------------------------------------
+        |-ef/--edge_file         | REQUIRED         |Path to TSV file listing edges of the interaction network,|
+        |                        |                  |where each row contains the indices of two genes that are |
+        |                        |                  |connected in the network.                                 |
+        --------------------------------------------------------------------------------------------------------
+        |-dsf/                   | None             |Path to a tab-separated file containing a gene name in the|
+        |--display_score_file    |                  |first column and the display score for that gene in the   |
+        |                        |                  |second column of each line.                               |
+        --------------------------------------------------------------------------------------------------------
+        |-nn/--network_name      | Network          |Display name for the interaction network.                 |
+        --------------------------------------------------------------------------------------------------------
+        |-o/--output_directory   | REQUIRED         |Output directory.                                         |
+        --------------------------------------------------------------------------------------------------------
+
+    To view the resulting visualizations, navigate to the output directory and run
+    `python -m SimpleHTTPServer`, then visit `http://localhost:8000` in a browser.
+
 
 Passing parameters
 ------------------------
