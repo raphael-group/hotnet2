@@ -67,7 +67,7 @@ def run(args):
     if not os.path.exists(perm_dir): os.makedirs(perm_dir)
     pargs = '-q %s -s %s -e %s -p %s -o %s -n %s' % (args.Q, args.permutation_start_index, largest_cc_edgelist_file,
                                                      args.prefix, perm_dir, args.num_permutations)
-    permute.run(permute.parse_args(pargs.split()))
+    permute.run(permute.get_parser().parse_args(pargs.split()))
 
     # make permuted PPRs
     print "\nCreating PPR matrices for permuted networks"
