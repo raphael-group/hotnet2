@@ -30,7 +30,7 @@ def get_parser():
     parser.add_argument('-ccs', '--min_cc_size', type=int, default=2,
                         help='Minimum size connected components that should be returned.')
     parser.add_argument('-c', '--classic', default=False, action='store_true',
-                        help='Run classic (instead of directed) HotNet.')
+                        help='Run classic HotNet (rather than HotNet2).')
     parser.add_argument('-o', '--output_directory', required=True,
                         help='Output directory. Files results.json, components.txt, and\
                               significance.txt will be generated in subdirectories for each delta.')

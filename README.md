@@ -443,7 +443,7 @@ The steps of the algorithm and the code provided for each step are described bel
 
       or
 
-    * Permuted mutation data (recommended for classic HotNet mutation data is used to generate scores)
+    * Permuted mutation data (recommended for classic HotNet when mutation data is used to generate scores)
     
     The Python script `findThreshold.py` can be used to run the delta selection procedure. The
     required and optional parameters to the script are described below.
@@ -623,7 +623,7 @@ The steps of the algorithm and the code provided for each step are described bel
         --------------------------------------------------------------------------------------------------------
         |-mf/--infmat_file       | REQUIRED         |Path to .mat file containing influence matrix.            |
         --------------------------------------------------------------------------------------------------------
-        |-mn/--infmat_name       | Li               |Variable name of the influence matrices in the .mat files.|
+        |-mn/--infmat_name       | PPR              |Variable name of the influence matrix in the .mat file.   |
         --------------------------------------------------------------------------------------------------------
         |-if/--infmat_index_file | REQUIRED         |Path to tab-separated file containing an index in the     |
         |                        |                  |first column and the name of the gene represented at that |
@@ -631,20 +631,13 @@ The steps of the algorithm and the code provided for each step are described bel
         --------------------------------------------------------------------------------------------------------
         |-hf/--heat_file         | REQUIRED         |JSON heat score file generated via generateHeat.py        |
         --------------------------------------------------------------------------------------------------------
-        |-ms/--min_heat_score    | See description  |Minimum heat score for a gene to be eligible for inclusion|
-        |                        |                  |in a returned connected component. By default, all genes  |
-        |                        |                  |with positive heat scores will be included. Note that if  |
-        |                        |                  |heat permutation is used to generate permuted data sets   |
-        |                        |                  |for significance testing, heat scores will be permuted    |
-        |                        |                  |among all genes that have scores, even those with scores  |
-        |                        |                  |below the minimum for inclusion in output CCs.            |
-        --------------------------------------------------------------------------------------------------------
         |-d/--deltas             | REQUIRED         |Weight thresholds for edge removal.                       |
         --------------------------------------------------------------------------------------------------------
-        |-ccs/--min_cc_size      | 3                |Minimum size connected components that should be returned.|
+        |-ccs/--min_cc_size      | 2                |Minimum size connected components that should be returned.|
         --------------------------------------------------------------------------------------------------------
         |-o/--output_directory   | REQUIRED         |Output directory. Files results.json, components.txt, and |
-        |                        |                  |significance.txt will be generated                        |
+        |                        |                  |significance.txt will be generated in subdirectories for  |
+        |                        |                  |each delta.                                               |
         --------------------------------------------------------------------------------------------------------
         |-c/--classic            | None             |Run classic HotNet (rather than HotNet2).                 |
         --------------------------------------------------------------------------------------------------------
