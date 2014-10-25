@@ -482,11 +482,9 @@ The steps of the algorithm and the code provided for each step are described bel
         --------------------------------------------------------------------------------------------------------
         |-n/--num_permutations   | REQUIRED         |Number of permuted data sets to generate.                 |
         --------------------------------------------------------------------------------------------------------
-        |--parallel              | Not default      |Include flag to run permutation tests in parallel. Only   |
-        |                        |                  |recommended for machines with at least 8 cores.           |
+        |--parallel              | Not default      |Include flag to run permutation tests in parallel.        |
         --------------------------------------------------------------------------------------------------------
         |--no-parallel           | Default          |Include flag to run permutation tests sequentially.       |
-        |                        |                  |Recommended for machines with fewer than 8 cores.         |
         --------------------------------------------------------------------------------------------------------
         |-o/--output_file        | None             |Output file. If none, output will be written to stdout.   |
         --------------------------------------------------------------------------------------------------------
@@ -529,11 +527,9 @@ The steps of the algorithm and the code provided for each step are described bel
         --------------------------------------------------------------------------------------------------------
         |-n/--num_permutations   | REQUIRED         |Number of permuted data sets to generate.                 |
         --------------------------------------------------------------------------------------------------------
-        |--parallel              | Not default      |Include flag to run permutation tests in parallel. Only   |
-        |                        |                  |recommended for machines with at least 8 cores.           |
+        |--parallel              | Not default      |Include flag to run permutation tests in parallel.        |
         --------------------------------------------------------------------------------------------------------
         |--no-parallel           | Default          |Include flag to run permutation tests sequentially.       |
-        |                        |                  |Recommended for machines with fewer than 8 cores.         |
         --------------------------------------------------------------------------------------------------------
         |-o/--output_file        | None             |Output file. If none, output will be written to stdout.   |
         --------------------------------------------------------------------------------------------------------
@@ -587,11 +583,9 @@ The steps of the algorithm and the code provided for each step are described bel
         --------------------------------------------------------------------------------------------------------
         |-n/--num_permutations   | REQUIRED         |Number of permuted data sets to generate.                 |
         --------------------------------------------------------------------------------------------------------
-        |--parallel              | Not default      |Include flag to run permutation tests in parallel. Only   |
-        |                        |                  |recommended for machines with at least 8 cores.           |
+        |--parallel              | Not default      |Include flag to run permutation tests in parallel.        |
         --------------------------------------------------------------------------------------------------------
         |--no-parallel           | Default          |Include flag to run permutation tests sequentially.       |
-        |                        |                  |Recommended for machines with fewer than 8 cores.         |
         --------------------------------------------------------------------------------------------------------
         |-o/--output_file        | None             |Output file. If none, output will be written to stdout.   |
         --------------------------------------------------------------------------------------------------------
@@ -672,11 +666,9 @@ The steps of the algorithm and the code provided for each step are described bel
         --------------------------------------------------------------------------------------------------------
         |-l/--cc_stop_size       | 10               |Largest connected component size to count                 |
         --------------------------------------------------------------------------------------------------------
-        |--parallel              | Not default      |Include flag to run permutation tests in parallel. Only   |
-        |                        |                  |recommended for machines with at least 8 cores.           |
+        |--parallel              | Not default      |Include flag to run permutation tests in parallel.        |
         --------------------------------------------------------------------------------------------------------
         |--no-parallel           | Default          |Include flag to run permutation tests sequentially.       |
-        |                        |                  |Recommended for machines with fewer than 8 cores.         |
         --------------------------------------------------------------------------------------------------------
 
     To run statistical significance testing with permuted mutation data, include `mutations` as a
@@ -707,11 +699,9 @@ The steps of the algorithm and the code provided for each step are described bel
         --------------------------------------------------------------------------------------------------------
         |-l/--cc_stop_size       | 10               |Largest connected component size to count                 |
         --------------------------------------------------------------------------------------------------------
-        |--parallel              | Not default      |Include flag to run permutation tests in parallel. Only   |
-        |                        |                  |recommended for machines with at least 8 cores.           |
+        |--parallel              | Not default      |Include flag to run permutation tests in parallel.        |
         --------------------------------------------------------------------------------------------------------
         |--no-parallel           | Default          |Include flag to run permutation tests sequentially.       |
-        |                        |                  |Recommended for machines with fewer than 8 cores.         |
         --------------------------------------------------------------------------------------------------------
 
 

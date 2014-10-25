@@ -44,11 +44,9 @@ def get_parser():
     parent_parser.add_argument('-l', '--cc_stop_size', type=int, default=10,
                                help='Largest connected component size to count in permutation tests')
     parent_parser.add_argument('--parallel', dest='parallel', action='store_true',
-                               help='Run permutation tests in parallel. Only recommended for machines\
-                                     with at least 8 cores.')
+                               help='Run permutation tests in parallel.')
     parent_parser.add_argument('--no-parallel', dest='parallel', action='store_false',
-                               help='Run permutation tests sequentially. Recommended for machines\
-                                     with fewer than 8 cores.')
+                               help='Run permutation tests sequentially.')
     parent_parser.set_defaults(parallel=False)
     
     subparsers = parser.add_subparsers(title='Heat score type', dest='permutation_type')
