@@ -8,15 +8,15 @@ supports any application in which meaningful scores can be assigned to genes in 
 HotNet2 vs. Classic HotNet
 ------------------------
 This distribution contains two related algorithms: the original HotNet algorithm "classic HotNet",
-and an updated version "HotNet2". HotNet2 differs from classic HotNet in several important ways.
-First, HotNet2 uses a new heat diffusion kernel analogous to random walk with restart that better
+and an updated version "HotNet2". For details on the two algorithms, please refer to the publications
+listed at the end of this README.
+
+In brief, HotNet2 uses a new heat diffusion kernel analogous to random walk with restart that better
 captures the local topology of the interaction network as compared to the general heat diffusion
 process used by classic HotNet. HotNet2 also uses an asymmetric influence score and different
 permutation testing and parameter selection procedures. Although classic HotNet is included for
 completeness, we recommend using HotNet2.
 
-For more details on the two algorithms, please refer to the publications listed at the end of this
-README.
 
 Requirements
 ------------------------
@@ -766,6 +766,14 @@ details.
 
 Citation
 ------------------------
+If you use HotNet2 in your work, please cit:
+
+M.D.M. Leiserson, F. Vandin, H.T. Wu, J.R. Dobson, J.V. Eldridge, J.L. Thomas, A. Papoutsaki,
+Y. Kim, B. Niu, M. McLellan, M.S. Lawrence, A.G. Perez, D. Tamborero, Y. Cheng, G.A. Ryslik,
+N. Lopez-Bigas, G. Getz, L. Ding, and B.J. Raphael.  (2014) Pan-Cancer Network Analysis Identifies
+Combinations of Rare Somatic Mutations across Pathways and Protein Complexes. Nature Genetics.
+In press.
+
 If you use HotNet in your work, please cite:
 
 F. Vandin, E. Upfal, and B.J. Raphael. (2011) Algorithms for Detecting Significantly Mutated
