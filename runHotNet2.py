@@ -30,7 +30,7 @@ def get_parser():
     parser.add_argument('-ccs', '--min_cc_size', type=int, default=2,
                         help='Minimum size connected components that should be returned.')
     parser.add_argument('-c', '--classic', default=False, action='store_true',
-                        help='Run classic (instead of directed) HotNet.')
+                        help='Run classic HotNet (rather than HotNet2).')
     parser.add_argument('-o', '--output_directory', required=True,
                         help='Output directory. Files results.json, components.txt, and\
                               significance.txt will be generated in subdirectories for each delta.')
@@ -44,11 +44,9 @@ def get_parser():
     parent_parser.add_argument('-l', '--cc_stop_size', type=int, default=10,
                                help='Largest connected component size to count in permutation tests')
     parent_parser.add_argument('--parallel', dest='parallel', action='store_true',
-                               help='Run permutation tests in parallel. Only recommended for machines\
-                                     with at least 8 cores.')
+                               help='Run permutation tests in parallel.')
     parent_parser.add_argument('--no-parallel', dest='parallel', action='store_false',
-                               help='Run permutation tests sequentially. Recommended for machines\
-                                     with fewer than 8 cores.')
+                               help='Run permutation tests sequentially.')
     parent_parser.set_defaults(parallel=False)
     
     subparsers = parser.add_subparsers(title='Heat score type', dest='permutation_type')

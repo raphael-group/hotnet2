@@ -40,11 +40,9 @@ def get_parser():
                         help='Output directory. Files results.json, components.txt, and\
                               significance.txt will be generated in subdirectories for each delta.')
     parser.add_argument('--parallel', dest='parallel', action='store_true',
-                        help='Run permutation tests in parallel. Only recommended for machines\
-                              with at least 8 cores.')
+                        help='Run permutation tests in parallel.')
     parser.add_argument('--no-parallel', dest='parallel', action='store_false',
-                        help='Run permutation tests sequentially. Recommended for machines\
-                              with fewer than 8 cores.')
+                        help='Run permutation tests sequentially.')
     parser.set_defaults(parallel=False)
     
     return parser
