@@ -1,4 +1,5 @@
 import hnio
+from collections import defaultdict
 
 def get_nodes(cc, gene2heat, d_score):
     scores = d_score if d_score else gene2heat
@@ -21,6 +22,18 @@ def get_component_json(cc, gene2heat, edges, gene2index, networkName, d_score):
     cc_edges = get_edges(cc, edges, gene2index, networkName)
 
     return {'nodes': nodes, 'edges': cc_edges}
+
+def get_oncoprint_json(cc, snvs, cnas):
+    cc = set(cc)
+    samples = set()
+    
+    M = defaultdict(lambda: defaultdict(list))
+    for mut in snvs + cnas:
+        if mut.gene in cc:
+            M[mut.gene][mut.sample].append(mut.mut_type)
+            samples.add(mut.sample)
+    
+    return M
 
 def write_index_file(index_file, out_file, deltas):
     index = hnio.load_file(index_file)
