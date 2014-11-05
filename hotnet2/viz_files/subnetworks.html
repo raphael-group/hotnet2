@@ -1,40 +1,96 @@
-<!DOCTYPE html>
-<meta charset="utf-8">
-<title>HotNet Subnetworks</title>
+<title>HotNet2 Subnetworks</title>
 <style>
 	body{
 		font-family:"Helvetica","Arial";
 		padding:10px;
 	}
-	div#figures{
+	div.container{
+		width:70%;
+		margin:0px auto;
 		background:"#F6F6F6";
-		width:350px;
-		float:left;
 	}
 	div#instructions{
-		position:fixed;
-		left:400px;
-		width:450px;
+		width:45%;
+		float:left;
+	}
+	div#filters{
+		width:45%;
+		float:right;
+	}
+	div#figures{
+		padding:5px;
+		clear:both;
+	}
+	div#figures h3 small#stats{
+		float:right;
+		font-size:80%;
 	}
 	hr{
+		clear:both;
+		padding-bottom:0px;
+		margin:0px;
+		border:0;
+		border-bottom:1px solid #eee;
+	}
+	div#figures hr{
 		margin-top:30px;
 		border:0;
 		border-bottom:1px dashed #777777;
 	}
+	abbr{
+		font-weight:bold;
+		color:rgb(36,64,144);
+		border:1px solid rgb(36,64,144);
+		cursor:help;
+		font-size:80%;
+		padding:0px 2px 0px 2px;
+		float:right;
+		margin-left:30px;
+	}
 </style>
 <body>
-<div id="figures">
-	<h3>
-		HotNet Subnetworks<br/>
-		<small></small>
-	</h3>
-</div>
-<div id="instructions">
-	<a style="float:left;" href="../">Back to Index</a>
-	<h3>Instructions</h3>
-	This page shows the protein interactions among each subnetwork identified by HotNet.
-	You can toggle the interaction networks shown by clicking them in the legend,
-	and you can reposition the nodes in the subnetwork for a better view by dragging/dropping them.
+<div class="container">
+	<h1>HotNet2 Results</h1>
+	<hr/>
+	<div style="border-bottom:1px solid #eee;padding-bottom:10px">
+		<div id="instructions">
+			<h3>Instructions</h3>
+			This page shows the protein interactions among each subnetwork identified by HotNet2.
+			You can toggle the interaction networks shown by clicking them in the legend,
+			and you can reposition the nodes in the subnetwork for a better view by dragging/dropping them.
+		</div>
+		<div id="filters">
+			<h3>Parameters</h3>
+			<table>
+				<tr>
+					<td><label>Minimum edge weight &delta;</label>:</td>
+					<td>
+						<select id="deltas"></select>
+						<abbr title="Changing delta changes the subnetworks and significance reported by HotNet2.">?</abbr>
+					</td>
+				</tr>
+				<tr>
+					<td><label>Minimum subnetwork size <i>k</i></label>:</td>
+					<td>
+						<input type="range" id="k" min="2" value="2" max="10" step="1" />
+						<span id="k">2</span>
+						<abbr title="Hide subnetworks of size less than k.">?</abbr>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<br style="clear:both"/>
+	</div>
+	<div id="figures">
+		<h3>
+			Subnetworks <small></small>
+			<small id="stats">
+				<span id="observed"></span>
+				<span id="expected"></span>
+				<span id="pval"></span>
+			</small>
+		</h3>
+	</div>
 </div>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script>
@@ -339,30 +395,80 @@ function subnetwork(params) {
 }
 // Add the subnetworks 
 d3.json('subnetworks.json', function(json) {
-	// Add delta to the page so the user knows which delta s/he is looking at
-	var delta = json.delta;
-	d3.select("small").html("&delta; = " + delta);
-	d3.select("title").html("HotNet Subnetworks: &delta; = " + delta)
+	// Populate the delta select and the ks slider
+	var deltaSelect = d3.select("div#filters select");
+	deltaSelect.selectAll(".delta")
+		.data(json.deltas.sort()).enter()
+		.append("option")
+		.attr("value", function(d){ return d; })
+		.text(function(d){ return d; })
 
-	// Create an object that contains any changes to the default styles 
-	var styling = {
-		fontColor: '#34495E',
-		heatLegendWidth: 350,
-		netLegendWidth: 90
+	var kSlider = d3.select("div#filters input")
+		.attr("min", d3.min(json.ks))
+		.attr("max", d3.max(json.ks));
+
+	// Add listeners to the deltaSelect and kSlider
+	deltaSelect.on("change", drawSubnetworks);
+	kSlider.on("change", filterSubnetworks);
+
+	var delta = json.deltas[0],
+		fig = d3.select("#figures");
+	function drawSubnetworks(){
+		// Retrieve the current delta
+		if (d3.select(this).node().value){
+			delta = d3.select(this).node().value;
+		}
+
+		// Remove the old subnetworks
+		fig.selectAll("div").remove();
+
+		// Update the title to reflect the new subnetworks and significance
+		d3.select("div#figures h3 small").html("&delta; = " + delta);
+
+		// Create an object that contains any changes to the default styles 
+		var styling = {
+			fontColor: '#34495E',
+			heatLegendWidth: 350,
+			netLegendWidth: 90
+		}
+
+		// Add each subnetwork as an SVG wrapped in a div
+		json.subnetworks[delta].forEach(function(d){
+			fig.append("div")
+				.datum(d)
+				.attr("class", function(d){ return "subnetwork k" + d.nodes.length; })
+				.call(
+					subnetwork({style: styling})
+						.addNetworkLegend()
+						.addGradientLegend()
+		  		)
+		  		.append("hr");
+
+		});
+		filterSubnetworks();
+	} // end drawSubnetworks
+
+	var stats = d3.select("div#figures h3 small#stats");
+	function filterSubnetworks(){
+		// Get the current value of k from the slider
+		var k = kSlider.node().value;
+
+		// Update the slider value, and update the signficance
+		d3.select("span#k").text(k);
+		console.log(delta)
+		stats.select("span#pval").html("P=" + json.stats[delta][k].pval);
+		stats.select("span#expected").html("Expected: " + json.stats[delta][k].expected);
+		stats.select("span#observed").html("Observed: " + json.stats[delta][k].observed);
+
+		// Show subnetworks of size at least k, hide the rest
+		d3.selectAll("div.subnetwork").style("display", "inline");
+		d3.range(d3.min(json.ks), k).forEach(function(k){
+			d3.selectAll(".k" + k).style("display", "none");
+		});
 	}
 
-	// Add each subnetwork as an SVG wrapped in a div
-	var fig = d3.select("#figures");
-	json.subnetworks.forEach(function(d){
-		fig.append("div")
-			.datum(d)
-			.call(
-				subnetwork({style: styling})
-					.addNetworkLegend()
-					.addGradientLegend()
-	  		)
-	  		.append("hr");
+	// Draw the subnetworks, starting with the first delta
+	drawSubnetworks();
 
-	});
 });
 </script>

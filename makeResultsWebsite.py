@@ -27,7 +27,6 @@ def get_parser():
     return parser
 
 def run(args):
-    index_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_INDEX)
     subnetworks_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_SUBNETWORKS)
 
     # create output directory if doesn't exist; warn if it exists and is not empty
@@ -38,8 +37,8 @@ def run(args):
         print("WARNING: Output directory is not empty. Any conflicting files will be overwritten. "
               "(Ctrl-c to cancel).")
 
-    deltas = list()
-
+    ks = set()
+    output = dict(deltas=[], subnetworks=dict(), stats=dict())
     for results_file in args.results_files:
         results = json.load(open(results_file))
         ccs = results['components']
@@ -50,24 +49,25 @@ def run(args):
                           in hnio.load_index(results['parameters']['infmat_index_file']).iteritems())
         delta = results['parameters']['delta']
 
-        deltas.append(delta)
+        output['deltas'].append(delta)
 
-        output = {"delta": delta, 'subnetworks': list()}
+        output["subnetworks"][delta] = []
         for cc in ccs:
-            output['subnetworks'].append(viz.get_component_json(cc, gene2heat, edges, gene2index,
+            output['subnetworks'][delta].append(viz.get_component_json(cc, gene2heat, edges, gene2index,
                                                                 args.network_name, d_score))
 
-        # write output
-        delta_dir = '%s/delta%s' % (outdir, delta)
-        if not os.path.isdir(delta_dir):
-            os.mkdir(delta_dir)
-        out = open('%s/subnetworks.json' % delta_dir, 'w')
+        output['stats'][delta] = results['statistics']
+        for k in sorted(map(int, results['statistics'].keys())):
+            ks.add(k)
+            continue
+            stats = results['statistics'][str(k)]
+            output['stats'][delta].append( dict(k=k, expected=stats['expected'], observed=stats['observed'], pval=stats['pval']))
+
+    output['ks'] = range(min(ks), max(ks)+1)
+    with open('%s/subnetworks.json' % outdir, 'w') as out:
         json.dump(output, out, indent=4)
-        out.close()
 
-        shutil.copy(subnetworks_file, delta_dir)
-
-    viz.write_index_file(index_file, '%s/%s' % (outdir, VIZ_INDEX), deltas)
+    shutil.copy(subnetworks_file, '%s/%s' % (outdir, VIZ_INDEX))
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))
