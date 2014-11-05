@@ -38,6 +38,7 @@
 </div>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script>
+var heatFormat = d3.format(".3r");
 function subnetwork(params) {
   var params = params || {},
 	  style  = params.style || {},
@@ -123,7 +124,7 @@ function subnetwork(params) {
 
 	  var numNets = networks.length,
 		  netLegendHeight = numNets * 10;
-	
+
 	  // Make sure each network has a color
 	  if (colorSchemes.network == undefined) {
 		var colors = d3.scale.category20();
@@ -209,9 +210,6 @@ function subnetwork(params) {
 		var netLegend = fig.selectAll(".net-group")
 			.data(networks).enter()
 			.append("g")
-				.attr("transform", function(d, i){
-					return "translate(" + (width-netLegendWidth) + "," + ((i+1)*netLegendBox) + ")";
-				})
 				.style("font-size", 12)
 				.on("click", function(n){
 					var active = activeNetworks[n];
@@ -234,6 +232,11 @@ function subnetwork(params) {
 			.attr("x", 8 + netLegendBox)
 			.attr("y", 3)
 			.text(function(n){ return n; });
+
+		netLegend.attr("transform", function(d, i){
+			return "translate(" + (width-d3.select(this).node().getBBox().width) + "," + ((i+1)*netLegendBox) + ")";
+		})
+
 	  } // end renderNetworkLegend()
 
 
@@ -269,14 +272,15 @@ function subnetwork(params) {
 
 		var labels = heatLegend.append('div')
 			.style('clear', 'both');
+		var format = d3.format("g");
 
 		heatLegend.append('span')
 		  .style('float', 'left')
-		  .text(d3.min(heatRange));
+		  .text(heatFormat(d3.min(heatRange)));
 
 		heatLegend.append('span')
 		  .style('float', 'right')
-		  .text(d3.max(heatRange));
+		  .text(heatFormat(d3.max(heatRange)));
 	  } // end renderGradientLegend()
 
 
