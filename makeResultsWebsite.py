@@ -49,7 +49,7 @@ def run(args):
         edges = hnio.load_ppi_edges(args.edge_file)
         gene2index = dict((gene, index) for index, gene \
                           in hnio.load_index(results['parameters']['infmat_index_file']).iteritems())
-        delta = results['parameters']['delta']
+        delta = format(float(results['parameters']['delta']), 'g')
 
         output['deltas'].append(delta)
 
