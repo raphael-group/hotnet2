@@ -42,6 +42,7 @@ def run(args):
     for results_file in args.results_files:
         results = json.load(open(results_file))
         ccs = results['components']
+
         heat_file = json.load(open(results['parameters']['heat_file']))
         gene2heat = heat_file['heat']
         heat_parameters = heat_file['parameters']
@@ -57,6 +58,16 @@ def run(args):
         for cc in ccs:
             output['subnetworks'][delta].append(viz.get_component_json(cc, gene2heat, edges, gene2index,
                                                                 args.network_name, d_score))
+            
+        if heat_parameters['heat_fn'] == 'load_mutation_heat':
+            output['oncoprints'] = list()
+            samples = hnio.load_samples(heat_parameters['sample_file']) if heat_parameters['sample_file'] else None
+            genes = hnio.load_genes(heat_parameters['gene_file']) if heat_parameters['gene_file'] else None
+            snvs = hnio.load_snvs(heat_parameters['snv_file'], genes, samples) if heat_parameters['snv_file'] else []
+            cnas = hnio.load_cnas(heat_parameters['cna_file'], genes, samples) if heat_parameters['cna_file'] else []
+            
+            for cc in ccs:
+                output['oncoprints'].append(viz.get_oncoprint_json(cc, snvs, cnas))
 
         if heat_parameters['heat_fn'] == 'load_mutation_heat':
             output['mutation_matrices'][delta] = list()
