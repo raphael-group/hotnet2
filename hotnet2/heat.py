@@ -91,12 +91,13 @@ def mut_heat(num_samples, snvs, cnas, min_freq):
         genes2mutations[snv.gene].add(snv)
     for cna in cnas:
         genes2mutations[cna.gene].add(cna)
-    
-    print("\t- Including %s genes in %s samples at min frequency %s" %
-          (len(genes2mutations), num_samples, min_freq))
-    
-    return dict((g, len(heat) / float(num_samples)) for g, heat in genes2mutations.items()
+
+    heat = dict((g, len(heat) / float(num_samples)) for g, heat in genes2mutations.items()
                 if num_snvs(heat) >= min_freq or num_cnas(heat) > 0)
+    print("\t- Including %s genes in %s samples at min frequency %s" %
+          (len(heat), num_samples, min_freq))
+    
+    return heat
 
 NULL = 100
 def fm_heat(gene2heat, fm_threshold, cis_threshold=0.01, CIS=False):
