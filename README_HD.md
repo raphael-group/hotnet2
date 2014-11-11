@@ -1,0 +1,133 @@
+Overview
+-----------
+Tarjan (1982, 1983) describes a hierarchical clustering algorithm that uses strongly connected components.  Below, we describe how to use Tarjan's algorithm to select the `delta` parameter in HotNet2.
+
+Installation
+------------
+Run the included `setup.py` script or, (generally) equivalently, run the following command in terminal:
+
+    f2py -c fortran_routines.f95 -m fortran_routines
+
+This process requires a Fortran compiler and NumPy, which contains the F2PY program.  Our implementation uses Fortran in several places where large performance gains are possible.  However, if a Fortran compiler is unavailable, our implementation will automatically revert to functionally equivalent (but slower) Python functions.
+
+Usage
+-----
+For illustration, consider the example given in Tarjan (1983).  The graph in this example can be given by the following vertices and weighted adjacency matrix:
+
+`V`:
+
+    ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+
+`A`:
+
+    [[  0.  10.   0.   0.   0.   0.  15.]
+     [ 12.   0.  30.   0.   0.   0.   0.]
+     [  0.   0.   0.   0.   0.   0.  45.]
+     [  0.   0.   6.   0.  16.   0.  14.]
+     [  0.   0.   0.  13.   0.   8.   0.]
+     [ 26.   0.   0.   0.   0.   0.  20.]
+     [  0.  35.  22.   0.  50.   0.   0.]]
+
+For example, there is an edge from vertex `a` to vertex `b` with weight `10.`.  The entries of the list `V` may be any hashable type, e.g., integers and strings.  The entries of the NumPy array `A` are double-precision floating-point numbers.
+
+To generate the hierarchical decomposition tree, import `hierarchicalClustering.py` and run
+
+    T = HD(V,A,increasing)
+
+with `increasing = True` to add edge weights in increasing order or `increasing = False` to edge weights in decreasing order.  In this example, again, set `increasing = True`.  For this example, set `increasing = True`.  The output is a tree represented as a dictionary `T` whose keys and values are tuples containing edge weights and leaf nodes:
+
+`T`:
+
+    (0.0, 'a') : (12.0, 'a', 'b')
+    (0.0, 'b') : (12.0, 'a', 'b')
+    (0.0, 'c') : (45.0, 'a', 'b', 'c', 'g')
+    (0.0, 'd') : (16.0, 'd', 'e')
+    (0.0, 'e') : (16.0, 'd', 'e')
+    (0.0, 'f') : (50.0, 'a', 'b', 'c', 'd', 'e', 'f', 'g')
+    (0.0, 'g') : (35.0, 'a', 'b', 'g')
+    (12.0, 'a', 'b') : (35.0, 'a', 'b', 'g')
+    (16.0, 'd', 'e') : (50.0, 'a', 'b', 'c', 'd', 'e', 'f', 'g')
+    (35.0, 'a', 'b', 'g') : (45.0, 'a', 'b', 'c', 'g')
+    (45.0, 'a', 'b', 'c', 'g') : (50.0, 'a', 'b', 'c', 'd', 'e', 'f', 'g')
+
+For example, vertices `a` and `b` condense into a single component after the addition of weight `12.0`.  The later addition of `35.0` combines the component containing both `a` and `b` with the component containing only `g` into a single component containing `a`, `b`, and `g`.  The eventual addition of `50.0` completes the tree, combining `a`, `b`, `c`, `d`, `e`, `f`, and `g` into a single component.
+
+To find the clusters formed from the hierarchical decomposition, run
+
+    weights,clusters = cluster(V,T,increasing)
+
+where `increasing = True` once again.  The output is a collection of condensing weights and a collection of vertex clusters:
+
+`weights`:
+
+     [12.0, 16.0, 35.0, 45.0, 50.0]
+
+`clusters`:
+
+     [['a'], ['b'], ['c'], ['d'], ['e'], ['f'], ['g']]
+     [['a', 'b'], ['c'], ['d'], ['e'], ['f'], ['g']]
+     [['a', 'b'], ['c'], ['d', 'e'], ['f'], ['g']]
+     [['a', 'b', 'g'], ['c'], ['d', 'e'], ['f']]
+     [['a', 'b', 'c', 'g'], ['d', 'e'], ['f']]
+     [['a', 'b', 'c', 'd', 'e', 'f', 'g']]
+
+For example, each vertex initially forms its own strongly connected component.  Later, after the addition of `12.0`, the components with `a` and `b` merge to form one component with both `a` and `b`.  After the eventual addition of `50.0`, the vertices `a`, `b`, `c`, `d`, `e`, `f`, and `g` form a single connected component.  This explanation, naturally, is similar to our explanation of the tree.  Note that there are five weights and six collections of clusters.
+
+For HotNet2, `V` are gene names or indices while `A` is a similarity matrix.  Also, since we only interested in adding edges in decreasing order, specifying `increasing` is optional; both `HD` and `clustering` default to `increasing = False` when it is omitted.  Moreover, while the edge weights in this example are unique, we also allow nonunique edge weights.
+
+Minimal working example
+-----------------------
+Consider the following minimal working example.  Note that we have implicitly set `increasing = False` by omitting it, so the results will differ from those of the previous example.  Also, while we rearranged the tree output in the previous example for the sake of presentation, we leave it unchanged here in hash-based order.
+
+** Input **
+
+    from hierarchicalClustering import *
+    V = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+    A = np.array([[  0.,  10.,   0.,   0.,   0.,   0.,  15.],
+                  [ 12.,   0.,  30.,   0.,   0.,   0.,   0.],
+                  [  0.,   0.,   0.,   0.,   0.,   0.,  45.],
+                  [  0.,   0.,   6.,   0.,  16.,   0.,  14.],
+                  [  0.,   0.,   0.,  13.,   0.,   8.,   0.],
+                  [ 26.,   0.,   0.,   0.,   0.,   0.,  20.],
+                  [  0.,  35.,  22.,   0.,  50.,   0.,   0.]])
+
+    T = HD(V,A)
+    weights,clusters = cluster(V,T)
+
+    print 'Tree:'
+    for v in T:
+        print '    ',v,':',T[v]
+    print 'Weights:'
+    print '    ',weights
+    print 'Clusters:'
+    for c in clusters:
+        print '    ',c
+
+** Output **
+
+    Tree:
+        (0.0, 'a') : (12.0, 'a', 'b', 'c', 'd', 'e', 'g')
+        (13.0, 'b', 'c', 'd', 'e', 'g') : (12.0, 'a', 'b', 'c', 'd', 'e', 'g')
+        (0.0, 'f') : (8.0, 'a', 'b', 'c', 'd', 'e', 'f', 'g')
+        (0.0, 'c') : (30.0, 'b', 'c', 'g')
+        (0.0, 'g') : (30.0, 'b', 'c', 'g')
+        (30.0, 'b', 'c', 'g') : (13.0, 'b', 'c', 'd', 'e', 'g')
+        (0.0, 'd') : (13.0, 'b', 'c', 'd', 'e', 'g')
+        (0.0, 'e') : (13.0, 'b', 'c', 'd', 'e', 'g')
+        (0.0, 'b') : (30.0, 'b', 'c', 'g')
+        (12.0, 'a', 'b', 'c', 'd', 'e', 'g') : (8.0, 'a', 'b', 'c', 'd', 'e', 'f', 'g')
+
+    Weights:
+        [30.0, 13.0, 12.0, 8.0]
+
+    Clusters:
+        [['a'], ['b'], ['c'], ['d'], ['e'], ['f'], ['g']]
+        [['a'], ['b', 'c', 'g'], ['d'], ['e'], ['f']]
+        [['a'], ['b', 'c', 'd', 'e', 'g'], ['f']]
+        [['a', 'b', 'c', 'd', 'e', 'g'], ['f']]
+        [['a', 'b', 'c', 'd', 'e', 'f', 'g']]
+
+References
+----------
+* R.E. Tarjan. A Hierarchical Clustering Algorithm Using Strong Components. *Information Processing Letters*. (1982) 14(1):26-29.
+* R.E. Tarjan. An Improved Algorithm for Hierarchical Clustering Using Strong Components. *Information Processing Letters*. (1983) 17(1):37-41.
