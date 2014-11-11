@@ -1,0 +1,772 @@
+###############################################################################
+#
+#   Setup
+#
+###############################################################################
+
+import math
+import numpy as np
+
+try:
+    import fortran_routines
+    available_routines = 1
+except:
+    available_routines = 0
+
+###############################################################################
+#
+#   Tarjan's hierarchical decomposition algorithm
+#
+###############################################################################
+
+#
+# HD(V,A,increasing=False)
+#
+#   This function finds the decomposition of a graph into a hierarchy of
+#   strongly connected components following the algorithm of Tarjan (1983).
+#   It is a wrapper for tarjan_HD, which actually performs the decomposition.
+#
+#   Inputs:
+#       V: list of vertices of the graph
+#       A: weighted adjacency matrix representing the edges of the graph
+#       increasing: order for adding edges according to weight
+#
+#   Output:
+#       T: hierarchical decomposition tree
+#
+
+def HD(V,A,increasing=False):
+
+    if len(strongly_connected_components(A))>1:
+        raise Exception('Graph has more than one strongly connected component.')
+
+    if increasing:
+        W = [tuple([0.0,v]) for v in V]
+        T,root = tarjan_HD(W,A,{},0)
+    elif not increasing:
+        W = [tuple([0.0,v]) for v in V]
+        S,root = tarjan_HD(W,reverse_matrix(A),{},0)
+        T = reverse_tree(W,A,S)
+
+    return T
+
+#
+# tarjan_HD(V,A,T,i)
+#
+#   This function implements the hierarchical decomposition algorithm
+#   described in Tarjan (1983).  Whenever possible, we reuse the notation and
+#   labels, i.e., Case 1, Case 2, Case 2a, and Case 2b, used in the paper.
+#
+#   Inputs:
+#       V: list of vertices of the graph
+#       A: weighted adjacency matrix representing the edges of the graph
+#       T: hierarchical decomposition tree
+#       i: weight index; see Tarjan (1983) for description
+#
+#   Outputs:
+#       T: hierarchical decomposition tree
+#       root: root of the tree
+#
+
+def tarjan_HD(V,A,T,i):
+
+    A_sort = sort(A)
+    m = len(A_sort)-1
+    r = m-i
+
+    if r==1:
+        # Case 1
+        root = form_edge(A_sort[-1],V)
+        S = {v:root for v in V}
+        T.update(S)
+        return T,root
+
+    else:
+        # Case 2
+        j = int(math.ceil(0.5*float(i+m)))
+        weight_i = A_sort[i]
+        weight_j = A_sort[j]
+        A_j = remove_edges(A,weight_j)
+        SCCs = strongly_connected_components(A_j)
+
+        if len(SCCs)==1:
+            # Case 2a
+            return tarjan_HD(V,A_j,T,i)
+
+        else:
+            # Case 2b
+            W = []
+            for SCC in SCCs:
+                if len(SCC)>1:
+                    B = slice_array(A_j,SCC,SCC)
+                    k = subproblem_index(B,weight_i)
+                    X = reorder_vertices(V,SCC)
+                    S,root = tarjan_HD(X,B,{},k)
+                    T.update(S)
+                    W.append(root)
+                else:
+                    W.extend(reorder_vertices(V,SCC))
+
+            B = condense_graph(A,SCCs)
+            k = subproblem_index(B,weight_j)
+            return tarjan_HD(W,B,T,k)
+
+
+#
+# cluster(V,T,increasing=False)
+#
+#   This function finds the clusters of vertices given in the hierarchical
+#   decomposition tree T.  Each vertex of the original graph forms its own
+#   cluster at the leaf nodes of the tree while the same vertices form a single
+#   cluster at the root of the tree.
+#
+#   Inputs:
+#       V: list of vertices of the graph
+#       T: hierarchical decomposition tree
+#       increasing: order for adding edges according to weight
+#
+#   Outputs:
+#       weights: weights of the inner nodes of the tree
+#       clusters: clusters of vertex corresponding to each weight
+#
+
+def cluster(V,T,increasing=False):
+
+    clusters = [[[v] for v in V]]
+    condensations = [tuple([0.0,v]) for v in V]
+    inner_nodes = sorted(list(set(T.values())), key=lambda e: e[0], reverse=not increasing)
+    weights = sorted(list(set([e[0] for e in inner_nodes])), reverse=not increasing)
+
+    i = 0
+    n = len(inner_nodes)
+
+    for delta in weights:
+
+        while i<n and inner_nodes[i][0]==delta:
+            children = [v for v in condensations if T[v]==inner_nodes[i]]
+            for child in children:
+                condensations.remove(child)
+            condensations.append(inner_nodes[i])
+            i += 1
+
+        leaf_nodes = [list(v[1:]) for v in condensations]
+        clusters.append(sorted(leaf_nodes))
+
+    return weights,clusters
+
+###############################################################################
+#
+#   Helper functions
+#
+###############################################################################
+
+def closest(x,Y):
+
+    m = len(Y)//2
+    n = len(Y)//2
+    r = len(Y)-1
+
+    while m>1:
+        m = int(round(m/2.0))
+        if x<=Y[n]:
+            n = max(n-m,0)
+        else:
+            n = min(n+m,r)
+
+    p = max(n-1,0)
+    q = min(n+1,r)
+
+    if Y[p]<=x<=Y[n]:
+        if abs(x-Y[p])<=abs(x-Y[n]):
+            index = p
+        else:
+            index = n
+    else:
+        if abs(x-Y[n])<=abs(x-Y[q]):
+            index = n
+        else:
+            index = q
+
+    return index
+
+def condense_graph(A,SCCs):
+
+    if available_routines==1:
+
+        vertices = np.array([vertex for component in SCCs for vertex in component],dtype=np.int)
+        sizes = [len(component) for component in SCCs]
+        indices = np.array([sum(sizes[:i]) for i in xrange(len(SCCs)+1)],dtype=np.int)
+        return fortran_routines.condense_graph(A,vertices+1,indices+1)
+
+    else:
+
+        n = len(SCCs)
+        B = np.zeros((n,n),dtype=np.float)
+
+        for i in xrange(n):
+             for j in xrange(n):
+                if i!=j:
+                    C = slice_array(A,SCCs[j],SCCs[i])
+                    D = np.nonzero(C)
+                    if np.size(D)>0:
+                        B[i,j] = np.min(C[D])
+
+        return B
+
+def form_edge(weight,V):
+
+    W = []
+    for v in V:
+        W.extend(v[1:])
+    return tuple([weight]+sorted(W))
+
+def remove_edges(A,weight):
+
+    if available_routines==1:
+
+        return fortran_routines.remove_edges(A,weight)
+
+    else:
+
+        B = A.copy()
+        B[B>weight] = 0
+        return B
+
+def reorder_vertices(vertices,indices):
+
+    return [vertices[index] for index in indices]
+
+# The next function is a hack to reverse the order of the edge weights in the
+# adjacency matrix: the largest weight is mapped to the smallest weight, the
+# second largest to the second smallest, etc.  The reverse_tree function
+# effectively reverses the reverse_matrix function.
+
+def reverse_matrix(A):
+
+    shift = int(math.ceil(np.max(A)))+1
+    B = -A+shift
+    B[B==shift] = 0
+    return B
+
+# The next function is a hack to reverse the order of the edge weights in the
+# hierarchical.  Due to floating-point precision errors, it is also necessary
+# to match each reversed edge weight with its original edge weight in A.  The
+# reverse_tree function effectively reverses the reverse_matrix function.
+
+def reverse_tree(V,A,S):
+
+    weights = np.unique(A)
+    interior_nodes = set(S.values())
+    shift = int(math.ceil(weights[-1]))+1
+    mapping = {v: v for v in V}
+
+    for e in interior_nodes:
+        u = -e[0]+shift
+        w = weights[closest(u,weights)]
+        mapping[e] = tuple([w]+list(e[1:]))
+
+    return {mapping[v]: mapping[S[v]] for v in S}
+
+def slice_array(A,rows,columns):
+
+    if available_routines==1:
+
+        return fortran_routines.slice_array(A,np.array(columns,dtype=np.int)+1,np.array(rows,dtype=np.int)+1)
+
+    else:
+
+        return A[np.ix_(rows,columns)]
+
+def sort(A):
+
+    return np.unique(A)
+
+def strongly_connected_components(A):
+
+    if available_routines==1:
+
+        C = fortran_routines.strongly_connected_components(A)
+        return [np.where(C==i+1)[0].tolist() for i in xrange(np.max(C))]
+
+    else:
+
+        components = strongly_connected_components_from_matrix(A)
+        return sorted([sorted(c) for c in components])
+
+# I adapted the next function from NetworkX's documentation to use adjacency
+# matrices instead of adjacency lists.
+
+def strongly_connected_components_from_matrix(A):
+
+    n=len(A)
+    preorder={}
+    lowlink={}
+    scc_found={}
+    scc_queue = []
+    i=0
+    for source in xrange(n):
+        if source not in scc_found:
+            queue=[source]
+            while queue:
+                v=queue[-1]
+                if v not in preorder:
+                    i=i+1
+                    preorder[v]=i
+                done=True
+                v_nbrs=[w for w in xrange(n) if A[v,w]!=0]
+                for w in v_nbrs:
+                    if w not in preorder:
+                        queue.append(w)
+                        done=False
+                        break
+                if done==True:
+                    lowlink[v]=preorder[v]
+                    for w in v_nbrs:
+                        if w not in scc_found:
+                            if preorder[w]>preorder[v]:
+                                lowlink[v]=min([lowlink[v],lowlink[w]])
+                            else:
+                                lowlink[v]=min([lowlink[v],preorder[w]])
+                    queue.pop()
+                    if lowlink[v]==preorder[v]:
+                        scc_found[v]=True
+                        scc=[v]
+                        while scc_queue and preorder[scc_queue[-1]]>preorder[v]:
+                            k=scc_queue.pop()
+                            scc_found[k]=True
+                            scc.append(k)
+                        yield scc
+                    else:
+                        scc_queue.append(v)
+
+def subproblem_index(B,A_weight):
+
+    C = np.unique(B)
+    index = closest(A_weight,C)
+    while C[index]<A_weight:
+        index += 1
+    while C[index]>A_weight:
+        index -= 1
+    return index
+
+if __name__ == "__main__":
+
+    ###############################################################################
+    #
+    #   Testing functions
+    #
+    ###############################################################################
+
+    def edges_to_matrix(E):
+
+        V = edges_to_vertices(E)
+        n = len(V)
+        indices = {V[i]:i for i in xrange(n)}
+
+        A = np.zeros((n,n),dtype=np.float)
+        for (source,target,weight) in E:
+            A[indices[source],indices[target]] = weight
+
+        return V,A
+
+    def edges_to_vertices(E):
+
+        V = set()
+
+        for (source,target,weight) in E:
+            V.add(source)
+            V.add(target)
+
+        return sorted(list(V))
+
+    # The next function computes the hierarchical decomposition naively, i.e.,
+    # by adding one edge at a time. The disadvantage of the naive approach
+    # compared to Tarjan's algorithm is the need to compute strongly connected
+    # components many more times.
+
+    def HD_naive(E,increasing):
+
+        import networkx as nx
+
+        vertices = edges_to_vertices(E)
+        edges = sorted(E, key = lambda e:e[2], reverse = not increasing)
+        weights = sorted(list(set(e[2] for e in edges)), reverse = not increasing)
+
+        # Add all of the vertices to the graph.
+
+        G = nx.DiGraph()
+        G.add_nodes_from(vertices)
+
+        T = {}
+        roots = {v:tuple([0.0,v]) for v in vertices}
+
+        i = 0
+        m = len(edges)
+        n = len(vertices)
+
+        # Consider each weight.
+
+        for weight in weights:
+
+            # Add all of the edges with the same weight to the graph.
+
+            while edges[i][2]==weight:
+                G.add_edge(edges[i][0], edges[i][1], weight=edges[i][2])
+                i += 1
+                if i==m:
+                    break
+
+            # Find the SCCs of the resulting graph.
+
+            components = [component for component in nx.strongly_connected_components(G)]
+
+            # Check if any the components contracted by comparing the number of
+            # components previously to the number of components currently.
+
+            if len(components)<n:
+                n = len(components)
+                for component in components:
+
+                    # Check each component for contractions by checking if
+                    # every vertex in the component has the same root.  If not,
+                    # a contraction occurred while adding the latest weight, so
+                    # update the tree and roots.
+
+                    first_root = roots[component[0]]
+                    if not all(roots[v]==first_root for v in component):
+                        root = tuple([weight]+sorted(component))
+                        for v in component:
+                            T[roots[v]] = root
+                            roots[v] = root
+
+        return T
+
+    def matrix_to_edges(V,A):
+
+        (m,n) = np.shape(A)
+        o = len(V)
+
+        if m!=n or n!=o:
+            raise Exception('Number of vertices and adjacency matrix dimensions do not match.')
+
+        return [[V[i],V[j],A[i,j]] for i in xrange(n) for j in xrange(n) if A[i,j]!=0]
+
+    def progress(message):
+
+        import sys
+
+        try:
+            previous_length = len(progress.previous)
+        except:
+            previous_length = 0
+
+        sys.stdout.write("\r"+" "*previous_length)
+        sys.stdout.flush()
+        sys.stdout.write("\r"+str(message))
+        sys.stdout.flush()
+
+        progress.previous = message
+
+    # The next function generates weighted adjacency matrices with uniformly
+    # distributed edge weights that conform to given sparsity and
+    # nonuniqueness parameters.
+
+    def random_adjacency_matrix(n,seed=np.random.randint(0,4294967295),sparsity=0.0,nonuniqueness=0.0):
+
+        np.random.seed(seed=seed)
+
+        sparsity = max(0,min(sparsity,1))
+        nonuniqueness = max(0,min(nonuniqueness,1))
+        unique_elements = int((1-sparsity)*(1-nonuniqueness)*n**2)
+        repeated_elements = int((1-sparsity)*nonuniqueness*n**2)
+
+        V = range(n)
+
+        # Should the graph be complete with unique edge weights?
+
+        if sparsity==0 and nonuniqueness==0:
+
+            # If so, generate a random matrix and remove the diagonal entries.
+
+            A = np.random.rand(n,n)
+            np.fill_diagonal(A,0)
+
+        else:
+
+            # If not, generate a vector with the expected number of unique
+            # entries, duplicate some of those entries according to a Binomial
+            # distribution according to the nonuniqueness parameter, and fill
+            # in the remaining entries with zeros according to the sparsity
+            # parameter.  Permute the entries of the vector and reshape it into
+            # the correct dimensions.
+
+            B = np.random.rand(unique_elements)
+            C = np.zeros(n**2-unique_elements,dtype=np.float)
+
+            tally = 0
+            while tally<repeated_elements:
+                duplications = max(np.random.binomial(repeated_elements-tally,0.5),1)
+                C[tally:tally+duplications] = B[np.random.randint(unique_elements)]
+                tally += duplications
+
+            A = np.random.permutation(np.concatenate((B,C))).reshape(n,n)
+            np.fill_diagonal(A,0)
+
+            # Is the resulting graph strongly connected?  If not, add entries
+            # to the adjacency matrix at semi-random to bridge the components.
+
+            components = strongly_connected_components(A)
+            m = len(components)
+            if m>1:
+                for i in xrange(m):
+                    for j in xrange(m):
+                            if i!=j:
+                                p = np.random.randint(len(components[i]))
+                                q = np.random.randint(len(components[j]))
+                                A[components[i][p],components[j][q]] = np.random.rand()
+
+        return V,A
+
+    # The next function provides the example given by Tarajn in Tarjan (1983).
+
+    def tarjan_1983_example():
+
+        E = [["a","b",10.0], ["b","a",12.0], ["b","c",30.0], ["d","c",6.0],  ["d","e",16.0],
+             ["e","d",13.0], ["e","f",8.0],  ["f","a",26.0], ["a","g",15.0], ["g","b",35.0],
+             ["c","g",45.0], ["g","c",22.0], ["d","g",14.0], ["g","e",50.0], ["f","g",20.0]]
+
+        V,A = edges_to_matrix(E)
+
+        return V,A,E
+
+    # The next function tests the correctness of our implementation of the
+    # hierarchical decomposition algorithm by comparing its results with those
+    # from a naive implementation on various random graphs.  If the functions
+    # return different trees for the same graph, then we display trees, the
+    # seed for generating the adjacency matrix, and the adjacency matrix
+    # itself.
+
+    def test_HD_correctness(m,n,increasing,sparsity=0.0,nonuniqueness=0.0):
+
+        for i in xrange(n):
+
+            progress("Progress: %d/%d" % (i+1,n))
+            V,A = random_adjacency_matrix(m,seed=i,sparsity=sparsity,nonuniqueness=nonuniqueness)
+            E = matrix_to_edges(V,A)
+            S = HD_naive(E,increasing)
+            T = HD(V,A,increasing)
+
+            if S!=T:
+                progress("")
+                print i
+                print A
+                print S
+                print T
+                return False
+
+        progress("")
+        return True
+
+    # The next function tests the performance of our implementation of the
+    # hierarchical decomposition algorithm as well as our implementation of a
+    # clustering algorithm by running then on various complete random graphs
+    # of various sizes.
+
+    def test_performance(trials,repetitions,increasing):
+
+        import time
+
+        dimensions = np.zeros(trials, dtype=np.int)
+        HD_times = np.zeros((trials,repetitions),dtype=np.float)
+        clustering_times = np.zeros((trials,repetitions),dtype=np.float)
+
+        for trial in xrange(trials):
+
+            n = int(10*2**trial)
+            dimensions[trial] = n
+
+            progress("Progress: %d/%d of %d/%d" % (0,repetitions,trial+1,trials))
+            np.random.seed(seed=trial)
+            V,A = random_adjacency_matrix(n)
+
+            for repetition in xrange(repetitions):
+
+                progress("Progress: %d/%d of %d/%d" % (repetition+1,repetitions,trial+1,trials))
+                first_time = time.time()
+                T = HD(V,A,increasing)
+                second_time = time.time()
+                weights,clusters = cluster(V,T,increasing)
+                third_time = time.time()
+
+                HD_times[trial,repetition] = second_time-first_time
+                clustering_times[trial,repetition] = third_time-second_time
+
+        progress("")
+
+        return dimensions,np.min(HD_times,axis=1),np.min(clustering_times,axis=1)
+
+    # The next function profiles our implementation of the hierarchical
+    # decomposition algorithm on a complete random graph; search online for
+    # cProfile for details.
+
+    def test_HD_profile(n,increasing,filename):
+
+        import cProfile
+
+        V,A = random_adjacency_matrix(n)
+        cProfile.runctx("T = HD(V,A,"+str(increasing)+")", globals(), locals(), filename=filename)
+
+    ###########################################################################
+    #
+    #   Tests
+    #
+    ###########################################################################
+
+    # Excluding for the profiling code, this collection of tests should require
+    # less than 1 minute of runtime and 300 MB of memory on a modern machine.
+    # No additional storage space or a network connection is necessary.  We use
+    # the NetworkX package only for the test cases.  We import several Fortran
+    # routines to expedite several of the computations, but they can be
+    # replaced with equivalent Python routines that we have commented out for
+    # better performance.
+
+    # See Tarjan (1983) for a description of hierarchical clustering with
+    # strongly connected components (SCCs).  Here, we review the naive
+    # algorithm for constructing the hierarchical decomposition (HD) tree of a
+    # strongly connected graph, representing the tree as a dictionary.  The
+    # formation of a SCC is represented as a tuple whose first entry is a
+    # weight and remaining entries are vertices; the weight causes the vertices
+    # to coalesce into the corresponding component.
+
+    # For example, in the example in Tarjan (1983), the addition of weight 12
+    # forms SCC consisting of vertices a and b, which we represent with the
+    # dictionary entries
+    #
+    #   (0.0, 'a') : (12.0, 'a', 'b')
+    #   (0.0, 'b') : (12.0, 'a', 'b')
+    #
+    # The further addition of weight 35 forms a SCC consisting of vertices a,
+    # b, and g, which we represent with the dictionary entries
+    #
+    #   (0.0, 'g') : (35.0, 'a', 'b', 'g')
+    #   (12.0, 'a', 'b') : (35.0, 'a', 'b', 'g')
+
+    # First, we run the Tarjan's HD algorithm on the example given in Tarjan
+    # (1983) and output the results.  We reverse the edge order from increasing
+    # weights to decreasing one and repeat.
+
+    print '=== Test 1 ==='
+    V,A,E = tarjan_1983_example()
+    T = HD(V,A,increasing=True)
+
+    print 'Tree:'
+    for v in T:
+        print '   '+str(v)+' : '+str(T[v])
+    print ''
+
+    T = HD(V,A,increasing=False)
+    print 'Tree:'
+    for v in T:
+        print '   '+str(v)+' : '+str(T[v])
+    print ''
+
+    # Second, we run the HD algorithm, i.e., adding one weight at a time and
+    # compare the decomposition trees, which should be the same.  Note that the
+    # tree for each graph and its corresponding representation are unique.
+
+    print '=== Test 2 ==='
+    print HD(V,A,True)==HD_naive(E,True)
+    print HD(V,A,False)==HD_naive(E,False)
+    print ''
+
+    # Third, we compare the results from Tarjan's HD algorithm with those from
+    # the naive HD algorithm on a complete graph, a graph with roughly 70% of
+    # its edges removed, and a graph with roughly 40% of its edge weights
+    # repeated, many to the same weights.  Each graph has 25 vertices and edge
+    # weights chosen randomly from a uniform distribution, and each test
+    # repeats 20 times with a different graph each time for both increasing and
+    # decreasing edge weights.  The test returns `True` if the trees are the
+    # same and `False`, with additional information, if they differ; see the
+    # `test_HD_correctness` function for more details.
+
+    print '=== Test 3 ==='
+    print test_HD_correctness(25,20,True)
+    print test_HD_correctness(25,20,True,sparsity=0.7)
+    print test_HD_correctness(25,20,True,nonuniqueness=0.4)
+    print test_HD_correctness(25,20,False)
+    print test_HD_correctness(25,20,False,sparsity=0.7)
+    print test_HD_correctness(25,20,False,nonuniqueness=0.4)
+    print ''
+
+    # Fourth, we generate profiling data for our implementation of Tarjan's HD
+    # algorithm for a complete random graph with 2000 vertices.  Search for
+    # cProfile online for details.
+
+    print '=== Test 4 ==='
+    #    test_HD_profile(2000,True,'tarjan_HD.cprof')
+    print ''
+
+    # Fifth, we examine the performance of our implementation of Tarjan's HD
+    # algorithm on complete random graph of various sizes, returning the best
+    # runtime from three repetitions on the same random graph.  We start with
+    # 10 vertices, double to 20 vertices, and so on for a total of eight
+    # trials.  We return the number of vertices and the shortest runtime for
+    # each trial and perform the test for both increasing and decreasing edge
+    # weights.
+
+    print '=== Test 5 ==='
+    number_of_vertices, HD_runtimes, clustering_runtimes = test_performance(8,3,True)
+
+    print 'Number of vertices:'
+    print number_of_vertices
+    print 'Runtimes for increasing edge weights:'
+    print HD_runtimes
+
+    number_of_vertices, HD_runtimes, clustering_runtimes = test_performance(8,3,False)
+
+    print 'Runtimes decreasing edge weights:'
+    print HD_runtimes
+    print ''
+
+    # Sixth, we find the clusters of vertices given by the HD tree.  Again, we
+    # use the example in Tarjan (1983).
+
+    print '=== Test 6 ==='
+    V,A,E = tarjan_1983_example()
+    T = HD(V,A,increasing=True)
+    weights,clusters = cluster(V,T,increasing=True)
+
+    print 'Tree for increasing edge weights:'
+    for v in T:
+        print '    ',v,':',T[v]
+    print 'Condensing weights:'
+    print '    ',weights
+    print 'Vertex clusters:'
+    for c in clusters:
+        print '    ',c
+
+    T = HD(V,A,increasing=False)
+    weights,clusters = cluster(V,T,increasing=False)
+    print 'Tree for decreasing edge weights:'
+    for v in T:
+        print '    ',v,':',T[v]
+    print 'Condensing weights:'
+    print '    ',weights
+    print 'Vertex clusters:'
+    for c in clusters:
+        print '    ',c
+    print ''
+
+    # Seventh, we examine the performance of finding the clusters given by the
+    # HD tree.  This example is simply a continuation of Test 5,  so we simply
+    # report the results computed earlier.  We include the earlier runtimes for
+    # our HD implementation for comparison but only show the case of decreasing
+    # edge weights.
+
+    print '=== Test 7 ==='
+    print 'Number of vertices:'
+    print number_of_vertices
+    print 'Runtimes for hierarchical decomposition:'
+    print HD_runtimes
+    print 'Runtimes for vertex clustering:'
+    print clustering_runtimes
