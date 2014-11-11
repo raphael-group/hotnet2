@@ -34,7 +34,7 @@ To generate the hierarchical decomposition tree, import `hierarchicalClustering.
 
     T = HD(V,A,increasing)
 
-with `increasing = True` to add edge weights in increasing order or `increasing = False` to edge weights in decreasing order.  In this example, again, set `increasing = True`.  For this example, set `increasing = True`.  The output is a tree represented as a dictionary `T` whose keys and values are tuples containing edge weights and leaf nodes:
+with `increasing = True` to add edge weights in increasing order or `increasing = False` to edge weights in decreasing order.  For this example, set `increasing = True`.  The output is a tree represented as a dictionary `T` whose keys and values are tuples containing edge weights and leaf nodes:
 
 `T`:
 
