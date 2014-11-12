@@ -546,7 +546,7 @@ if __name__ == "__main__":
     # seed for generating the adjacency matrix, and the adjacency matrix
     # itself.
 
-    def test_HD_correctness(m,n,increasing,sparsity=0.0,nonuniqueness=0.0):
+    def test_correctness(m,n,increasing,sparsity=0.0,nonuniqueness=0.0):
 
         for i in xrange(n):
 
@@ -609,7 +609,7 @@ if __name__ == "__main__":
     # decomposition algorithm on a complete random graph; search online for
     # cProfile for details.
 
-    def test_HD_profile(n,increasing,filename):
+    def test_profile(n,increasing,filename):
 
         import cProfile
 
@@ -690,12 +690,12 @@ if __name__ == "__main__":
     # `test_HD_correctness` function for more details.
 
     print '=== Test 3 ==='
-    print test_HD_correctness(25,20,True)
-    print test_HD_correctness(25,20,True,sparsity=0.7)
-    print test_HD_correctness(25,20,True,nonuniqueness=0.4)
-    print test_HD_correctness(25,20,False)
-    print test_HD_correctness(25,20,False,sparsity=0.7)
-    print test_HD_correctness(25,20,False,nonuniqueness=0.4)
+    print test_correctness(25,20,True)
+    print test_correctness(25,20,True,sparsity=0.7)
+    print test_correctness(25,20,True,nonuniqueness=0.4)
+    print test_correctness(25,20,False)
+    print test_correctness(25,20,False,sparsity=0.7)
+    print test_correctness(25,20,False,nonuniqueness=0.4)
     print ''
 
     # Fourth, we generate profiling data for our implementation of Tarjan's HD
@@ -703,7 +703,7 @@ if __name__ == "__main__":
     # cProfile online for details.
 
     print '=== Test 4 ==='
-    #    test_HD_profile(2000,True,'tarjan_HD.cprof')
+    #    test_profile(2000,True,'tarjan_HD.cprof')
     print ''
 
     # Fifth, we examine the performance of our implementation of Tarjan's HD
