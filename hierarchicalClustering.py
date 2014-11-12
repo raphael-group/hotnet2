@@ -41,7 +41,7 @@ def HD(V,A,increasing=False):
         raise Exception('Graph has more than one strongly connected component.')
 
     if increasing:
-        base = np.min(A)
+        base = 0.0
         W = [tuple([base,v]) for v in V]
         T,root = tarjan_HD(W,A,{},0)
     elif not increasing:
@@ -134,7 +134,7 @@ def tarjan_HD(V,A,T,i):
 def cluster(V,T,increasing=False):
 
     clusters = [[[v] for v in V]]
-    condensations = [tuple([0.0,v]) for v in V]
+    condensations = [v for v in T if len(v)==2]
     inner_nodes = sorted(list(set(T.values())), key=lambda e: e[0], reverse=not increasing)
     weights = sorted(list(set([e[0] for e in inner_nodes])), reverse=not increasing)
 
@@ -399,7 +399,10 @@ if __name__ == "__main__":
         G.add_nodes_from(vertices)
 
         T = {}
-        roots = {v:tuple([0.0,v]) for v in vertices}
+        if increasing:
+            roots = {v:tuple([0.0,v]) for v in vertices}
+        elif not increasing:
+            roots = {v:tuple([max(weights),v]) for v in vertices}
 
         i = 0
         m = len(edges)
@@ -451,6 +454,27 @@ if __name__ == "__main__":
             raise Exception('Number of vertices and adjacency matrix dimensions do not match.')
 
         return [[V[i],V[j],A[i,j]] for i in xrange(n) for j in xrange(n) if A[i,j]!=0]
+
+    # The next function formats various data types in an arguably easier-to-
+    # read way.
+
+    def prettify(X):
+
+        if type(X) in [dict]:
+            string = ''
+            for x in X:
+                string += '   '+str(x)+' : '+str(X[x])+'\n'
+        elif type(X) in [list,tuple]:
+            string = ''
+            for i,x in enumerate(X):
+                string += '   '+str(i)+' : '+str(x)+'\n'
+        else:
+            string = str(X)
+
+        return string
+
+    # The next function displays progress messages, but I have only tested it
+    # on Debian and Ubuntu.
 
     def progress(message):
 
@@ -627,17 +651,16 @@ if __name__ == "__main__":
     # less than 1 minute of runtime and 300 MB of memory on a modern machine.
     # No additional storage space or a network connection is necessary.  We use
     # the NetworkX package only for the test cases.  We import several Fortran
-    # routines to expedite several of the computations, but they can be
-    # replaced with equivalent Python routines that we have commented out for
-    # better performance.
+    # routines to expedite several of the computations, but the code falls back
+    # on functionally equivalent Python functions when the Fortran routines are
+    # unavailable.
 
     # See Tarjan (1983) for a description of hierarchical clustering with
-    # strongly connected components (SCCs).  Here, we review the naive
-    # algorithm for constructing the hierarchical decomposition (HD) tree of a
-    # strongly connected graph, representing the tree as a dictionary.  The
-    # formation of a SCC is represented as a tuple whose first entry is a
-    # weight and remaining entries are vertices; the weight causes the vertices
-    # to coalesce into the corresponding component.
+    # strongly connected components (SCCs).  In our implementation, we
+    # represent the hierarchical decomposition (HD) tree of a strongly
+    # connected graph as a dictionary.  The formation of a SCC is represented
+    # as a tuple whose first entry is the condensing weight and remaining
+    # entries are strongly connected vertices.
 
     # For example, in the example in Tarjan (1983), the addition of weight 12
     # forms SCC consisting of vertices a and b, which we represent with the
@@ -652,43 +675,53 @@ if __name__ == "__main__":
     #   (0.0, 'g') : (35.0, 'a', 'b', 'g')
     #   (12.0, 'a', 'b') : (35.0, 'a', 'b', 'g')
 
-    # First, we run the Tarjan's HD algorithm on the example given in Tarjan
-    # (1983) and output the results.  We reverse the edge order from increasing
-    # weights to decreasing one and repeat.
+    # First, we run our implementation of Tarjan's HD algorithm on the example
+    # given in Tarjan (1983) and output the tree, condensing weights, and
+    # vertex clusters.  We reverse the edge order from increasing weights to
+    # decreasing weights and repeat.
 
     print '=== Test 1 ==='
-    V,A,E = tarjan_1983_example()
-    T = HD(V,A,increasing=True)
+    V, A, E = tarjan_1983_example()
 
-    print 'Tree:'
-    for v in T:
-        print '   '+str(v)+' : '+str(T[v])
-    print ''
+    T = HD(V,A,increasing=True)
+    weights, clusters = cluster(V,T,increasing=True)
+
+    print 'Tree with weights added in increasing order:'
+    print prettify(T)
+    print 'Condensing weights:'
+    print prettify(weights)
+    print 'Vertex clusters:'
+    print prettify(clusters)
 
     T = HD(V,A,increasing=False)
-    print 'Tree:'
-    for v in T:
-        print '   '+str(v)+' : '+str(T[v])
-    print ''
+    weights, clusters = cluster(V,T,increasing=False)
 
-    # Second, we run the HD algorithm, i.e., adding one weight at a time and
-    # compare the decomposition trees, which should be the same.  Note that the
-    # tree for each graph and its corresponding representation are unique.
+    print 'Tree with weights added in decreasing order:'
+    print prettify(T)
+    print 'Condensing weights:'
+    print prettify(weights)
+    print 'Vertex clusters:'
+    print prettify(clusters)
+
+    # Second, we compare tree from of our implementation of Tarjan's HD
+    # algorithm with the tree from our implementation of the naive algorithm,
+    # i.e., the addition of one weight at a time.  Our dictionary
+    # representation of the tree is unique, so the the trees are the same when
+    # the dictionaries are the same and different when different.
 
     print '=== Test 2 ==='
     print HD(V,A,True)==HD_naive(E,True)
     print HD(V,A,False)==HD_naive(E,False)
     print ''
 
-    # Third, we compare the results from Tarjan's HD algorithm with those from
-    # the naive HD algorithm on a complete graph, a graph with roughly 70% of
-    # its edges removed, and a graph with roughly 40% of its edge weights
-    # repeated, many to the same weights.  Each graph has 25 vertices and edge
-    # weights chosen randomly from a uniform distribution, and each test
-    # repeats 20 times with a different graph each time for both increasing and
-    # decreasing edge weights.  The test returns `True` if the trees are the
-    # same and `False`, with additional information, if they differ; see the
-    # `test_HD_correctness` function for more details.
+    # Third, we repeat the previous test on a complete graph, a graph with
+    # roughly 70% of its edges removed, and a graph with roughly 40% of its
+    # edge weights repeated, many to the same weights.  Each graph has 25
+    # vertices and edge weights chosen randomly from a uniform distribution.
+    # Each test repeats 20 times with a different graph each time for both
+    # increasing and decreasing edge weights.  The test returns `True` if the
+    # trees are the same and `False` with additional information if they
+    # differ; see `test_HD_correctness` for more details.
 
     print '=== Test 3 ==='
     print test_correctness(25,20,True)
@@ -708,12 +741,12 @@ if __name__ == "__main__":
     print ''
 
     # Fifth, we examine the performance of our implementation of Tarjan's HD
-    # algorithm on complete random graph of various sizes, returning the best
-    # runtime from three repetitions on the same random graph.  We start with
-    # 10 vertices, double to 20 vertices, and so on for a total of eight
-    # trials.  We return the number of vertices and the shortest runtime for
-    # each trial and perform the test for both increasing and decreasing edge
-    # weights.
+    # algorithm and the performance of our clustering routine on complete
+    # random graphs of various sizes, returning the best runtime from three
+    # repetitions on the same random graph.  We start with 10 vertices, double
+    # to 20 vertices, and so on for a total of eight trials.  We return the
+    # number of vertices and the shortest runtimes for each trial, and we
+    # perform the test for both increasing and decreasing edge weights.
 
     print '=== Test 5 ==='
     number_of_vertices, HD_runtimes, clustering_runtimes = test_performance(8,3,True)
@@ -722,52 +755,15 @@ if __name__ == "__main__":
     print number_of_vertices
     print 'Runtimes for increasing edge weights:'
     print HD_runtimes
+    print 'Runtimes for vertex clustering:'
+    print clustering_runtimes
+    print ''
 
     number_of_vertices, HD_runtimes, clustering_runtimes = test_performance(8,3,False)
 
-    print 'Runtimes decreasing edge weights:'
-    print HD_runtimes
-    print ''
-
-    # Sixth, we find the clusters of vertices given by the HD tree.  Again, we
-    # use the example in Tarjan (1983).
-
-    print '=== Test 6 ==='
-    V,A,E = tarjan_1983_example()
-    T = HD(V,A,increasing=True)
-    weights,clusters = cluster(V,T,increasing=True)
-
-    print 'Tree for increasing edge weights:'
-    for v in T:
-        print '    ',v,':',T[v]
-    print 'Condensing weights:'
-    print '    ',weights
-    print 'Vertex clusters:'
-    for c in clusters:
-        print '    ',c
-
-    T = HD(V,A,increasing=False)
-    weights,clusters = cluster(V,T,increasing=False)
-    print 'Tree for decreasing edge weights:'
-    for v in T:
-        print '    ',v,':',T[v]
-    print 'Condensing weights:'
-    print '    ',weights
-    print 'Vertex clusters:'
-    for c in clusters:
-        print '    ',c
-    print ''
-
-    # Seventh, we examine the performance of finding the clusters given by the
-    # HD tree.  This example is simply a continuation of Test 5,  so we simply
-    # report the results computed earlier.  We include the earlier runtimes for
-    # our HD implementation for comparison but only show the case of decreasing
-    # edge weights.
-
-    print '=== Test 7 ==='
     print 'Number of vertices:'
     print number_of_vertices
-    print 'Runtimes for hierarchical decomposition:'
+    print 'Runtimes for decreasing edge weights:'
     print HD_runtimes
     print 'Runtimes for vertex clustering:'
     print clustering_runtimes
