@@ -41,10 +41,12 @@ def HD(V,A,increasing=False):
         raise Exception('Graph has more than one strongly connected component.')
 
     if increasing:
-        W = [tuple([0.0,v]) for v in V]
+        base = np.min(A)
+        W = [tuple([base,v]) for v in V]
         T,root = tarjan_HD(W,A,{},0)
     elif not increasing:
-        W = [tuple([0.0,v]) for v in V]
+        base = np.max(A)
+        W = [tuple([base,v]) for v in V]
         S,root = tarjan_HD(W,reverse_matrix(A),{},0)
         T = reverse_tree(W,A,S)
 
@@ -110,7 +112,6 @@ def tarjan_HD(V,A,T,i):
             B = condense_graph(A,SCCs)
             k = subproblem_index(B,weight_j)
             return tarjan_HD(W,B,T,k)
-
 
 #
 # cluster(V,T,increasing=False)
