@@ -114,27 +114,26 @@ def tarjan_HD(V,A,T,i):
             return tarjan_HD(W,B,T,k)
 
 #
-# cluster(V,T,increasing=False)
+# cluster(T)
 #
 #   This function finds the clusters of vertices given in the hierarchical
 #   decomposition tree T.  Each vertex of the original graph forms its own
 #   cluster at the leaf nodes of the tree while the same vertices form a single
 #   cluster at the root of the tree.
 #
-#   Inputs:
-#       V: list of vertices of the graph
+#   Input:
 #       T: hierarchical decomposition tree
-#       increasing: order for adding edges according to weight
 #
 #   Outputs:
 #       weights: weights of the inner nodes of the tree
 #       clusters: clusters of vertex corresponding to each weight
 #
 
-def cluster(V,T,increasing=False):
+def cluster(T):
 
-    clusters = [[[v] for v in V]]
     condensations = [v for v in T if len(v)==2]
+    clusters = [sorted([[v[1]] for v in condensations])]
+    increasing = condensations[0][0]<T[condensations[0]][0]
     inner_nodes = sorted(list(set(T.values())), key=lambda e: e[0], reverse=not increasing)
     weights = sorted(list(set([e[0] for e in inner_nodes])), reverse=not increasing)
 
@@ -145,8 +144,8 @@ def cluster(V,T,increasing=False):
 
         while i<n and inner_nodes[i][0]==delta:
             children = [v for v in condensations if T[v]==inner_nodes[i]]
-            for child in children:
-                condensations.remove(child)
+            for v in children:
+                condensations.remove(v)
             condensations.append(inner_nodes[i])
             i += 1
 
@@ -286,8 +285,8 @@ def strongly_connected_components(A):
 
     if available_routines==1:
 
-        C = fortran_routines.strongly_connected_components(A)
-        return [np.where(C==i+1)[0].tolist() for i in xrange(np.max(C))]
+        components = fortran_routines.strongly_connected_components(A)
+        return [np.where(components==i+1)[0].tolist() for i in xrange(np.max(components))]
 
     else:
 
@@ -350,13 +349,41 @@ def subproblem_index(B,A_weight):
         index -= 1
     return index
 
+###############################################################################
+#
+#   Output function
+#
+###############################################################################
+
+# The next function converts a tree from our specialized format to the
+# standard Newick format.
+
+def newick(T):
+
+    condensations = [v for v in T if len(v)==2]
+    increasing = condensations[0][0]<T[condensations[0]][0]
+    inner_nodes = sorted(list(set(T.values())), key=lambda e: e[0], reverse=not increasing)
+    root = inner_nodes.pop()
+
+    mapping = {v:str(v[1])+':'+str(abs(T[v][0]-v[0])) for v in condensations}
+
+    for w in inner_nodes:
+        children = [v for v in condensations if T[v]==w]
+        mapping[w] = '('+','.join([mapping[v] for v in children])+'):'+str(abs(T[w][0]-w[0]))
+        for v in children:
+            condensations.remove(v)
+        condensations.append(w)
+
+    children = [v for v in condensations if T[v]==root]
+    return '('+','.join([mapping[v] for v in children])+');'
+
 if __name__ == "__main__":
 
-    ###############################################################################
+    ###########################################################################
     #
     #   Testing functions
     #
-    ###############################################################################
+    ###########################################################################
 
     def edges_to_matrix(E):
 
@@ -469,7 +496,7 @@ if __name__ == "__main__":
             for i,x in enumerate(X):
                 string += '   '+str(i)+' : '+str(x)+'\n'
         else:
-            string = str(X)
+            string = '   '+str(X)+'\n'
 
         return string
 
@@ -552,7 +579,7 @@ if __name__ == "__main__":
 
         return V,A
 
-    # The next function provides the example given by Tarajn in Tarjan (1983).
+    # The next function provides the example given by Tarjan in Tarjan (1983).
 
     def tarjan_1983_example():
 
@@ -620,7 +647,7 @@ if __name__ == "__main__":
                 first_time = time.time()
                 T = HD(V,A,increasing)
                 second_time = time.time()
-                weights,clusters = cluster(V,T,increasing)
+                weights,clusters = cluster(T)
                 third_time = time.time()
 
                 HD_times[trial,repetition] = second_time-first_time
@@ -676,17 +703,22 @@ if __name__ == "__main__":
     #   (12.0, 'a', 'b') : (35.0, 'a', 'b', 'g')
 
     # First, we run our implementation of Tarjan's HD algorithm on the example
-    # given in Tarjan (1983) and output the tree, condensing weights, and
-    # vertex clusters.  We reverse the edge order from increasing weights to
-    # decreasing weights and repeat.
+    # given in Tarjan (1983) and output the tree in both our specialized format
+    # and Newick format, condensing weights, and vertex clusters.  We reverse
+    # the edge order from increasing weights to decreasing weights and repeat.
 
     print '=== Test 1 ==='
     V, A, E = tarjan_1983_example()
 
     T = HD(V,A,increasing=True)
-    weights, clusters = cluster(V,T,increasing=True)
+    weights, clusters = cluster(T)
+    representation = newick(T)
 
-    print 'Tree with weights added in increasing order:'
+    print 'Weights added in increasing order:'
+    print ''
+    print 'Tree in Newick format:'
+    print prettify(representation)
+    print 'Tree in our specialized format:'
     print prettify(T)
     print 'Condensing weights:'
     print prettify(weights)
@@ -694,9 +726,14 @@ if __name__ == "__main__":
     print prettify(clusters)
 
     T = HD(V,A,increasing=False)
-    weights, clusters = cluster(V,T,increasing=False)
+    weights, clusters = cluster(T)
+    representation = newick(T)
 
-    print 'Tree with weights added in decreasing order:'
+    print 'Weights added in decreasing order:'
+    print ''
+    print 'Tree in Newick format:'
+    print prettify(representation)
+    print 'Tree in our specialized format:'
     print prettify(T)
     print 'Condensing weights:'
     print prettify(weights)
