@@ -34,7 +34,7 @@ To generate the hierarchical decomposition tree, import `hierarchicalClustering.
 
     T = HD(V,A,increasing)
 
-with `increasing = True` to add edge weights in increasing order or `increasing = False` to edge weights in decreasing order.  For this example, set `increasing = True`.  The output is a tree represented as a dictionary `T` whose keys and values are tuples containing edge weights and leaf nodes:
+with `increasing = True` to add edge weights in increasing order or `increasing = False` to edge weights in decreasing order; setting `increasing` is optional, and `False` is the default value.  For this example, set `increasing = True`.  The output is a tree represented as a dictionary `T` whose keys and values are tuples containing edge weights and leaf nodes:
 
 `T`:
 
@@ -52,11 +52,21 @@ with `increasing = True` to add edge weights in increasing order or `increasing 
 
 For example, vertices `a` and `b` condense into a single component after the addition of weight `12.0`.  The later addition of `35.0` combines the component containing both `a` and `b` with the component containing only `g` into a single component containing `a`, `b`, and `g`.  The eventual addition of `50.0` completes the tree, combining `a`, `b`, `c`, `d`, `e`, `f`, and `g` into a single component.
 
+To convert this specialized tree representation to the more standard Newick format, run
+
+    newick_representation = newick(T)
+
+The output is a string representing the tree:
+
+`newick_representation`:
+
+    (f:50.0,(d:16.0,e:16.0):34.0,(c:45.0,(g:35.0,(a:12.0,b:12.0):23.0):10.0):5.0);
+
 To find the clusters formed from the hierarchical decomposition, run
 
-    weights,clusters = cluster(V,T,increasing)
+    weights,clusters = cluster(T)
 
-where `increasing = True` once again.  The output is a collection of condensing weights and a collection of vertex clusters:
+The output is a collection of condensing weights and a collection of vertex clusters:
 
 `weights`:
 
@@ -73,7 +83,7 @@ where `increasing = True` once again.  The output is a collection of condensing 
 
 For example, each vertex initially forms its own strongly connected component.  Later, after the addition of `12.0`, the components with `a` and `b` merge to form one component with both `a` and `b`.  After the eventual addition of `50.0`, the vertices `a`, `b`, `c`, `d`, `e`, `f`, and `g` form a single connected component.  This explanation, naturally, is similar to our explanation of the tree.  Note that there are five weights and six collections of clusters.
 
-For HotNet2, `V` are gene names or indices while `A` is a similarity matrix.  Also, since we only interested in adding edges in decreasing order, specifying `increasing` is optional; both `HD` and `clustering` default to `increasing = False` when it is omitted.  Moreover, while the edge weights in this example are unique, we also allow nonunique edge weights.
+For HotNet2, a few things are worth mentioning.  The variables `V` are gene names or indices while `A` is a similarity matrix.  We want `increasing = False`, which is the default when we omit it from the argument list.  Moreover, while the edge weights in this example are unique, those in our similarity matrices very well may not be, so our implementation allows nonunique edge weights.
 
 Minimal working example
 -----------------------
@@ -92,12 +102,15 @@ Consider the following minimal working example.  Note that we have implicitly se
                   [  0.,  35.,  22.,   0.,  50.,   0.,   0.]])
 
     T = HD(V,A)
-    weights,clusters = cluster(V,T)
+    weights,clusters = cluster(T)
+    newick_representation = newick(T)
 
-    print 'Tree:'
+    print 'Tree in Newick format:'
+        print '    ',newick_representation
+    print 'Tree in our format:'
     for v in T:
         print '    ',v,':',T[v]
-    print 'Weights:'
+    print 'Condensing weights:'
     print '    ',weights
     print 'Clusters:'
     for c in clusters:
@@ -105,16 +118,19 @@ Consider the following minimal working example.  Note that we have implicitly se
 
 ** Output **
 
-    Tree:
-        (0.0, 'a') : (12.0, 'a', 'b', 'c', 'd', 'e', 'g')
+    Tree in Newick format:
+        (f:42.0,(a:38.0,(d:37.0,e:37.0,(b:20.0,c:20.0,g:20.0):17.0):1.0):4.0);
+
+    Tree in our format:
+        (50.0, 'a') : (12.0, 'a', 'b', 'c', 'd', 'e', 'g')
+        (50.0, 'b') : (30.0, 'b', 'c', 'g')
+        (50.0, 'c') : (30.0, 'b', 'c', 'g')
         (13.0, 'b', 'c', 'd', 'e', 'g') : (12.0, 'a', 'b', 'c', 'd', 'e', 'g')
-        (0.0, 'f') : (8.0, 'a', 'b', 'c', 'd', 'e', 'f', 'g')
-        (0.0, 'c') : (30.0, 'b', 'c', 'g')
-        (0.0, 'g') : (30.0, 'b', 'c', 'g')
+        (50.0, 'd') : (13.0, 'b', 'c', 'd', 'e', 'g')
+        (50.0, 'e') : (13.0, 'b', 'c', 'd', 'e', 'g')
+        (50.0, 'f') : (8.0, 'a', 'b', 'c', 'd', 'e', 'f', 'g')
         (30.0, 'b', 'c', 'g') : (13.0, 'b', 'c', 'd', 'e', 'g')
-        (0.0, 'd') : (13.0, 'b', 'c', 'd', 'e', 'g')
-        (0.0, 'e') : (13.0, 'b', 'c', 'd', 'e', 'g')
-        (0.0, 'b') : (30.0, 'b', 'c', 'g')
+        (50.0, 'g') : (30.0, 'b', 'c', 'g')
         (12.0, 'a', 'b', 'c', 'd', 'e', 'g') : (8.0, 'a', 'b', 'c', 'd', 'e', 'f', 'g')
 
     Weights:
