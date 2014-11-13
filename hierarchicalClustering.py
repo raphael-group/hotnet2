@@ -10,7 +10,7 @@ import numpy as np
 try:
     import fortran_routines
     available_routines = 1
-except:
+except ImportError:
     available_routines = 0
 
 ###############################################################################
@@ -132,8 +132,8 @@ def tarjan_HD(V,A,T,i):
 def cluster(T):
 
     condensations = [v for v in T if len(v)==2]
-    clusters = [sorted([[v[1]] for v in condensations])]
     increasing = condensations[0][0]<T[condensations[0]][0]
+    clusters = [sorted([[v[1]] for v in condensations])]
     inner_nodes = sorted(list(set(T.values())), key=lambda e: e[0], reverse=not increasing)
     weights = sorted(list(set([e[0] for e in inner_nodes])), reverse=not increasing)
 
@@ -490,13 +490,13 @@ if __name__ == "__main__":
         if type(X) in [dict]:
             string = ''
             for x in X:
-                string += '   '+str(x)+' : '+str(X[x])+'\n'
+                string += '    '+str(x)+' : '+str(X[x])+'\n'
         elif type(X) in [list,tuple]:
             string = ''
             for i,x in enumerate(X):
-                string += '   '+str(i)+' : '+str(x)+'\n'
+                string += '    '+str(i)+' : '+str(x)+'\n'
         else:
-            string = '   '+str(X)+'\n'
+            string = '    '+str(X)+'\n'
 
         return string
 
