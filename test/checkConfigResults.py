@@ -40,7 +40,7 @@ def run(args):
             run_args = "--output_directory {}\n".format(tmp_dir) + run_args
         
         # parse args and ensure output directory is set to temporary directory
-        run_args = rh.parse_args(shlex.split(run_args))
+        run_args = rh.get_parser().parse_args(shlex.split(run_args))
         run_args.output_directory = tmp_dir
         
         # run HotNet2
