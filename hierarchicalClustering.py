@@ -152,6 +152,11 @@ def cluster(T):
         leaf_nodes = [list(v[1:]) for v in condensations]
         clusters.append(sorted(leaf_nodes))
 
+    if increasing:
+        weights.insert(0,0.0)
+    elif not increasing:
+        weights.append(0.0)
+
     return weights,clusters
 
 ###############################################################################
@@ -343,9 +348,11 @@ def subproblem_index(B,A_weight):
 
     C = np.unique(B)
     index = closest(A_weight,C)
-    while C[index]<A_weight:
+    maximum_index = len(C)-1
+
+    while C[index]<A_weight and index<maximum_index:
         index += 1
-    while C[index]>A_weight:
+    while C[index]>A_weight and index>0:
         index -= 1
     return index
 

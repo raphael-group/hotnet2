@@ -4,15 +4,15 @@ Tarjan (1982, 1983) describes a hierarchical clustering algorithm that uses stro
 
 Installation
 ------------
-Run the included `setup.py` script or, (generally) equivalently, run the following command in terminal:
+Run the included `setup_fortran.py` script or, (almost) equivalently, run the following command in terminal:
 
     f2py -c fortran_routines.f95 -m fortran_routines
 
-This process requires a Fortran compiler and NumPy, which contains the F2PY program.  Our implementation uses Fortran in several places where large performance gains are possible.  However, if a Fortran compiler is unavailable, our implementation will automatically revert to functionally equivalent (but slower) Python functions.
+This process requires a Fortran compiler and NumPy, which contains the F2PY program.  Our implementation uses Fortran in several places where large performance gains are possible.  However, if a Fortran compiler is unavailable or unsuccessful, our implementation will automatically revert to functionally equivalent (but slower) Python functions.
 
 Usage
 -----
-For illustration, consider the example given in Tarjan (1983).  The graph in this example can be given by the following vertices and weighted adjacency matrix:
+For illustration, consider the example given in Tarjan (1983).  The graph in this example can be given by the vertices `V` and weighted adjacency matrix `A`.
 
 `V`:
 
@@ -28,13 +28,15 @@ For illustration, consider the example given in Tarjan (1983).  The graph in thi
      [ 26.   0.   0.   0.   0.   0.  20.]
      [  0.  35.  22.   0.  50.   0.   0.]]
 
-For example, there is an edge from vertex `a` to vertex `b` with weight `10.`.  The entries of the list `V` may be any hashable type, e.g., integers and strings.  The entries of the NumPy array `A` are double-precision floating-point numbers.
+For example, the edge from vertex `a` to vertex `b` has weight `10.`.
+
+For our implementation, the entries of the list `V` may be any hashable type, e.g., integers and/or strings.  The entries of the NumPy array `A` must be double-precision floating-point numbers.  The entries of `A` need not be unique.  An exception is raised when the graph described by `A` is not strongly connected.
 
 To generate the hierarchical decomposition tree, import `hierarchicalClustering.py` and run
 
     T = HD(V,A,increasing)
 
-with `increasing = True` to add edge weights in increasing order or `increasing = False` to edge weights in decreasing order; setting `increasing` is optional, and `False` is the default value.  For this example, set `increasing = True`.  The output is a tree represented as a dictionary `T` whose keys and values are tuples containing edge weights and leaf nodes:
+where `increasing = True` adds edge weights in increasing order and `increasing = False` adds edge weights in decreasing order; the latter is the case for HotNet2.  The `increasing` argument is optional, and `increasing = False` is its default value when omitted.  For this example, set `increasing=True`.  The output is a tree represented as a dictionary `T` whose keys and values are tuples containing edge weights and leaf nodes.
 
 `T`:
 
@@ -56,7 +58,7 @@ To convert this specialized tree representation to the more standard Newick form
 
     newick_representation = newick(T)
 
-The output is a string representing the tree:
+The output is a string representing the tree.
 
 `newick_representation`:
 
@@ -66,11 +68,11 @@ To find the clusters formed from the hierarchical decomposition, run
 
     weights,clusters = cluster(T)
 
-The output is a collection of condensing weights and a collection of vertex clusters:
+The output is a collection of condensing weights and a collection of vertex clusters.
 
 `weights`:
 
-     [12.0, 16.0, 35.0, 45.0, 50.0]
+     [0.0, 12.0, 16.0, 35.0, 45.0, 50.0]
 
 `clusters`:
 
@@ -81,13 +83,11 @@ The output is a collection of condensing weights and a collection of vertex clus
      [['a', 'b', 'c', 'g'], ['d', 'e'], ['f']]
      [['a', 'b', 'c', 'd', 'e', 'f', 'g']]
 
-For example, each vertex initially forms its own strongly connected component.  Later, after the addition of `12.0`, the components with `a` and `b` merge to form one component with both `a` and `b`.  After the eventual addition of `50.0`, the vertices `a`, `b`, `c`, `d`, `e`, `f`, and `g` form a single connected component.  This explanation, naturally, is similar to our explanation of the tree.  Note that there are five weights and six collections of clusters.
-
-For HotNet2, a few things are worth mentioning.  The variables `V` are gene names or indices while `A` is a similarity matrix.  We want `increasing = False`, which is the default when we omit it from the argument list.  Moreover, while the edge weights in this example are unique, those in our similarity matrices very well may not be, so our implementation allows nonunique edge weights.
+For example, each vertex initially forms its own strongly connected component.  Later, after the addition of `12.0`, the components with `a` and `b` merge to form one component with both `a` and `b`.  After the eventual addition of `50.0`, the vertices `a`, `b`, `c`, `d`, `e`, `f`, and `g` form a single connected component.
 
 Minimal working example
 -----------------------
-Consider the following minimal working example.  Note that we have implicitly set `increasing = False` by omitting it, so the results will differ from those of the previous example.  Also, while we rearranged the tree output in the previous example for the sake of presentation, we leave it unchanged here in hash-based order.
+Consider the following minimal working example.  Note that `increasing` has been omitted from `HD`, so it is `False` by default.
 
 ** Input **
 
@@ -107,7 +107,7 @@ Consider the following minimal working example.  Note that we have implicitly se
 
     print 'Tree in Newick format:'
         print '    ',newick_representation
-    print 'Tree in our format:'
+    print 'Tree in our specialized format:'
     for v in T:
         print '    ',v,':',T[v]
     print 'Condensing weights:'
@@ -121,7 +121,7 @@ Consider the following minimal working example.  Note that we have implicitly se
     Tree in Newick format:
         (f:42.0,(a:38.0,(d:37.0,e:37.0,(b:20.0,c:20.0,g:20.0):17.0):1.0):4.0);
 
-    Tree in our format:
+    Tree in our specialized format:
         (50.0, 'a') : (12.0, 'a', 'b', 'c', 'd', 'e', 'g')
         (50.0, 'b') : (30.0, 'b', 'c', 'g')
         (50.0, 'c') : (30.0, 'b', 'c', 'g')
@@ -133,15 +133,19 @@ Consider the following minimal working example.  Note that we have implicitly se
         (50.0, 'g') : (30.0, 'b', 'c', 'g')
         (12.0, 'a', 'b', 'c', 'd', 'e', 'g') : (8.0, 'a', 'b', 'c', 'd', 'e', 'f', 'g')
 
-    Weights:
-        [30.0, 13.0, 12.0, 8.0]
+    Condensing weights:
+        0 : 30.0
+        1 : 13.0
+        2 : 12.0
+        3 : 8.0
+        4 : 0.0
 
-    Clusters:
-        [['a'], ['b'], ['c'], ['d'], ['e'], ['f'], ['g']]
-        [['a'], ['b', 'c', 'g'], ['d'], ['e'], ['f']]
-        [['a'], ['b', 'c', 'd', 'e', 'g'], ['f']]
-        [['a', 'b', 'c', 'd', 'e', 'g'], ['f']]
-        [['a', 'b', 'c', 'd', 'e', 'f', 'g']]
+    Vertex clusters:
+        0 : [['a'], ['b'], ['c'], ['d'], ['e'], ['f'], ['g']]
+        1 : [['a'], ['b', 'c', 'g'], ['d'], ['e'], ['f']]
+        2 : [['a'], ['b', 'c', 'd', 'e', 'g'], ['f']]
+        3 : [['a', 'b', 'c', 'd', 'e', 'g'], ['f']]
+        4 : [['a', 'b', 'c', 'd', 'e', 'f', 'g']]
 
 References
 ----------
