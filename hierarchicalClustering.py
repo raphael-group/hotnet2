@@ -126,7 +126,7 @@ def tarjan_HD(V,A,T,i):
 #
 #   Outputs:
 #       weights: weights of the inner nodes of the tree
-#       clusters: clusters of vertex corresponding to each weight
+#       clusters: clusters of vertices corresponding to each weight
 #
 
 def cluster(T):
@@ -140,9 +140,9 @@ def cluster(T):
     i = 0
     n = len(inner_nodes)
 
-    for delta in weights:
+    for weight in weights:
 
-        while i<n and inner_nodes[i][0]==delta:
+        while i<n and inner_nodes[i][0]==weight:
             children = [v for v in condensations if T[v]==inner_nodes[i]]
             for v in children:
                 condensations.remove(v)
@@ -158,6 +158,49 @@ def cluster(T):
         weights.append(0.0)
 
     return weights,clusters
+
+#
+# delta_cluster(T,delta)
+#
+#   This function finds the clusters of vertices given in the hierarchical
+#   decomposition tree T for a particular delta.  Compare this to cluster,
+#   which finds the clusters for all values of delta as well as the values of
+#   delta that condense the components.
+#
+#   Input:
+#       T: hierarchical decomposition tree
+#
+#   Output:
+#       clusters: clusters of vertices corresponding to delta
+#
+
+def delta_cluster(T,delta):
+
+    condensations = [v for v in T if len(v)==2]
+    increasing = condensations[0][0]<T[condensations[0]][0]
+    inner_nodes = sorted(list(set(T.values())), key=lambda e: e[0], reverse=not increasing)
+    weights = sorted(list(set([e[0] for e in inner_nodes])), reverse=not increasing)
+
+    i = 0
+    n = len(inner_nodes)
+
+    for weight in weights:
+
+        if increasing and delta<weight:
+            break
+        elif not increasing and delta>weight:
+            break
+
+        while i<n and inner_nodes[i][0]==weight:
+            children = [v for v in condensations if T[v]==inner_nodes[i]]
+            for v in children:
+                condensations.remove(v)
+            condensations.append(inner_nodes[i])
+            i += 1
+
+    clusters = [list(v[1:]) for v in condensations]
+
+    return sorted(clusters)
 
 ###############################################################################
 #
