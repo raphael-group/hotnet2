@@ -17,12 +17,13 @@ def load_index(index_file):
         arrs  = [l.split() for l in f]
         return dict((int(arr[0]), arr[1]) for arr in arrs)
 
-def load_ppi_edges(edge_list_file):
-    """Load PPI edges from file and return as a set of 2-tuples of gene indices.
+def load_ppi_edges(edge_list_file, index2gene):
+    """Load PPI edges from file and return as a set of 2-tuples of gene names.
     
     Arguments:
     edge_list_file -- path to TSV file containing edges with a gene index in each of the first
                       two columns
+    index2gene -- dictionary mapping gene indices to gene names
                       
     Note that edges are undirected, but each edge is represented as a single tuple in the
     returned set. Thus, to check whether a given pair of proteins interact, one must check
@@ -31,7 +32,7 @@ def load_ppi_edges(edge_list_file):
     """
     with open(edge_list_file) as f:
         arrs = [l.split() for l in f]
-        return set((int(arr[0]), int(arr[1])) for arr in arrs)
+        return set((index2gene[int(arr[0])], index2gene[int(arr[1])]) for arr in arrs)
 
 def load_heat_json(heat_file):
     """Load heat JSON file and return a dict mapping gene names to heat scores and a dict mapping

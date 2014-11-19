@@ -90,10 +90,10 @@ def run(args):
     sim, index2gene = hn.similarity_matrix(infmat, full_index2gene, heat, True)
     
     # load interaction network edges and determine location of static HTML files for visualization
-    edges = hnio.load_ppi_edges(args.edge_file) if args.edge_file else None
+    if args.edge_file:
+        edges = hnio.load_ppi_edges(args.edge_file, full_index2gene)
     index_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_INDEX)
     subnetworks_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_SUBNETWORKS)
-    full_gene2index = dict((gene, index) for index, gene in full_index2gene.iteritems())
     
     for delta in run_deltas:
         # create output directory
@@ -149,7 +149,7 @@ def run(args):
             viz_data = {"delta": delta, 'subnetworks': list()}
             d_score = hnio.load_display_score_tsv(args.display_score_file) if args.display_score_file else None
             for cc in ccs:
-                viz_data['subnetworks'].append(viz.get_component_json(cc, heat, edges, full_gene2index,
+                viz_data['subnetworks'].append(viz.get_component_json(cc, heat, edges,
                                                                       args.network_name, d_score))
             
             delta_viz_dir = '%s/viz/delta%s' % (args.output_directory, delta)

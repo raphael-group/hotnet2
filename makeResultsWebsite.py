@@ -48,16 +48,14 @@ def run(args):
         gene2heat = heat_file['heat']
         heat_parameters = heat_file['parameters']
         d_score = hnio.load_display_score_tsv(args.display_score_file) if args.display_score_file else None
-        edges = hnio.load_ppi_edges(args.edge_file)
-        gene2index = dict((gene, index) for index, gene \
-                          in hnio.load_index(results['parameters']['infmat_index_file']).iteritems())
+        edges = hnio.load_ppi_edges(args.edge_file, hnio.load_index(results['parameters']['infmat_index_file']))
         delta = results['parameters']['delta']
 
         deltas.append(delta)
 
         output = {'delta': delta, 'subnetworks': list()}
         for cc in ccs:
-            output['subnetworks'].append(viz.get_component_json(cc, gene2heat, edges, gene2index,
+            output['subnetworks'].append(viz.get_component_json(cc, gene2heat, edges,
                                                                 args.network_name, d_score))
             
         if heat_parameters['heat_fn'] == 'load_mutation_heat':
