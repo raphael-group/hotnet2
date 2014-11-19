@@ -1,7 +1,7 @@
 from collections import defaultdict
 from math import log10
 import scipy
-from constants import SNV, AMP, DEL
+from constants import Mutation, SNV, AMP, DEL
 
 def filter_heat(heat, min_score):
     """Returns (1) a dict mapping gene names to heat scores that contains only entries with heat
@@ -21,27 +21,30 @@ def filter_heat(heat, min_score):
     return filtered_heat, [gene for gene in heat if gene not in filtered_heat], min_score
 
 def num_snvs(mutations):
-    """Return the number of SNVs in the given iterable of Mutations (those with mut_type == SNV).
+    """Return the number of valid SNVs in the given iterable of Mutations
+    (those with mut_type == SNV and valid == True).
     
     Arguments:
     mutations -- iterable of Mutation tuples 
     
     """
-    return len([mut for mut in mutations if mut.mut_type == SNV])
+    return len([mut for mut in mutations if mut.mut_type == SNV and mut.valid])
 
 def num_cnas(mutations):
-    """Return the number of CNAs in the given iterable of Mutations (those with mut_type == AMP or DEL).
+    """Return the number of valid CNAs in the given iterable of Mutations
+    (those with mut_type == AMP or DEL and valid == True).
     
     Arguments:
     mutations -- iterable of Mutation tuples 
     
     """
-    return len([mut for mut in mutations if mut.mut_type == AMP or mut.mut_type == DEL])
+    return len([mut for mut in mutations if (mut.mut_type == AMP or mut.mut_type == DEL) and mut.valid])
 
 def filter_cnas(cnas, filter_thresh):
-    """Return a list of Mutation tuples containing only CNAs in genes in which the proportion of
-    CNAs in the gene across samples is at least filter_thresh. CNAs in genes whose CNAs pass the
-    threshold that are of the opposite type of the dominant type in the gene are also excluded.
+    """Return a list of Mutation tuples in which CNAs in genes where the proportion of CNAs in the
+    gene across samples is less than filter_thresh have their "valid" field set to False. CNAs in
+    genes whose CNAs pass the threshold that are of the opposite type of the dominant type in the gene
+    also have their "valid" field set to False.
     
     Arguments:
     cnas -- a list of Mutation tuples representing CNAs. All are assumed to be of mut_type AMP or DEL
@@ -51,33 +54,39 @@ def filter_cnas(cnas, filter_thresh):
     if filter_thresh <= .5:
         raise ValueError("filter_thresh must be greater than .5")
     
-    filtered_cnas = list(cnas)
+    filtered_cnas = list()
     genes2cnas = defaultdict(list)
-    for cna in filtered_cnas:
+    for cna in cnas:
         genes2cnas[cna.gene].append(cna)
     
     for gene_cnas in genes2cnas.itervalues():
         amp_count = float(len([cna for cna in gene_cnas if cna.mut_type == AMP]))
         del_count = float(len([cna for cna in gene_cnas if cna.mut_type == DEL]))
         if (amp_count / (amp_count + del_count)) >= filter_thresh:
-            remove_opposite_cnas(filtered_cnas, gene_cnas, AMP)
+            invalidate_opposite_cnas(filtered_cnas, gene_cnas, AMP)
         elif (del_count / (amp_count + del_count)) >= filter_thresh:
-            remove_opposite_cnas(filtered_cnas, gene_cnas, DEL)
+            invalidate_opposite_cnas(filtered_cnas, gene_cnas, DEL)
         else:
             for cna in gene_cnas:
-                filtered_cnas.remove(cna)
+                filtered_cnas.add(get_invalidated_mutation(cna))
                 
     return filtered_cnas
 
-def remove_opposite_cnas(cnas, gene_cnas, mut_type):
+def invalidate_opposite_cnas(cnas, gene_cnas, mut_type):
     for cna in gene_cnas:
-        if cna.mut_type != mut_type:
-            cnas.remove(cna)
+        if cna.mut_type == mut_type:
+            cnas.append(cna)
+        else:
+            cnas.append(get_invalidated_mutation(cna))
 
-def mut_heat(num_samples, snvs, cnas, min_freq):
+def get_invalidated_mutation(mutation):
+    return Mutation(mutation.sample, mutation.gene, mutation.mut_type, False)
+
+def mut_heat(genes, num_samples, snvs, cnas, min_freq):
     """Return a dict mapping gene name to heat score based on the given mutation data.
     
     Arguments:
+    genes -- iterable of genes tested for mutations
     num_samples -- the number of samples tested for mutations
     snvs -- iterable of Mutation tuples representing SNVs (mut_type == SNV)
     cnas -- iterable of Mutation tuples representing CNAs (mut_type == AMP or DEL)
@@ -86,7 +95,7 @@ def mut_heat(num_samples, snvs, cnas, min_freq):
     
     """
     
-    genes2mutations = defaultdict(set)
+    genes2mutations = dict((gene, set()) for gene in genes)
     for snv in snvs:
         genes2mutations[snv.gene].add(snv)
     for cna in cnas:
@@ -95,8 +104,14 @@ def mut_heat(num_samples, snvs, cnas, min_freq):
     print("\t- Including %s genes in %s samples at min frequency %s" %
           (len(genes2mutations), num_samples, min_freq))
     
-    return dict((g, len(heat) / float(num_samples)) for g, heat in genes2mutations.items()
-                if num_snvs(heat) >= min_freq or num_cnas(heat) > 0)
+    gene2heat = dict()
+    for gene, mutations in genes2mutations.iteritems():
+        snv_heat = num_snvs(mutations)
+        snv_heat = snv_heat if snv_heat >= min_freq else 0
+        cna_heat = num_cnas(mutations)
+        gene2heat[gene] = (snv_heat + cna_heat) / float(num_samples)
+    
+    return gene2heat
 
 NULL = 100
 def fm_heat(gene2heat, fm_threshold, cis_threshold=0.01, CIS=False):

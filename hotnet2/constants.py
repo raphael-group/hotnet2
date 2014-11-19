@@ -20,7 +20,8 @@ SIGNIFICANCE_TSV = "significance.txt"
 VIZ_INDEX = 'index.html'
 VIZ_SUBNETWORKS = 'subnetworks.html'
 
-Mutation = namedtuple("Mutation", ["sample", "gene", "mut_type"])
+Mutation = namedtuple("Mutation", ["sample", "gene", "mut_type", "valid"])
+Mutation.__new__.__defaults__ = (True,) # default valid field to True
 Fusion = namedtuple("Fusion", ["sample", "genes"])
 
 ITERATION_REPLACEMENT_TOKEN = '##NUM##'

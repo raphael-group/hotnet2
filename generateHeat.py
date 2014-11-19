@@ -137,7 +137,9 @@ def load_mutation_heat(args):
 
     if not samples:
         samples = set([snv.sample for snv in snvs] + [cna.sample for cna in cnas])
-    return hnheat.mut_heat(len(samples), snvs, cnas, args.min_freq), None
+    if not genes:
+        genes = set([snv.gene for snv in snvs] + [cna.gene for cna in cnas])
+    return hnheat.mut_heat(genes, len(samples), snvs, cnas, args.min_freq), None
 
 def load_oncodrive_heat(args):
     gene2heat = hnio.load_oncodrive_data(args.fm_scores, args.cis_amp_scores, args.cis_del_scores)
