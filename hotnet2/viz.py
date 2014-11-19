@@ -5,21 +5,20 @@ def get_nodes(cc, gene2heat, d_score):
     scores = d_score if d_score else gene2heat
     return [{'name': gene, 'heat': scores[gene]} for gene in cc]
 
-def get_edges(cc, edges, gene2index, networkName):
+def get_edges(cc, edges, networkName):
     edgeData = list()
     for i in range(len(cc)):
         for j in range(i+1, len(cc)):
             gene1 = min(cc[i], cc[j])
             gene2 = max(cc[i], cc[j])
-            if (gene2index[gene1], gene2index[gene2]) in edges or \
-               (gene2index[gene2], gene2index[gene1]) in edges:
+            if (gene1, gene2) in edges or (gene2, gene1) in edges:
                 edgeData.append({'source': gene1, 'target': gene2, 'networks': [networkName]})
 
     return edgeData
 
-def get_component_json(cc, gene2heat, edges, gene2index, networkName, d_score):
+def get_component_json(cc, gene2heat, edges, networkName, d_score):
     nodes = get_nodes(cc, gene2heat, d_score)
-    cc_edges = get_edges(cc, edges, gene2index, networkName)
+    cc_edges = get_edges(cc, edges, networkName)
 
     return {'nodes': nodes, 'edges': cc_edges}
 

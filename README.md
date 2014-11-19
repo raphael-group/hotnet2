@@ -766,7 +766,7 @@ details.
 
 Citation
 ------------------------
-If you use HotNet2 in your work, please cit:
+If you use HotNet2 in your work, please cite:
 
 M.D.M. Leiserson, F. Vandin, H.T. Wu, J.R. Dobson, J.V. Eldridge, J.L. Thomas, A. Papoutsaki,
 Y. Kim, B. Niu, M. McLellan, M.S. Lawrence, A.G. Perez, D. Tamborero, Y. Cheng, G.A. Ryslik,
