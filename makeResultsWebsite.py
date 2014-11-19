@@ -58,7 +58,8 @@ def run(args):
             output['subnetworks'].append(viz.get_component_json(cc, gene2heat, edges,
                                                                 args.network_name, d_score))
             
-        if heat_parameters['heat_fn'] == 'load_mutation_heat':
+        # make oncoprints if heat file was generated from mutation data
+        if 'heat_fn' in heat_parameters and heat_parameters['heat_fn'] == 'load_mutation_heat':
             output['oncoprints'] = list()
             samples = hnio.load_samples(heat_parameters['sample_file']) if heat_parameters['sample_file'] else None
             genes = hnio.load_genes(heat_parameters['gene_file']) if heat_parameters['gene_file'] else None
