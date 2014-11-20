@@ -77,7 +77,7 @@ def run(args):
     heat = hnio.load_heat_tsv(args.heat_file)
     
     # filter out genes with heat score less than min_heat_score
-    heat, addtl_genes, args.min_heat_score = hnheat.filter_heat(heat, args.min_heat_score)
+    heat, addtl_genes = hnheat.filter_heat(heat, args.min_heat_score)
 
     # find smallest delta
     deltas = ft.get_deltas_for_network(args.permuted_networks_path, heat, INFMAT_NAME,
@@ -92,8 +92,8 @@ def run(args):
     # load interaction network edges and determine location of static HTML files for visualization
     if args.edge_file:
         edges = hnio.load_ppi_edges(args.edge_file, full_index2gene)
-    index_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_INDEX)
-    subnetworks_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_SUBNETWORKS)
+    index_file = '%s/viz_files/%s' % (str(hotnet2.__file__).rsplit('/', 1)[0], VIZ_INDEX)
+    subnetworks_file = '%s/viz_files/%s' % (str(hotnet2.__file__).rsplit('/', 1)[0], VIZ_SUBNETWORKS)
     
     for delta in run_deltas:
         # create output directory

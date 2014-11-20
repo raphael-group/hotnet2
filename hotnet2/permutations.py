@@ -58,7 +58,7 @@ def mutation_permuation_heat_wrapper((samples, genes, cnas, gene2length, bmr, ge
     if cna_filter_threshold:
         permuted_cnas = heat.filter_cnas(permuted_cnas, cna_filter_threshold)
         
-    return heat.mut_heat(len(samples), permuted_snvs, permuted_cnas, min_freq)
+    return heat.mut_heat(genes, len(samples), permuted_snvs, permuted_cnas, min_freq)
     
 
 def generate_mutation_permutation_heat(heat_fn, sample_file, gene_file, genes_in_network, snv_file,
