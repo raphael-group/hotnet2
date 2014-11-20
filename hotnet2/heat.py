@@ -170,20 +170,14 @@ def music_heat(gene2music, threshold=1.0, max_heat=15):
     print "\t- Including", len(gene2heat), "genes at threshold", threshold
     return gene2heat
 
-def expr_filter_heat(gene2heat, genes_to_preserve):
-    """Return (1) a dict mapping gene names to heat scores containing only entries for genes in
-    genes_to_preserve, and (2) a list of genes whose heat scores are not included in the returned dict.
+def reconcile_heat_with_tested_genes(gene2heat, tested_genes):
+    """Return a dict mapping gene names to heat scores containing for each gene in tested_genes
+    and only for genes in tested_genes. Genes in tested_genes not in gene2heat will be given a
+    score of 0.
     
     Arguments:
     gene2heat -- dict mapping gene names to heat scores
-    genes_to_preserve -- set of genes whose heat scores should be contained in the returned dict
+    tested_genes -- set of genes that should have heat scores in the returned dict
     
     """
-    filtered_heat = dict()
-    excluded_genes = list()
-    for gene in gene2heat:
-        if gene in genes_to_preserve:
-            filtered_heat[gene] = gene2heat[gene]
-        else:
-            excluded_genes.append(gene)
-    return filtered_heat, excluded_genes
+    return dict((g, gene2heat[g] if g in gene2heat else 0) for g in tested_genes)

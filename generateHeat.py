@@ -110,12 +110,8 @@ def valid_cna_filter_thresh(string):
             raise argparse.ArgumentTypeError("cna_filter_threshold must be > .5")
         return value
 
-def load_direct_heat(tested_genes, args):
-    raw_heat = hnio.load_heat_tsv(args.heat_file)
-    if tested_genes:
-        heat = dict((g, raw_heat[g] if g in raw_heat else 0) for g in tested_genes)
-    else:
-        heat = raw_heat
+def load_direct_heat(args):
+    heat = hnio.load_heat_tsv(args.heat_file)
 
     #ensure that all heat scores are positive
     bad_genes = [gene for gene in heat if heat[gene] < 0]
@@ -126,35 +122,36 @@ def load_direct_heat(tested_genes, args):
     heat, _ = hnheat.filter_heat(heat, args.min_heat_score, True)
     return heat
 
-def load_mutation_heat(tested_genes, args):
+def load_mutation_heat(args):
+    genes = hnio.load_genes(args.gene_file) if args.gene_file else None
     samples = hnio.load_samples(args.sample_file) if args.sample_file else None
-    snvs = hnio.load_snvs(args.snv_file, tested_genes, samples)
-    cnas = hnio.load_cnas(args.cna_file, tested_genes, samples) if args.cna_file else []
+    snvs = hnio.load_snvs(args.snv_file, genes, samples)
+    cnas = hnio.load_cnas(args.cna_file, genes, samples) if args.cna_file else []
     if args.cna_filter_threshold:
         cnas = hnheat.filter_cnas(cnas, args.cna_filter_threshold)
 
     if not samples:
         samples = set([snv.sample for snv in snvs] + [cna.sample for cna in cnas])
-    if not tested_genes:
-        tested_genes = set([snv.gene for snv in snvs] + [cna.gene for cna in cnas])
-    return hnheat.mut_heat(tested_genes, len(samples), snvs, cnas, args.min_freq)
+    if not genes:
+        genes = set([snv.gene for snv in snvs] + [cna.gene for cna in cnas])
+    return hnheat.mut_heat(genes, len(samples), snvs, cnas, args.min_freq)
 
-def load_oncodrive_heat(tested_genes, args):
+def load_oncodrive_heat(args):
     gene2heat = hnio.load_oncodrive_data(args.fm_scores, args.cis_amp_scores, args.cis_del_scores)
     return hnheat.fm_heat(gene2heat, args.fm_threshold, args.cis_threshold, args.cis)
 
-def load_mutsig_heat(tested_genes, args):
+def load_mutsig_heat(args):
     gene2mutsig = hnio.load_mutsig_scores(args.mutsig_score_file)
     return hnheat.mutsig_heat(gene2mutsig, args.threshold)
 
-def load_music_heat(tested_genes, args):
+def load_music_heat(args):
     gene2music = hnio.load_music_scores(args.music_score_file)
     return hnheat.music_heat(gene2music, args.threshold, args.max_heat)
 
 def run(args):
-    gene_file = args.gene_file if args.heat_fn == load_mutation_heat else args.gene_filter_file
-    tested_genes = hnio.load_genes(gene_file) if gene_file else None
-    heat = args.heat_fn(tested_genes, args)
+    heat = args.heat_fn(args)
+    if args.heat_fn != load_mutation_heat and args.gene_filter_file:
+        heat = hnheat.reconcile_heat_with_tested_genes(heat, hnio.load_genes(args.gene_filter_file))
 
     args.heat_fn = args.heat_fn.__name__
     output_dict = {"parameters": vars(args), "heat": heat}
