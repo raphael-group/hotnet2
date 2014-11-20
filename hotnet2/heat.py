@@ -29,6 +29,11 @@ def filter_heat(heat, min_score, zero_genes=False):
             filtered_genes.add(gene)
             if zero_genes:
                 filtered_heat[gene] = 0
+    
+    if len(filtered_genes) > 0:
+        print "\t- Assigning score 0 to %s genes with scores below min score %s" % \
+              (len(filtered_genes), min_score)
+    
     return filtered_heat, filtered_genes
 
 def num_snvs(mutations):
@@ -112,7 +117,7 @@ def mut_heat(genes, num_samples, snvs, cnas, min_freq):
     for cna in cnas:
         genes2mutations[cna.gene].add(cna)
     
-    print("\t- Including %s genes in %s samples at min frequency %s" %
+    print("* Calculating heat scores for %s genes in %s samples at min frequency %s" %
           (len(genes2mutations), num_samples, min_freq))
     
     gene2heat = dict()
@@ -180,4 +185,10 @@ def reconcile_heat_with_tested_genes(gene2heat, tested_genes):
     tested_genes -- set of genes that should have heat scores in the returned dict
     
     """
-    return dict((g, gene2heat[g] if g in gene2heat else 0) for g in tested_genes)
+    filtered_heat = dict((g, gene2heat[g] if g in gene2heat else 0) for g in tested_genes)
+    
+    num_removed = len(set(gene2heat.keys()).difference(tested_genes))
+    if num_removed > 0:
+        print "\t- Removing %s genes not in gene_filter_file" % num_removed
+    
+    return filtered_heat
