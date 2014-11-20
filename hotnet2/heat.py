@@ -3,22 +3,33 @@ from math import log10
 import scipy
 from constants import Mutation, SNV, AMP, DEL
 
-def filter_heat(heat, min_score):
-    """Returns (1) a dict mapping gene names to heat scores that contains only entries with heat
-    scores greater than min_score; (2) a list of the genes excluded because their heat scores were
-    less than min_score; and (3) the value of min_score, which will not be None even if
-    it was given as None.
+def filter_heat(heat, min_score, zero_genes=False):
+    """Returns (1) a dict mapping gene names to heat scores where all non-zero heat scores are at
+    least min_score and any genes that originally had score less than min_score either have score 0
+    or are excluded depending on the value of zero_genes; and (2) a set of the genes that had scores
+    less than min_score
     
     Arguments:
     heat -- dict mapping gene names to heat scores
-    min_score -- minimum heat score a gene must have to be included in the returned dict. If None,
-                 the minimum score will be calculated as the minimum of the non-zero heat scores
-                 included in the input dict 
+    min_score -- minimum heat score a gene must have to be included or non-zero (depending on the
+                 value of zero_genes) in the returned dict. If None, the minimum score will be
+                 calculated as the minimum of the non-zero heat scores included in the input dict
+    zero_genes -- if true, genes with score below min_score will be included in the returned heat
+                  dict with their scores set to zero; otherwise, they will be excluded
     """
-    if min_score is None:
+    if not min_score:
         min_score = min([score for score in heat.values() if score > 0])
-    filtered_heat = dict((gene, score) for gene, score in heat.iteritems() if score >= min_score)
-    return filtered_heat, [gene for gene in heat if gene not in filtered_heat], min_score
+    
+    filtered_genes = set()
+    filtered_heat = dict()
+    for gene, score in heat.iteritems():
+        if score >= min_score:
+            filtered_heat[gene] = score
+        else:
+            filtered_genes.add(gene)
+            if zero_genes:
+                filtered_heat[gene] = 0
+    return filtered_heat, filtered_genes
 
 def num_snvs(mutations):
     """Return the number of valid SNVs in the given iterable of Mutations

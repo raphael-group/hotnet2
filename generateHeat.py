@@ -18,19 +18,14 @@ def get_parser():
                              help='Path to a tab-separated file containing a gene name in the first\
                                    column and the heat score for that gene in the second column of\
                                    each line.')
-    heat_parser.add_argument('-ms', '--min_heat_score', type=float,
-                             help='Minimum heat score for including genes in the resulting output\
-                                   file. By default, all genes with positive heat scores will be\
-                                   included.')
+    heat_parser.add_argument('-ms', '--min_heat_score', type=float, default=0,
+                             help='Minimum heat score for genes to have their original heat score\
+                                   in the resulting output file. Genes with score below this value\
+                                   will be assigned score 0.')
     heat_parser.add_argument('-gff', '--gene_filter_file', default=None,
                              help='Path to file listing genes whose heat scores should be\
                                    preserved, one per line. If present, all other heat scores\
                                    will be discarded.')
-    heat_parser.add_argument('-e', '--excluded_genes_output_file',
-                             help='File path to which the list of genes that were excluded from\
-                                   the heat score output due to the specified filtering parameters\
-                                   should be written, one gene per line. If no genes were filtered\
-                                   and a path is specified, the resulting file will be empty.')
     heat_parser.set_defaults(heat_fn=load_direct_heat)
 
     mutation_parser = subparsers.add_parser('mutation', help='Mutation data', parents=[parent_parser])
@@ -115,8 +110,12 @@ def valid_cna_filter_thresh(string):
             raise argparse.ArgumentTypeError("cna_filter_threshold must be > .5")
         return value
 
-def load_direct_heat(args):
-    heat = hnio.load_heat_tsv(args.heat_file)
+def load_direct_heat(tested_genes, args):
+    raw_heat = hnio.load_heat_tsv(args.heat_file)
+    if tested_genes:
+        heat = dict((g, raw_heat[g] if g in raw_heat else 0) for g in tested_genes)
+    else:
+        heat = raw_heat
 
     #ensure that all heat scores are positive
     bad_genes = [gene for gene in heat if heat[gene] < 0]
@@ -124,50 +123,41 @@ def load_direct_heat(args):
         raise ValueError("ERROR: All gene heat scores must be non-negative. There are %s genes with\
                           negative heat scores: %s" % (len(bad_genes), bad_genes))
 
-    heat, excluded_genes, args.min_heat_score = hnheat.filter_heat(heat, args.min_heat_score)
-    return heat, excluded_genes
+    heat, _ = hnheat.filter_heat(heat, args.min_heat_score, True)
+    return heat
 
-def load_mutation_heat(args):
+def load_mutation_heat(tested_genes, args):
     samples = hnio.load_samples(args.sample_file) if args.sample_file else None
-    genes = hnio.load_genes(args.gene_file) if args.gene_file else None
-    snvs = hnio.load_snvs(args.snv_file, genes, samples)
-    cnas = hnio.load_cnas(args.cna_file, genes, samples) if args.cna_file else []
+    snvs = hnio.load_snvs(args.snv_file, tested_genes, samples)
+    cnas = hnio.load_cnas(args.cna_file, tested_genes, samples) if args.cna_file else []
     if args.cna_filter_threshold:
         cnas = hnheat.filter_cnas(cnas, args.cna_filter_threshold)
 
     if not samples:
         samples = set([snv.sample for snv in snvs] + [cna.sample for cna in cnas])
-    if not genes:
-        genes = set([snv.gene for snv in snvs] + [cna.gene for cna in cnas])
-    return hnheat.mut_heat(genes, len(samples), snvs, cnas, args.min_freq), None
+    if not tested_genes:
+        tested_genes = set([snv.gene for snv in snvs] + [cna.gene for cna in cnas])
+    return hnheat.mut_heat(tested_genes, len(samples), snvs, cnas, args.min_freq)
 
-def load_oncodrive_heat(args):
+def load_oncodrive_heat(tested_genes, args):
     gene2heat = hnio.load_oncodrive_data(args.fm_scores, args.cis_amp_scores, args.cis_del_scores)
-    return hnheat.fm_heat(gene2heat, args.fm_threshold, args.cis_threshold, args.cis), None
+    return hnheat.fm_heat(gene2heat, args.fm_threshold, args.cis_threshold, args.cis)
 
-def load_mutsig_heat(args):
+def load_mutsig_heat(tested_genes, args):
     gene2mutsig = hnio.load_mutsig_scores(args.mutsig_score_file)
-    return hnheat.mutsig_heat(gene2mutsig, args.threshold), None
+    return hnheat.mutsig_heat(gene2mutsig, args.threshold)
 
-def load_music_heat(args):
+def load_music_heat(tested_genes, args):
     gene2music = hnio.load_music_scores(args.music_score_file)
-    return hnheat.music_heat(gene2music, args.threshold, args.max_heat), None
+    return hnheat.music_heat(gene2music, args.threshold, args.max_heat)
 
 def run(args):
-    heat, heat_excluded_genes = args.heat_fn(args)
-
-    filter_excluded_genes = []
-    if args.heat_fn != load_mutation_heat and args.gene_filter_file:
-        heat, filter_excluded_genes = hnheat.expr_filter_heat(heat,
-                                                              hnio.load_genes(args.gene_filter_file))
+    gene_file = args.gene_file if args.heat_fn == load_mutation_heat else args.gene_filter_file
+    tested_genes = hnio.load_genes(gene_file) if gene_file else None
+    heat = args.heat_fn(tested_genes, args)
 
     args.heat_fn = args.heat_fn.__name__
     output_dict = {"parameters": vars(args), "heat": heat}
-
-    if args.heat_fn == "load_direct_heat":
-        output_dict["excluded_genes"] = list(set().union(heat_excluded_genes, filter_excluded_genes))
-        if args.excluded_genes_output_file:
-            hnio.write_gene_list(args.excluded_genes_output_file, heat_excluded_genes)    
 
     output_file = open(args.output_file, 'w') if args.output_file else sys.stdout
     json.dump(output_dict, output_file, indent=4)

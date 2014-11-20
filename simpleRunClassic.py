@@ -60,7 +60,7 @@ def run(args):
     heat = hnio.load_heat_tsv(args.heat_file)
     
     #filter out genes with heat score less than min_heat_score
-    heat, addtl_genes, args.min_heat_score = hnheat.filter_heat(heat, args.min_heat_score)
+    heat, addtl_genes = hnheat.filter_heat(heat, args.min_heat_score)
 
     #find delta that maximizes # CCs of size >= MIN_SIZE for each permuted data set
     deltas = ft.get_deltas_for_heat(infmat, full_index2gene, heat, addtl_genes, args.num_permutations,
