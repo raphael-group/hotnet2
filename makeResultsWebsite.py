@@ -73,6 +73,8 @@ def run(args):
                 with open(heat_parameters['sample_type_file']) as f:
                     output['sampleToTypes'] = dict(l.rstrip().split() for l in f if not l.startswith("#") )
                     output['typeToSamples'] = dict((t, []) for t in set(output['sampleToTypes'].values()))
+                    for s, ty in output['sampleToTypes'].iteritems():
+                        output['typeToSamples'][ty].append( s )
             else:
                 output['sampleToTypes'] = dict( (s, "Cancer") for s in samples )
                 output['typeToSamples'] = dict(Cancer=list(samples))
