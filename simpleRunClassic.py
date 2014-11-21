@@ -23,9 +23,11 @@ def get_parser():
                               and the name of the gene represented at that index in the second\
                               column of each line.')
     parser.add_argument('-hf', '--heat_file', required=True,
-                        help='Path to a tab-separated file containing a gene name in the first\
-                              column and the heat score for that gene in the second column of\
-                              each line.')
+                        help='Path to heat file containing gene names and scores. This can either\
+                              be a JSON file created by generateHeat.py, in which case the file\
+                              name must end in .json, or a tab-separated file containing a gene\
+                              name in the first column and the heat score for that gene in the\
+                              second column of each line.')
     parser.add_argument('-ms', '--min_heat_score', type=float,
                         help='Minimum heat score for a gene to be eligible for inclusion in a\
                               returned connected component. By default, all genes with positive\
@@ -57,9 +59,18 @@ def run(args):
     
     infmat = scipy.io.loadmat(args.infmat_file)[INFMAT_NAME]
     full_index2gene = hnio.load_index(args.infmat_index_file)
-    heat = hnio.load_heat_tsv(args.heat_file)
     
-    #filter out genes with heat score less than min_heat_score
+    using_mutation_data = False
+    using_json_heat = os.path.splitext(args.heat_file.lower())[1] == '.json'
+    if using_json_heat:
+        heat_data = json.load(open(args.heat_file))
+        heat = heat_data['heat']
+        heat_params = heat_data['parameters']
+        using_mutation_data = 'heat_fn' in heat_params and heat_params['heat_fn'] == 'load_mutation_heat'
+    else:
+        heat = hnio.load_heat_tsv(args.heat_file)
+    
+    # filter out genes with heat score less than min_heat_score
     heat, addtl_genes = hnheat.filter_heat(heat, args.min_heat_score)
 
     #find delta that maximizes # CCs of size >= MIN_SIZE for each permuted data set
