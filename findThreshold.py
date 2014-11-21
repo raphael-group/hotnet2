@@ -129,7 +129,8 @@ def get_deltas_for_network(permuted_networks_path, heat, infmat_name, index2gene
 def get_deltas_for_heat(infmat, index2gene, gene2heat, addtl_genes, num_permutations, test_statistic,
                         sizes, classic, parallel):
     print "* Performing permuted heat delta selection..."
-    heat_permutations = permutations.permute_heat(gene2heat, num_permutations, addtl_genes, parallel)
+    heat_permutations = permutations.permute_heat(gene2heat, index2gene.values(), num_permutations,
+                                                  addtl_genes, parallel)
     return get_deltas_from_heat_permutations(infmat, index2gene, heat_permutations, test_statistic,
                                              sizes, classic, parallel)
 
