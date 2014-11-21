@@ -116,7 +116,6 @@ def mut_heat(genes, num_samples, snvs, cnas, min_freq):
         genes2mutations[snv.gene].add(snv)
     for cna in cnas:
         genes2mutations[cna.gene].add(cna)
-    
     print("* Calculating heat scores for %s genes in %s samples at min frequency %s" %
           (len(genes2mutations), num_samples, min_freq))
     

@@ -94,7 +94,8 @@ def run(args):
         edges = hnio.load_ppi_edges(args.edge_file, full_index2gene)
     index_file = '%s/viz_files/%s' % (str(hotnet2.__file__).rsplit('/', 1)[0], VIZ_INDEX)
     subnetworks_file = '%s/viz_files/%s' % (str(hotnet2.__file__).rsplit('/', 1)[0], VIZ_SUBNETWORKS)
-    
+
+    results_files = []
     for delta in run_deltas:
         # create output directory
         delta_out_dir = args.output_directory + "/delta_" + str(delta)
@@ -124,7 +125,7 @@ def run(args):
         ccs = [sorted(cc) for cc in ccs]
         ccs.sort(key=lambda comp: comp[0])
         ccs.sort(key=len, reverse=True)
-    
+
         # write output
         heat_dict = {"heat": heat, "parameters": {"heat_file": args.heat_file}}
         heat_out = open(os.path.abspath(delta_out_dir) + "/" + HEAT_JSON, 'w')
@@ -141,28 +142,18 @@ def run(args):
         json_out = open(os.path.abspath(delta_out_dir) + "/" + JSON_OUTPUT, 'w')
         json.dump(output_dict, json_out, indent=4)
         json_out.close()
+        results_files.append( os.path.abspath(delta_out_dir) + "/" + JSON_OUTPUT )
         
         hnio.write_components_as_tsv(os.path.abspath(delta_out_dir) + "/" + COMPONENTS_TSV, ccs)
-        
-        # write visualization output if edge file given
-        if args.edge_file:
-            viz_data = {"delta": delta, 'subnetworks': list()}
-            d_score = hnio.load_display_score_tsv(args.display_score_file) if args.display_score_file else None
-            for cc in ccs:
-                viz_data['subnetworks'].append(viz.get_component_json(cc, heat, edges,
-                                                                      args.network_name, d_score))
-            
-            delta_viz_dir = '%s/viz/delta%s' % (args.output_directory, delta)
-            if not os.path.isdir(delta_viz_dir):
-                os.makedirs(delta_viz_dir)
-            viz_out = open('%s/subnetworks.json' % delta_viz_dir, 'w')
-            json.dump(viz_data, viz_out, indent=4)
-            viz_out.close()
-    
-            shutil.copy(subnetworks_file, delta_viz_dir)
-    
+
+    # write visualization output if edge file given
     if args.edge_file:
-        viz.write_index_file(index_file, '%s/viz/%s' % (args.output_directory, VIZ_INDEX), run_deltas)
+        import makeResultsWebsite as MRW
+        viz_args = [ "-r" ] + results_files
+        viz_args += ["-ef", args.edge_file, "-o", args.output_directory + "/viz" ]
+        if args.network_name: viz_args += [ "-nn", args.network_name ]
+        if args.display_score_file: viz_args += [ "-dsf", args.display_score_file ]
+        MRW.run( MRW.get_parser().parse_args(viz_args) )
     
 if __name__ == "__main__": 
     run(get_parser().parse_args(sys.argv[1:]))

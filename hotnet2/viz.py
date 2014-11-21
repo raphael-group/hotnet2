@@ -25,13 +25,13 @@ def get_component_json(cc, gene2heat, edges, networkName, d_score):
 def get_oncoprint_json(cc, snvs, cnas):
     cc = set(cc)
     samples = set()
-    
+
     M = defaultdict(lambda: defaultdict(list))
     for mut in snvs + cnas:
         if mut.gene in cc:
             M[mut.gene][mut.sample].append(mut.mut_type)
             samples.add(mut.sample)
-    
+
     return M
 
 def write_index_file(index_file, out_file, deltas):

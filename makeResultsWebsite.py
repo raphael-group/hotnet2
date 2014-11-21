@@ -27,8 +27,7 @@ def get_parser():
     return parser
 
 def run(args):
-    index_file = '%s/viz_files/%s' % (str(hotnet2.__file__).rsplit('/', 1)[0], VIZ_INDEX)
-    subnetworks_file = '%s/viz_files/%s' % (str(hotnet2.__file__).rsplit('/', 1)[0], VIZ_SUBNETWORKS)
+    subnetworks_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_SUBNETWORKS)
 
     # create output directory if doesn't exist; warn if it exists and is not empty
     outdir = args.output_directory
@@ -38,48 +37,52 @@ def run(args):
         print("WARNING: Output directory is not empty. Any conflicting files will be overwritten. "
               "(Ctrl-c to cancel).")
 
-    deltas = list()
-
+    ks = set()
+    output = dict(deltas=[], subnetworks=dict(), mutation_matrices=dict(), stats=dict())
+    subnetworks = dict()
     for results_file in args.results_files:
         results = json.load(open(results_file))
         ccs = results['components']
-        
+
         heat_file = json.load(open(results['parameters']['heat_file']))
         gene2heat = heat_file['heat']
         heat_parameters = heat_file['parameters']
         d_score = hnio.load_display_score_tsv(args.display_score_file) if args.display_score_file else None
         edges = hnio.load_ppi_edges(args.edge_file, hnio.load_index(results['parameters']['infmat_index_file']))
-        delta = results['parameters']['delta']
+        delta = format(results['parameters']['delta'], 'g')
+        output['deltas'].append(delta)
+        subnetworks[delta] = ccs
 
-        deltas.append(delta)
-
-        output = {'delta': delta, 'subnetworks': list()}
+        output["subnetworks"][delta] = []
         for cc in ccs:
-            output['subnetworks'].append(viz.get_component_json(cc, gene2heat, edges,
+            output['subnetworks'][delta].append(viz.get_component_json(cc, gene2heat, edges,
                                                                 args.network_name, d_score))
             
         # make oncoprints if heat file was generated from mutation data
         if 'heat_fn' in heat_parameters and heat_parameters['heat_fn'] == 'load_mutation_heat':
-            output['oncoprints'] = list()
+            output['mutation_matrices'][delta] = list()
             samples = hnio.load_samples(heat_parameters['sample_file']) if heat_parameters['sample_file'] else None
             genes = hnio.load_genes(heat_parameters['gene_file']) if heat_parameters['gene_file'] else None
             snvs = hnio.load_snvs(heat_parameters['snv_file'], genes, samples) if heat_parameters['snv_file'] else []
             cnas = hnio.load_cnas(heat_parameters['cna_file'], genes, samples) if heat_parameters['cna_file'] else []
-            
+
             for cc in ccs:
-                output['oncoprints'].append(viz.get_oncoprint_json(cc, snvs, cnas))
+                output['mutation_matrices'][delta].append(viz.get_oncoprint_json(cc, snvs, cnas))
+            output['sampleToTypes'] = dict( (s, "Cancer") for s in samples )
+            output['typeToSamples'] = dict(Cancer=list(samples))
 
-        # write output
-        delta_dir = '%s/delta%s' % (outdir, delta)
-        if not os.path.isdir(delta_dir):
-            os.mkdir(delta_dir)
-        out = open('%s/subnetworks.json' % delta_dir, 'w')
+        output['stats'][delta] = results['statistics']
+        for k in sorted(map(int, results['statistics'].keys())):
+            ks.add(k)
+            continue
+            stats = results['statistics'][str(k)]
+            output['stats'][delta].append( dict(k=k, expected=stats['expected'], observed=stats['observed'], pval=stats['pval']))
+
+    output['ks'] = range(min(ks), max(ks)+1)
+    with open('%s/subnetworks.json' % outdir, 'w') as out:
         json.dump(output, out, indent=4)
-        out.close()
 
-        shutil.copy(subnetworks_file, delta_dir)
-
-    viz.write_index_file(index_file, '%s/%s' % (outdir, VIZ_INDEX), deltas)
+    shutil.copy(subnetworks_file, '%s/%s' % (outdir, VIZ_INDEX))
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))
