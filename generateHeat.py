@@ -48,6 +48,11 @@ def get_parser():
                                        mutations in the real data. If not provided, the set of samples\
                                        is assumed to be all samples that are provided in the SNV\
                                        or CNA data.')
+    mutation_parser.add_argument('--sample_type_file', default=None,
+                                 help='File listing type (e.g. cancer, datasets, etc.) of samples\
+                                       (see --sample_file). Each line is a space-separated row\
+                                       listing one sample and its type. The sample types are used\
+                                       for creating the HotNet(2) web output.')
     mutation_parser.add_argument('--gene_file', default=None,
                                  help='File listing tested genes. SNVs or CNAs in genes not listed\
                                        in this file will be ignored. If HotNet is run with mutation\
@@ -155,6 +160,7 @@ def run(args):
         heat = hnheat.reconcile_heat_with_tested_genes(heat, hnio.load_genes(args.gene_filter_file))
 
     args.heat_fn = args.heat_fn.__name__
+    print vars(args)
     output_dict = {"parameters": vars(args), "heat": heat}
 
     output_file = open(args.output_file, 'w') if args.output_file else sys.stdout

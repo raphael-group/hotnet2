@@ -175,7 +175,15 @@ d3.json('subnetworks.json', function(json) {
 		  		)
 		  	// Only draw the mutation matrix if there is data
 		  	if (json.mutation_matrices[delta]){
+                                // Identify the samples mutated in this subnetwork
 		  		var mutSamples = filterSamples(d.nodes.map(function(g){ return g.name; }), json.mutation_matrices[delta][i], json.sampleToTypes);
+
+                                // Create the customized mutation matrix function, including
+                                // a sample legend if there are more than one cancer type
+                                var m2 = mutation_matrix({style: {width: 550}}).addCoverage();
+                                if (Object.keys(json.typeToSamples).length > 1)
+                                    m2 = m2.addSampleLegend();
+
 			  	g.append("div")
 			  		.attr("class", "m2")
 			  		.style("margin-bottom", "30px")
@@ -185,7 +193,8 @@ d3.json('subnetworks.json', function(json) {
 			  			 sampleToTypes: json.sampleToTypes,
 			  			 typeToSamples: json.typeToSamples}
 			  		)
-			  		.call(mutation_matrix({style: {width: 550}}).addCoverage())
+			  		.call(m2)
+
 		  	}
 
 		  	g.append("hr");

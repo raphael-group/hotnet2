@@ -68,8 +68,14 @@ def run(args):
 
             for cc in ccs:
                 output['mutation_matrices'][delta].append(viz.get_oncoprint_json(cc, snvs, cnas))
-            output['sampleToTypes'] = dict( (s, "Cancer") for s in samples )
-            output['typeToSamples'] = dict(Cancer=list(samples))
+
+            if 'sample_type_file' in heat_parameters:
+                with open(heat_parameters['sample_type_file']) as f:
+                    output['sampleToTypes'] = dict(l.rstrip().split() for l in f if not l.startswith("#") )
+                    output['typeToSamples'] = dict((t, []) for t in set(output['sampleToTypes'].values()))
+            else:
+                output['sampleToTypes'] = dict( (s, "Cancer") for s in samples )
+                output['typeToSamples'] = dict(Cancer=list(samples))
 
         output['stats'][delta] = results['statistics']
         for k in sorted(map(int, results['statistics'].keys())):
