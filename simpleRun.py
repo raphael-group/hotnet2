@@ -55,7 +55,7 @@ def get_parser():
                               each row contains the indices of two genes that are connected in the\
                               network. This is used to create subnetwork visualizations; if not\
                               provided, visualizations will not be made.')
-    parser.add_argument('-dsf', '--display_score_file',          
+    parser.add_argument('-dsf', '--display_score_file',
                         help='Path to a tab-separated file containing a gene name in the first\
                         column and the display score for that gene in the second column of\
                         each line.')

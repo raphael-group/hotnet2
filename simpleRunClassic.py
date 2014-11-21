@@ -1,10 +1,12 @@
 import json
 import numpy as np
 import os
+import shutil
 import scipy.io
 import sys
-from hotnet2 import findThreshold as ft, heat as hnheat, hnap, hnio, hotnet2 as hn, permutations as p, stats
-from hotnet2.constants import NUM_CCS, HEAT_JSON, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV
+import hotnet2
+from hotnet2 import findThreshold as ft, heat as hnheat, hnap, hnio, hotnet2 as hn, permutations as p, stats, viz
+from hotnet2.constants import NUM_CCS, HEAT_JSON, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV, VIZ_INDEX, VIZ_SUBNETWORKS
 
 MIN_CC_SIZE = 3
 MAX_CC_SIZE = 25
@@ -45,6 +47,18 @@ def get_parser():
                         help='Run permutation tests in parallel.')
     parser.add_argument('--no-parallel', dest='parallel', action='store_false',
                         help='Run permutation tests sequentially.')
+    parser.add_argument('-ef', '--edge_file',
+                        help='Path to TSV file listing edges of the interaction network, where\
+                              each row contains the indices of two genes that are connected in the\
+                              network. This is used to create subnetwork visualizations; if not\
+                              provided, visualizations will not be made.')
+    parser.add_argument('-dsf', '--display_score_file',
+                        help='Path to a tab-separated file containing a gene name in the first\
+                        column and the display score for that gene in the second column of\
+                        each line.')
+    parser.add_argument('-nn', '--network_name', default='Network',
+                        help='Display name for the interaction network. (Used for subnetwork\
+                              visualizations)')
     parser.set_defaults(parallel=False)
     
     return parser
@@ -89,6 +103,12 @@ def run(args):
         max_cc_size = max([len(cc) for cc in hn.connected_components(G)])
         if max_cc_size <= MAX_CC_SIZE:
             break
+
+    # load interaction network edges and determine location of static HTML files for visualization
+    if args.edge_file:
+        edges = hnio.load_ppi_edges(args.edge_file, full_index2gene)
+    index_file = '%s/viz_files/%s' % (str(hotnet2.__file__).rsplit('/', 1)[0], VIZ_INDEX)
+    subnetworks_file = '%s/viz_files/%s' % (str(hotnet2.__file__).rsplit('/', 1)[0], VIZ_SUBNETWORKS)
 
     # and run HotNet with that multiple and the next 4 multiples
     run_deltas = [i*medianDelta for i in range(i, i+5)]
@@ -140,6 +160,36 @@ def run(args):
         json_out.close()
         
         hnio.write_components_as_tsv(os.path.abspath(delta_out_dir) + "/" + COMPONENTS_TSV, ccs)
+        
+        # write visualization output if edge file given
+        if args.edge_file:
+            viz_data = {"delta": delta, 'subnetworks': list()}
+            d_score = hnio.load_display_score_tsv(args.display_score_file) if args.display_score_file else None
+            for cc in ccs:
+                viz_data['subnetworks'].append(viz.get_component_json(cc, heat, edges,
+                                                                      args.network_name, d_score))
+                
+            if using_mutation_data:
+                viz_data['oncoprints'] = list()
+                samples = hnio.load_samples(heat_params['sample_file']) if heat_params['sample_file'] else None
+                genes = hnio.load_genes(heat_params['gene_file']) if heat_params['gene_file'] else None
+                snvs = hnio.load_snvs(heat_params['snv_file'], genes, samples) if heat_params['snv_file'] else []
+                cnas = hnio.load_cnas(heat_params['cna_file'], genes, samples) if heat_params['cna_file'] else []
+            
+                for cc in ccs:
+                    viz_data['oncoprints'].append(viz.get_oncoprint_json(cc, snvs, cnas))
+            
+            delta_viz_dir = '%s/viz/delta%s' % (args.output_directory, delta)
+            if not os.path.isdir(delta_viz_dir):
+                os.makedirs(delta_viz_dir)
+            viz_out = open('%s/subnetworks.json' % delta_viz_dir, 'w')
+            json.dump(viz_data, viz_out, indent=4)
+            viz_out.close()
+    
+            shutil.copy(subnetworks_file, delta_viz_dir)
+    
+    if args.edge_file:
+        viz.write_index_file(index_file, '%s/viz/%s' % (args.output_directory, VIZ_INDEX), run_deltas)
     
     
 if __name__ == "__main__": 
