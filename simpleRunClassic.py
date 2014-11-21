@@ -4,7 +4,7 @@ import os
 import scipy.io
 import sys
 from hotnet2 import findThreshold as ft, heat as hnheat, hnap, hnio, hotnet2 as hn, permutations as p, stats
-from hotnet2.constants import NUM_CCS, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV
+from hotnet2.constants import NUM_CCS, HEAT_JSON, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV
 
 MIN_CC_SIZE = 3
 MAX_CC_SIZE = 25
@@ -69,35 +69,36 @@ def run(args):
         using_mutation_data = 'heat_fn' in heat_params and heat_params['heat_fn'] == 'load_mutation_heat'
     else:
         heat = hnio.load_heat_tsv(args.heat_file)
+    print "* Loading heat scores for %s genes" % len(heat)
     
     # filter out genes with heat score less than min_heat_score
     heat, addtl_genes = hnheat.filter_heat(heat, args.min_heat_score)
 
-    #find delta that maximizes # CCs of size >= MIN_SIZE for each permuted data set
+    # find delta that maximizes # CCs of size >= MIN_SIZE for each permuted data set
     deltas = ft.get_deltas_for_heat(infmat, full_index2gene, heat, addtl_genes, args.num_permutations,
                                     NUM_CCS, [MIN_CC_SIZE], True, args.parallel)
 
-    #find the multiple of the median delta s.t. the size of the largest CC in the real data
-    #is <= MAX_CC_SIZE
+    # find the multiple of the median delta s.t. the size of the largest CC in the real data
+    # is <= MAX_CC_SIZE
     medianDelta = np.median(deltas[MIN_CC_SIZE])
 
     sim, index2gene = hn.similarity_matrix(infmat, full_index2gene, heat, False)
-    
+
     for i in range(1, 11):
         G = hn.weighted_graph(sim, index2gene, i*medianDelta)
         max_cc_size = max([len(cc) for cc in hn.connected_components(G)])
         if max_cc_size <= MAX_CC_SIZE:
             break
-    
-    #and run HotNet with that multiple and the next 4 multiples
+
+    # and run HotNet with that multiple and the next 4 multiples
     run_deltas = [i*medianDelta for i in range(i, i+5)]
     for delta in run_deltas: 
-        #create output directory
+        # create output directory
         delta_out_dir = args.output_directory + "/delta_" + str(delta)
         if not os.path.isdir(delta_out_dir):
             os.mkdir(delta_out_dir)
         
-        #find connected components
+        # find connected components
         G = hn.weighted_graph(sim, index2gene, delta, directed=False)
         ccs = hn.connected_components(G, args.min_cc_size)
         
@@ -114,13 +115,20 @@ def run(args):
         size2real_counts = dict(zip(sizes, real_counts))
         sizes2stats = stats.compute_statistics(size2real_counts, sizes2counts, args.num_permutations)
     
-        #sort ccs list such that genes within components are sorted alphanumerically, and components
-        #are sorted first by length, then alphanumerically by name of the first gene in the component 
+        # sort ccs list such that genes within components are sorted alphanumerically, and components
+        # are sorted first by length, then alphanumerically by name of the first gene in the component
         ccs = [sorted(cc) for cc in ccs]
         ccs.sort(key=lambda comp: comp[0])
         ccs.sort(key=len, reverse=True)
     
         # write output
+        if not using_json_heat:
+            heat_dict = {"heat": heat, "parameters": {"heat_file": args.heat_file}}
+            heat_out = open(os.path.abspath(delta_out_dir) + "/" + HEAT_JSON, 'w')
+            json.dump(heat_dict, heat_out, indent=4)
+            heat_out.close()
+            args.heat_file = os.path.abspath(delta_out_dir) + "/" + HEAT_JSON
+        
         args.delta = delta  # include delta in parameters section of output JSON
         output_dict = {"parameters": vars(args), "sizes": hn.component_sizes(ccs),
                        "components": ccs, "statistics": sizes2stats}

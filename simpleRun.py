@@ -86,6 +86,7 @@ def run(args):
         using_mutation_data = 'heat_fn' in heat_params and heat_params['heat_fn'] == 'load_mutation_heat'
     else:
         heat = hnio.load_heat_tsv(args.heat_file)
+    print "* Loading heat scores for %s genes" % len(heat)
     
     # filter out genes with heat score less than min_heat_score
     heat, addtl_genes = hnheat.filter_heat(heat, args.min_heat_score)
