@@ -77,11 +77,13 @@ def run(args):
     infmat = scipy.io.loadmat(args.infmat_file)[INFMAT_NAME]
     full_index2gene = hnio.load_index(args.infmat_index_file)
     
+    using_mutation_data = False
     using_json_heat = os.path.splitext(args.heat_file.lower())[1] == '.json'
     if using_json_heat:
         heat_data = json.load(open(args.heat_file))
         heat = heat_data['heat']
         heat_params = heat_data['parameters']
+        using_mutation_data = 'heat_fn' in heat_params and heat_params['heat_fn'] == 'load_mutation_heat'
     else:
         heat = hnio.load_heat_tsv(args.heat_file)
     
@@ -92,7 +94,7 @@ def run(args):
     deltas = ft.get_deltas_for_network(args.permuted_networks_path, heat, INFMAT_NAME,
                                        full_index2gene, MAX_CC_SIZE, MAX_CC_SIZES, False,
                                        args.num_permutations, args.parallel)
-     
+
     # and run HotNet with the median delta for each size
     run_deltas = [np.median(deltas[size]) for size in deltas]
     
