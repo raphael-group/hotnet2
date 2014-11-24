@@ -48,6 +48,11 @@ def get_parser():
                                        mutations in the real data. If not provided, the set of samples\
                                        is assumed to be all samples that are provided in the SNV\
                                        or CNA data.')
+    mutation_parser.add_argument('--sample_type_file', default=None,
+                                 help='File listing type (e.g. cancer, datasets, etc.) of samples\
+                                       (see --sample_file). Each line is a space-separated row\
+                                       listing one sample and its type. The sample types are used\
+                                       for creating the HotNet(2) web output.')
     mutation_parser.add_argument('--gene_file', default=None,
                                  help='File listing tested genes. SNVs or CNAs in genes not listed\
                                        in this file will be ignored. If HotNet is run with mutation\
