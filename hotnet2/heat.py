@@ -175,25 +175,45 @@ def music_heat(gene2music, threshold=1.0, max_heat=15):
     print "\t- Including", len(gene2heat), "genes at threshold", threshold
     return gene2heat
 
-def filter_heat_to_gene_set(gene2heat, genes_to_preserve, message):
-    """Return a dict mapping genes to heat scores such that only genes in the provided set of
-    genes_to_preserve are included.
+def filter_heat_to_network_genes(gene2heat, network_genes):
+    """Return a dict mapping genes to heat scores such that only genes in the network are included.
     
     Arguments:
     gene2heat -- dict mapping gene names to heat scores
-    genes_to_preserve -- set of genes for which scores should be preserved
-    message -- text to print after "Removing ## genes"
+    network_genes -- set of network_genes
     
     """
     filtered_heat = dict()
     num_removed = 0
     for gene, heat in gene2heat.iteritems():
-        if gene in genes_to_preserve:
+        if gene in network_genes:
             filtered_heat[gene] = heat
         else:
             num_removed += 1
     
     if num_removed > 0:
-        print "\t- Removing %s genes %s" % (num_removed, message)
+        print "\t- Removing %s genes not in the network" % num_removed
+    
+    return filtered_heat
+
+def reconcile_heat_with_tested_genes(gene2heat, tested_genes):
+    """Return a dict mapping gene names to heat scores containing for each gene in tested_genes
+    and only for genes in tested_genes. Genes in tested_genes not in gene2heat will be given a
+    score of 0.
+    
+    Arguments:
+    gene2heat -- dict mapping gene names to heat scores
+    tested_genes -- set of genes that should have heat scores in the returned dict
+    
+    """
+    filtered_heat = dict((g, gene2heat[g] if g in gene2heat else 0) for g in tested_genes)
+    
+    num_removed = len(set(gene2heat.keys()).difference(tested_genes))
+    if num_removed > 0:
+        print "\t- Removing %s genes not in gene_filter_file" % num_removed
+        
+    num_zeroed = len(set(tested_genes).difference(gene2heat.keys()))
+    if num_zeroed > 0:
+        print "\t- Assigned score 0 to %s genes in gene file without scores" % num_zeroed
     
     return filtered_heat

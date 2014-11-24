@@ -84,7 +84,7 @@ def run(args):
     print "* Loaded heat scores for %s genes" % len(heat)
     
     # filter out genes not in the network
-    heat = hnheat.filter_heat_to_gene_set(heat, set(full_index2gene.values()), "not in the network")
+    heat = hnheat.filter_heat_to_network_genes(heat, set(full_index2gene.values()))
     
     # genes with score 0 cannot be in output components, but are eligible for heat in permutations
     heat, addtl_genes = hnheat.filter_heat(heat, None, False, 'There are ## genes with heat score 0')

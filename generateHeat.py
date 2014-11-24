@@ -158,8 +158,7 @@ def load_music_heat(args):
 def run(args):
     heat = args.heat_fn(args)
     if args.heat_fn != load_mutation_heat and args.gene_filter_file:
-        heat = hnheat.filter_heat_to_gene_set(heat, hnio.load_genes(args.gene_filter_file),
-                                              "not in gene_filter_file")
+        heat = hnheat.reconcile_heat_with_tested_genes(heat, hnio.load_genes(args.gene_filter_file))
 
     args.heat_fn = args.heat_fn.__name__
     output_dict = {"parameters": vars(args), "heat": heat}
