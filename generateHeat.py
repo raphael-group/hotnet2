@@ -160,7 +160,6 @@ def run(args):
         heat = hnheat.reconcile_heat_with_tested_genes(heat, hnio.load_genes(args.gene_filter_file))
 
     args.heat_fn = args.heat_fn.__name__
-    print vars(args)
     output_dict = {"parameters": vars(args), "heat": heat}
 
     output_file = open(args.output_file, 'w') if args.output_file else sys.stdout
