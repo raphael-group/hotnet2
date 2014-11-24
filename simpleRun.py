@@ -29,11 +29,6 @@ def get_parser():
                               name must end in .json, or a tab-separated file containing a gene\
                               name in the first column and the heat score for that gene in the\
                               second column of each line.')
-    parser.add_argument('-ms', '--min_heat_score', type=float,
-                        help='Minimum heat score for a gene to be eligible for inclusion in a\
-                              returned connected component. By default, all genes with positive\
-                              heat scores will be included. (To include genes with score zero, set\
-                              min_heat_score to 0).')
     parser.add_argument('-ccs', '--min_cc_size', type=int, default=2,
                         help='Minimum size connected components that should be returned.')
     parser.add_argument('-pnp', '--permuted_networks_path', required=True,
@@ -86,10 +81,13 @@ def run(args):
         using_mutation_data = 'heat_fn' in heat_params and heat_params['heat_fn'] == 'load_mutation_heat'
     else:
         heat = hnio.load_heat_tsv(args.heat_file)
-    print "* Loading heat scores for %s genes" % len(heat)
+    print "* Loaded heat scores for %s genes" % len(heat)
     
-    # filter out genes with heat score less than min_heat_score
-    heat, addtl_genes = hnheat.filter_heat(heat, args.min_heat_score)
+    # filter out genes not in the network
+    heat = hnheat.filter_heat_to_gene_set(heat, set(full_index2gene.values()), "not in the network")
+    
+    # genes with score 0 cannot be in output components, but are eligible for heat in permutations
+    heat, addtl_genes = hnheat.filter_heat(heat, None, False, 'There are ## genes with heat score 0')
 
     # find smallest delta
     deltas = ft.get_deltas_for_network(args.permuted_networks_path, heat, INFMAT_NAME,

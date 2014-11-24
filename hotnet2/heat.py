@@ -3,7 +3,7 @@ from math import log10
 import scipy
 from constants import Mutation, SNV, AMP, DEL
 
-def filter_heat(heat, min_score, zero_genes=False):
+def filter_heat(heat, min_score, zero_genes=False, message=None):
     """Returns (1) a dict mapping gene names to heat scores where all non-zero heat scores are at
     least min_score and any genes that originally had score less than min_score either have score 0
     or are excluded depending on the value of zero_genes; and (2) a set of the genes that had scores
@@ -16,6 +16,8 @@ def filter_heat(heat, min_score, zero_genes=False):
                  calculated as the minimum of the non-zero heat scores included in the input dict
     zero_genes -- if true, genes with score below min_score will be included in the returned heat
                   dict with their scores set to zero; otherwise, they will be excluded
+    message -- message to print about number of filtered genes; '##' will be replaced with the number
+    
     """
     if not min_score:
         min_score = min([score for score in heat.values() if score > 0])
@@ -30,9 +32,8 @@ def filter_heat(heat, min_score, zero_genes=False):
             if zero_genes:
                 filtered_heat[gene] = 0
     
-    if len(filtered_genes) > 0:
-        print "\t- Assigning score 0 to %s genes with scores below min score %s" % \
-              (len(filtered_genes), min_score)
+    if message and len(filtered_genes) > 0:
+        print '\t- ' + message.replace('##', str(len(filtered_genes)))
     
     return filtered_heat, filtered_genes
 
@@ -174,20 +175,25 @@ def music_heat(gene2music, threshold=1.0, max_heat=15):
     print "\t- Including", len(gene2heat), "genes at threshold", threshold
     return gene2heat
 
-def reconcile_heat_with_tested_genes(gene2heat, tested_genes):
-    """Return a dict mapping gene names to heat scores containing for each gene in tested_genes
-    and only for genes in tested_genes. Genes in tested_genes not in gene2heat will be given a
-    score of 0.
+def filter_heat_to_gene_set(gene2heat, genes_to_preserve, message):
+    """Return a dict mapping genes to heat scores such that only genes in the provided set of
+    genes_to_preserve are included.
     
     Arguments:
     gene2heat -- dict mapping gene names to heat scores
-    tested_genes -- set of genes that should have heat scores in the returned dict
+    genes_to_preserve -- set of genes for which scores should be preserved
+    message -- text to print after "Removing ## genes"
     
     """
-    filtered_heat = dict((g, gene2heat[g] if g in gene2heat else 0) for g in tested_genes)
+    filtered_heat = dict()
+    num_removed = 0
+    for gene, heat in gene2heat.iteritems():
+        if gene in genes_to_preserve:
+            filtered_heat[gene] = heat
+        else:
+            num_removed += 1
     
-    num_removed = len(set(gene2heat.keys()).difference(tested_genes))
     if num_removed > 0:
-        print "\t- Removing %s genes not in gene_filter_file" % num_removed
+        print "\t- Removing %s genes %s" % (num_removed, message)
     
     return filtered_heat
