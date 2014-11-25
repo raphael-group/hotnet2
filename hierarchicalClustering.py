@@ -401,10 +401,47 @@ def subproblem_index(B,A_weight):
 
 ###############################################################################
 #
-#   Output function
+#   Output functions
 #
 ###############################################################################
 
+# The next function converts a tree from our specialized format to SciPy's
+# linkage matrix format.  The dictionary D converts the cluster indices in the
+# linkage matrix Z to the vertex labels in the tree T.
+
+def linkage(T):
+
+    condensations = sorted([v for v in T if len(v)==2])
+    base = condensations[0][0]
+    increasing = condensations[0][0]<T[condensations[0]][0]
+    inner_nodes = sorted(list(set(T.values())), key=lambda e: e[0], reverse=not increasing)
+
+    L = {v:i for i,v in enumerate(condensations)}
+    D = {i:v[1] for i,v in enumerate(condensations)}
+    k = len(condensations)
+
+    Z = []
+
+    for w in inner_nodes:
+
+        children = [v for v in condensations if T[v]==w]
+        weight = w[0]
+
+        x = children[0]
+        for y in children[1:]:
+            z = tuple([weight]+sorted(x[1:]+y[1:]))
+            Z.append([L[x],L[y],abs(weight-base),len(z[1:])])
+            L[z] = k
+            D[k] = z[1:]
+            x = z
+            k += 1
+
+        for v in children:
+            condensations.remove(v)
+        condensations.append(w)
+
+    return np.array(Z),D
+    
 # The next function converts a tree from our specialized format to the
 # standard Newick format.
 
