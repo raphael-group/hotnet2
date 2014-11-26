@@ -41,7 +41,7 @@ def similarity_matrix(infmat, index2gene, gene2heat, directed=True):
     # Identify genes in the given list that are also in the network
     genelist = sorted(set(gene2heat.keys()).intersection(gene2index.keys()))
     index2gene = dict(enumerate(genelist))
-    print "\t- Genes in list and network:", len(genelist)
+    print "\t- Genes in similarity matrix:", len(genelist)
 
     h = np.array([gene2heat[g] for g in genelist],dtype=np.float)
     

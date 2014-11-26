@@ -24,14 +24,11 @@ def get_parser():
                               and the name of the gene represented at that index in the second\
                               column of each line.')
     parser.add_argument('-hf', '--heat_file', required=True,
-                        help='Path to a tab-separated file containing a gene name in the first\
-                              column and the heat score for that gene in the second column of\
-                              each line.')
-    parser.add_argument('-ms', '--min_heat_score', type=float,
-                        help='Minimum heat score for a gene to be eligible for inclusion in a\
-                              returned connected component. By default, all genes with positive\
-                              heat scores will be included. (To include genes with score zero, set\
-                              min_heat_score to 0).')
+                        help='Path to heat file containing gene names and scores. This can either\
+                              be a JSON file created by generateHeat.py, in which case the file\
+                              name must end in .json, or a tab-separated file containing a gene\
+                              name in the first column and the heat score for that gene in the\
+                              second column of each line.')
     parser.add_argument('-ccs', '--min_cc_size', type=int, default=2,
                         help='Minimum size connected components that should be returned.')
     parser.add_argument('-pnp', '--permuted_networks_path', required=True,
@@ -53,7 +50,7 @@ def get_parser():
                               each row contains the indices of two genes that are connected in the\
                               network. This is used to create subnetwork visualizations; if not\
                               provided, visualizations will not be made.')
-    parser.add_argument('-dsf', '--display_score_file',          
+    parser.add_argument('-dsf', '--display_score_file',
                         help='Path to a tab-separated file containing a gene name in the first\
                         column and the display score for that gene in the second column of\
                         each line.')
@@ -74,16 +71,29 @@ def run(args):
     
     infmat = scipy.io.loadmat(args.infmat_file)[INFMAT_NAME]
     full_index2gene = hnio.load_index(args.infmat_index_file)
-    heat = hnio.load_heat_tsv(args.heat_file)
     
-    # filter out genes with heat score less than min_heat_score
-    heat, addtl_genes = hnheat.filter_heat(heat, args.min_heat_score)
+    using_mutation_data = False
+    using_json_heat = os.path.splitext(args.heat_file.lower())[1] == '.json'
+    if using_json_heat:
+        heat_data = json.load(open(args.heat_file))
+        heat = heat_data['heat']
+        heat_params = heat_data['parameters']
+        using_mutation_data = 'heat_fn' in heat_params and heat_params['heat_fn'] == 'load_mutation_heat'
+    else:
+        heat = hnio.load_heat_tsv(args.heat_file)
+    print "* Loaded heat scores for %s genes" % len(heat)
+    
+    # filter out genes not in the network
+    heat = hnheat.filter_heat_to_network_genes(heat, set(full_index2gene.values()))
+    
+    # genes with score 0 cannot be in output components, but are eligible for heat in permutations
+    heat, addtl_genes = hnheat.filter_heat(heat, None, False, 'There are ## genes with heat score 0')
 
     # find smallest delta
     deltas = ft.get_deltas_for_network(args.permuted_networks_path, heat, INFMAT_NAME,
                                        full_index2gene, MAX_CC_SIZE, MAX_CC_SIZES, False,
                                        args.num_permutations, args.parallel)
-    
+
     # and run HotNet with the median delta for each size
     run_deltas = [np.median(deltas[size]) for size in deltas]
     
@@ -127,12 +137,13 @@ def run(args):
         ccs.sort(key=len, reverse=True)
 
         # write output
-        heat_dict = {"heat": heat, "parameters": {"heat_file": args.heat_file}}
-        heat_out = open(os.path.abspath(delta_out_dir) + "/" + HEAT_JSON, 'w')
-        json.dump(heat_dict, heat_out, indent=4)
-        heat_out.close()
+        if not using_json_heat:
+            heat_dict = {"heat": heat, "parameters": {"heat_file": args.heat_file}}
+            heat_out = open(os.path.abspath(delta_out_dir) + "/" + HEAT_JSON, 'w')
+            json.dump(heat_dict, heat_out, indent=4)
+            heat_out.close()
+            args.heat_file = os.path.abspath(delta_out_dir) + "/" + HEAT_JSON
         
-        args.heat_file = os.path.abspath(delta_out_dir) + "/" + HEAT_JSON
         args.delta = delta  # include delta in parameters section of output JSON
         output_dict = {"parameters": vars(args), "sizes": hn.component_sizes(ccs),
                        "components": ccs, "statistics": sizes2stats}

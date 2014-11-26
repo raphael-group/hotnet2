@@ -117,7 +117,7 @@ def valid_cna_filter_thresh(string):
 
 def load_direct_heat(args):
     heat = hnio.load_heat_tsv(args.heat_file)
-    print "* Loading heat scores for %s genes", len(heat)
+    print "* Loading heat scores for %s genes" % len(heat)
 
     #ensure that all heat scores are positive
     bad_genes = [gene for gene in heat if heat[gene] < 0]
@@ -125,7 +125,8 @@ def load_direct_heat(args):
         raise ValueError("ERROR: All gene heat scores must be non-negative. There are %s genes with\
                           negative heat scores: %s" % (len(bad_genes), bad_genes))
 
-    heat, _ = hnheat.filter_heat(heat, args.min_heat_score, True)
+    heat, _ = hnheat.filter_heat(heat, args.min_heat_score, True,
+                                 'Assigning score 0 to ## genes with score below %s' % args.min_heat_score)
     return heat
 
 def load_mutation_heat(args):
