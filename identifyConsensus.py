@@ -1,37 +1,28 @@
 #!/usr/bin/python
 
-import sys, os, json, networkx as nx
+import sys, os, json, argparse, networkx as nx
 from collections import defaultdict
 
-def parse_args(input_list=None):
-    import argparse
-    class Args: pass
-    args = Args()
+def get_parser():
     description = 'Constructs consensus subnetworks from HotNet(2) results.'
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('-r', '--results_files',
                         nargs="*", help='Paths to HotNet(2) results files.', required=True)
     parser.add_argument('-n', '--networks', nargs="*", required=True,
                         help='List the network that corresponds to each results file.')
-    parser.add_argument('-o', '--output_file', help='Output file.', required=True)
+    parser.add_argument('-o', '--output_file',required=True,
+                        help='Output file. Text output by default. Use a .json extension to get JSON output.')
     parser.add_argument('-ms', '--min_cc_size', help='Min CC size.', type=int, default=2)
 
-    if not input_list: parser.parse_args(namespace=args)
-    else: parser.parse_args(input_list, namespace=args)
-
-    return args
+    return parser
     
 def load_results(results_files, min_cc_size):
     results = []
     for filename in results_files:
+        # Load the components from each results file
         print '* Loading {}...'.format(filename)
-        # Load the results
         with open(filename) as f: obj = json.load(f)
-
-        # Load the components
         components = [cc for cc in obj['components'] if len(cc) >= min_cc_size]
-
-        # Store the results
         results.append( components )
 
     return results
@@ -39,26 +30,25 @@ def load_results(results_files, min_cc_size):
 # Construct consensus graph
 def consensus_edges(results, networks, all_genes):
     # Create membership dictionary
-    def new_neighbors(): return dict(networks=set())
-    gene2neighbors = dict([(g, defaultdict(new_neighbors)) for g in all_genes])
+    gene2neighbors = dict((g, defaultdict(set)) for g in all_genes)
     for ccs, network in zip(results, networks):
         for cc in ccs:
             for i, u in enumerate(cc):
                 for j, v in enumerate(cc):
                     if i != j:
-                        gene2neighbors[u][v]['networks'].add( network )
+                        gene2neighbors[u][v].add( network )
                             
     # Create an edge list from the membership dictionary
     from itertools import combinations
-    edges = [(g1, g2, dict(networks=len(gene2neighbors[g1][g2]['networks'])))
+    edges = [(g1, g2, dict(networks=len(gene2neighbors[g1][g2])))
              for g1, g2 in combinations(all_genes, 2)
-             if len(gene2neighbors[g1][g2]['networks']) > 0 ]
+             if len(gene2neighbors[g1][g2]) > 0 ]
 
     return edges
 
 def run(args):
     # Assert that a network was given for each results file
-    if not (len(args.results_files) == len(args.networks)):
+    if len(args.results_files) != len(args.networks):
         raise ValueError("You must pass in one network name for each result file.")
 
     num_networks = len(set(args.networks))
@@ -76,13 +66,13 @@ def run(args):
     G = nx.Graph()
     G.add_edges_from( edges )
 
-    # Extract the connected components when restricted to edges with 3 networks
+    # Extract the connected components when restricted to edges in all networks
     H = nx.Graph()
     H.add_edges_from( (u, v, d) for u, v, d in edges if d['networks'] >= num_networks )
     consensus = [ set(cc) for cc in nx.connected_components( H ) ]
     consensus_genes = set( g for cc in consensus for g in cc )
     
-    # Expand each consensus by adding back any edges with < 3 networks
+    # Expand each consensus by adding back any edges not in all networks
     expanded_consensus = []
     linkers = set()
     for cc in consensus:
@@ -104,15 +94,15 @@ def run(args):
 
     print "* No. consensus genes:", len(consensus_genes)
 
-    # Output to file
-    output  = [ "# Linkers: {}".format(", ".join(sorted(linkers))), "#Consensus" ]
-    output += ["{}\t[{}] {}".format(i, ", ".join(sorted(c['consensus'])), ", ".join(sorted(c['expansion']))) for i, c in enumerate(expanded_consensus) ]
-    open(args.output_file, "w").write( "\n".join(output) )
-
-    # Annotate the subnetworks each linker came from
-    for g in linkers:
-        neighbors = set( u for u in G.neighbors(g) if G[g][u]['networks'] > 1 )
-        linked = [ "[{}]".format(" ".join(cc['consensus'])) for i, cc in enumerate(expanded_consensus) if len(set(cc['consensus'] + cc['expansion']) & neighbors) != 0 ]
-        print g, ", ".join(map(str, linked))
-
-if __name__ == "__main__": run(parse_args())
+    # Output to file (JSON or text depending on the file extension)
+    with open(args.output_file, "w") as out:
+        if args.output_file.lower().endswith(".json"):
+            # Convert the consensus to lists
+            consensus = [ dict(core=list(c['consensus']), expansion=list(c['expansion'])) for c in expanded_consensus ]
+            json.dump(dict(linkers=list(linkers), consensus=consensus), out, sort_keys=True, indent=4)
+        else:
+            output  = [ "# Linkers: {}".format(", ".join(sorted(linkers))), "#Consensus" ]
+            output += ["{}\t[{}] {}".format(i, ", ".join(sorted(c['consensus'])), ", ".join(sorted(c['expansion']))) for i, c in enumerate(expanded_consensus) ]
+            out.write( "\n".join(output) )
+            
+if __name__ == "__main__": run(get_parser().parse_args(sys.argv[1:]))
