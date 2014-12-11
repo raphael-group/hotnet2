@@ -3,7 +3,7 @@ import os
 import numpy as np
 import scipy.io
 from constants import MAX_CC_SIZE, NUM_CCS, HEAT_JSON, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV
-import findThreshold as ft
+from bin import findThreshold as ft
 import heat as hnheat
 import hnio
 import hotnet2 as hn
@@ -96,7 +96,7 @@ def run_helper(args, infmat_name, get_deltas_fn, extra_delta_args):
 
     # write visualization output if edge file given
     if args.edge_file:
-        import makeResultsWebsite as MRW
+        from bin import makeResultsWebsite as MRW
         viz_args = [ "-r" ] + results_files
         viz_args += ["-ef", args.edge_file, "-o", args.output_directory + "/viz" ]
         if args.network_name: viz_args += [ "-nn", args.network_name ]

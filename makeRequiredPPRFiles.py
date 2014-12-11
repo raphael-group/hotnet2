@@ -3,8 +3,8 @@ import os
 import sys
 from hotnet2 import hnap
 sys.path.append('influence_matrices')
-import createPPRMat as ppr
-import permuteNetwork as permute
+from bin import createPPRMat as ppr
+from bin import permuteNetwork as permute
 
 def get_parser():
     description = 'Create the personalized pagerank matrix and 100 permuted PPR matrices for the\

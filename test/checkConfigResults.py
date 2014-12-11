@@ -8,7 +8,7 @@ import os
 path = os.path.dirname(os.path.realpath(sys.argv[0]))
 sys.path.append(path[:path.rindex('/')])
 from hotnet2 import hnap
-import runHotNet2 as rh
+from bin import findComponents as fc
 
 def parse_args(raw_args): 
     description = "Runs the runHotNet2 script with the given config files and compares the\
@@ -40,11 +40,11 @@ def run(args):
             run_args = "--output_directory {}\n".format(tmp_dir) + run_args
         
         # parse args and ensure output directory is set to temporary directory
-        run_args = rh.get_parser().parse_args(shlex.split(run_args))
+        run_args = fc.get_parser().parse_args(shlex.split(run_args))
         run_args.output_directory = tmp_dir
         
         # run HotNet2
-        rh.run(run_args)
+        fc.run(run_args)
         
         # load results and compare to expected
         with open(args.results_files[i]) as f:

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, os, json, argparse, networkx as nx
+import sys, json, argparse, networkx as nx
 from collections import defaultdict
 
 def get_parser():
