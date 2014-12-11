@@ -1,12 +1,10 @@
 import json
 import os
-import shutil
 import sys
 import scipy.io
 import numpy as np
-import hotnet2
-from hotnet2 import hnap, findThreshold as ft, heat as hnheat, hnio, hotnet2 as hn, permutations as p, stats, viz
-from hotnet2.constants import ITERATION_REPLACEMENT_TOKEN, MAX_CC_SIZE, HEAT_JSON, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV, VIZ_INDEX, VIZ_SUBNETWORKS
+from hotnet2 import hnap, findThreshold as ft, heat as hnheat, hnio, hotnet2 as hn, permutations as p, stats
+from hotnet2.constants import ITERATION_REPLACEMENT_TOKEN, MAX_CC_SIZE, HEAT_JSON, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV
 
 MAX_CC_SIZES = [5, 10, 15, 20]
 INFMAT_NAME = "PPR"
@@ -32,9 +30,9 @@ def get_parser():
     parser.add_argument('-ccs', '--min_cc_size', type=int, default=2,
                         help='Minimum size connected components that should be returned.')
     parser.add_argument('-pnp', '--permuted_networks_path', required=True,
-                        help='Path to influence matrices for permuted networks.\
-                                      Include ' + ITERATION_REPLACEMENT_TOKEN + ' in the\
-                                      path to be replaced with the iteration number')
+                        help='Path to influence matrices for permuted networks. Include ' +\
+                              ITERATION_REPLACEMENT_TOKEN + ' in the path to be replaced with the\
+                              iteration number')
     parser.add_argument('-n', '--num_permutations', type=int, default=100,
                         help='Number of permutations that should be used for parameter selection\
                               and statistical significance testing.')
@@ -72,13 +70,9 @@ def run(args):
     infmat = scipy.io.loadmat(args.infmat_file)[INFMAT_NAME]
     full_index2gene = hnio.load_index(args.infmat_index_file)
     
-    using_mutation_data = False
     using_json_heat = os.path.splitext(args.heat_file.lower())[1] == '.json'
     if using_json_heat:
-        heat_data = json.load(open(args.heat_file))
-        heat = heat_data['heat']
-        heat_params = heat_data['parameters']
-        using_mutation_data = 'heat_fn' in heat_params and heat_params['heat_fn'] == 'load_mutation_heat'
+        heat = json.load(open(args.heat_file))['heat']
     else:
         heat = hnio.load_heat_tsv(args.heat_file)
     print "* Loaded heat scores for %s genes" % len(heat)
@@ -98,12 +92,6 @@ def run(args):
     run_deltas = [np.median(deltas[size]) for size in deltas]
     
     sim, index2gene = hn.similarity_matrix(infmat, full_index2gene, heat, True)
-    
-    # load interaction network edges and determine location of static HTML files for visualization
-    if args.edge_file:
-        edges = hnio.load_ppi_edges(args.edge_file, full_index2gene)
-    index_file = '%s/viz_files/%s' % (str(hotnet2.__file__).rsplit('/', 1)[0], VIZ_INDEX)
-    subnetworks_file = '%s/viz_files/%s' % (str(hotnet2.__file__).rsplit('/', 1)[0], VIZ_SUBNETWORKS)
 
     results_files = []
     for delta in run_deltas:
