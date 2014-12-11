@@ -71,7 +71,7 @@ def run(args):
             for cc in ccs:
                 output['mutation_matrices'][delta].append(viz.get_oncoprint_json(cc, snvs, cnas))
 
-            if 'sample_type_file' in heat_parameters:
+            if heat_parameters.get('sample_type_file', None):
                 with open(heat_parameters['sample_type_file']) as f:
                     output['sampleToTypes'] = dict(l.rstrip().split() for l in f if not l.startswith("#") )
                     output['typeToSamples'] = dict((t, []) for t in set(output['sampleToTypes'].values()))
