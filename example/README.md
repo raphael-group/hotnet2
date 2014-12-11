@@ -18,7 +18,7 @@ HotNet2 in these examples. To do so, run:
 ## A Simple Run
 To run the simpleRun example, execute:
 
-    python simpleRun.py @example/configs/simple.config
+    python runHotNet2.py @example/configs/simple.config
     
 This will run delta selection, HotNet2, and statistical significance testing using the heat file
 `example/example.heat` and store the output in `example/output/simple`. Because delta is selected
@@ -36,7 +36,7 @@ To run an example using mutation data, first create the directory `example/outpu
 
 2. Perform delta selection.
 
-        python findThreshold.py @example/configs/delta.config
+        python bin/findThreshold.py @example/configs/delta.config
         
    (Note that `findThreshold.py` will output a file that contains a distribution of deltas. In
    practice, you would use this distribution to choose the delta for running HotNet2 (e.g. by
@@ -45,12 +45,12 @@ To run an example using mutation data, first create the directory `example/outpu
 
 3. Run HotNet2 (without significance testing).
 
-        python runHotNet2.py @example/configs/run.config
+        python bin/findComponents.py @example/configs/run.config
         
 4. Run HotNet2 (with significance testing).
 
-        python runHotNet2.py @example/configs/significance.config
+        python bin/findComponents.py @example/configs/significance.config
 
 5. Make results website.
 
-		python makeResultsWebsite.py @example/configs/website.config
+		python bin/makeResultsWebsite.py @example/configs/website.config
