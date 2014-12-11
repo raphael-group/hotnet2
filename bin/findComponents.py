@@ -49,7 +49,7 @@ def get_parser():
                                help='Number of cores to use for running permutation tests in\
                                parallel. If -1, all available cores will be used.')
     
-    subparsers = parser.add_subparsers(title='Heat score type', dest='permutation_type')
+    subparsers = parser.add_subparsers(title='Permutation type', dest='permutation_type')
     
     subparsers.add_parser('none', help='Do not perform statistical significance permutation tests')
     
