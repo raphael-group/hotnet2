@@ -2,6 +2,8 @@
 import json
 import os
 import sys
+import os.path
+sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 import numpy as np
 import scipy.io
 from hotnet2 import hnap, hnio, hotnet2 as hn, permutations as p, stats

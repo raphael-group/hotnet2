@@ -2,6 +2,8 @@
 import json
 import scipy.io
 import sys
+import os.path
+sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 from hotnet2 import delta, hnap, hnio, permutations
 from hotnet2.constants import MAX_CC_SIZE, NUM_CCS, ITERATION_REPLACEMENT_TOKEN
 
@@ -35,7 +37,7 @@ def get_parser():
     parent_parser.add_argument('-c', '--num_cores', type=int, default=1,
                                help='Number of cores to use for running permutation tests in\
                                parallel. If -1, all available cores will be used.')
-    parent_parser.add_argument('-c', '--classic', default=False, action='store_true',
+    parent_parser.add_argument('--classic', default=False, action='store_true',
                         help='Run classic (instead of directed) HotNet.')
     parent_parser.add_argument('-o', '--output_file',
                                help='Output file.  If none given, output will be written to stdout.')

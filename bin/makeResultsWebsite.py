@@ -3,6 +3,8 @@ import json
 import os
 import shutil
 import sys
+import os.path
+sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 import hotnet2
 from hotnet2 import hnap, hnio, viz
 from hotnet2.constants import VIZ_INDEX, VIZ_SUBNETWORKS
