@@ -36,7 +36,7 @@ def run_helper(args, infmat_name, get_deltas_fn, extra_delta_args):
     # genes with score 0 cannot be in output components, but are eligible for heat in permutations
     heat, addtl_genes = hnheat.filter_heat(heat, None, False, 'There are ## genes with heat score 0')
     
-    deltas = get_deltas_fn(full_index2gene, heat, args.num_permutations, args.num_cores, infmat, addtl_genes, *extra_delta_args)
+    deltas = get_deltas_fn(full_index2gene, heat, args.delta_permutations, args.num_cores, infmat, addtl_genes, *extra_delta_args)
     
     sim, index2gene = hn.similarity_matrix(infmat, full_index2gene, heat, True)
 
@@ -53,8 +53,9 @@ def run_helper(args, infmat_name, get_deltas_fn, extra_delta_args):
         
         # calculate significance (using all genes with heat scores)
         print "* Performing permuted heat statistical significance..."
-        heat_permutations = p.permute_heat(heat, full_index2gene.values(), args.num_permutations,
-                                           addtl_genes, args.num_cores)
+        heat_permutations = p.permute_heat(heat, full_index2gene.values(),
+                                           args.significance_permutations, addtl_genes,
+                                           args.num_cores)
         sizes = range(2, 11)
         print "\t- Using no. of components >= k (k \\in",
         print "[%s, %s]) as statistic" % (min(sizes), max(sizes))
@@ -63,7 +64,8 @@ def run_helper(args, infmat_name, get_deltas_fn, extra_delta_args):
                                                           args.num_cores)
         real_counts = stats.num_components_min_size(G, sizes)
         size2real_counts = dict(zip(sizes, real_counts))
-        sizes2stats = stats.compute_statistics(size2real_counts, sizes2counts, args.num_permutations)
+        sizes2stats = stats.compute_statistics(size2real_counts, sizes2counts,
+                                               args.significance_permutations)
     
         # sort ccs list such that genes within components are sorted alphanumerically, and components
         # are sorted first by length, then alphanumerically by name of the first gene in the component

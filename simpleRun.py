@@ -29,9 +29,10 @@ def get_parser():
                         help='Path to influence matrices for permuted networks. Include ' +\
                               ITERATION_REPLACEMENT_TOKEN + ' in the path to be replaced with the\
                               iteration number')
-    parser.add_argument('-n', '--num_permutations', type=int, default=100,
-                        help='Number of permutations that should be used for parameter selection\
-                              and statistical significance testing.')
+    parser.add_argument('-dp', '--delta_permutations', type=int, default=100,
+                        help='Number of permutations to be used for delta parameter selection.')
+    parser.add_argument('-sp', '--significance_permutations', type=int, default=100,
+                        help='Number of permutations to be used for statistical significance testing.')
     parser.add_argument('-o', '--output_directory', default='hotnet_output',
                         help='Output directory. Files results.json, components.txt, and\
                               significance.txt will be generated in subdirectories for each delta.')
