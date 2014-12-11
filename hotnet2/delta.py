@@ -138,7 +138,7 @@ def network_delta_wrapper((network_path, infmat_name, index2gene, heat, sizes, d
         raise ValueError("Unknown delta selection function: %s" % (selection_function))
 
 def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes, directed=True,
-                            parallel=True, selection_fn=find_best_delta_by_largest_cc):
+                            num_cores=1, selection_fn=find_best_delta_by_largest_cc):
     """Return a dict mapping each size in sizes to a list of the best deltas for each permuted
     network for that size. 
     
@@ -150,12 +150,12 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
     heat -- dict mapping a gene name to the heat score for that gene
     sizes -- list of sizes for largest CC / min size for CCs to be counted (based on selection_fn)
     directed -- whether or not the graph constructed from the similarity matrix should be directed
-    parallel -- whether finding the best delta for each permuted network should be performed in parallel
+    num_cores -- number of cores to use for running in parallel
     selection_fn -- function that should be used for finding the best delta 
     
     """
-    if parallel:
-        pool = mp.Pool(25)
+    if num_cores != 1:
+        pool = mp.Pool(None if num_cores == -1 else num_cores)
         map_fn = pool.map
     else:
         map_fn = map
@@ -164,7 +164,7 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
              selection_fn) for network_path in network_paths]
     delta_maps = map_fn(network_delta_wrapper, args)
     
-    if parallel:
+    if num_cores != 1:
         pool.close()
         pool.join()
          
@@ -185,7 +185,7 @@ def heat_delta_wrapper((infmat, index2gene, heat_permutation, directed, sizes, s
         raise ValueError("Unknown delta selection function: %s" % (selection_function))
 
 #list of num_permutations dicts of max cc size => best delta
-def heat_delta_selection(infmat, index2gene, heat_permutations, sizes, directed=True, parallel=True,
+def heat_delta_selection(infmat, index2gene, heat_permutations, sizes, directed=True, num_cores=1,
                          selection_fn=find_best_delta_by_largest_cc):
     """Return a dict mapping each size in sizes to a list of the best deltas for each heat
     permutation for that size. 
@@ -197,12 +197,12 @@ def heat_delta_selection(infmat, index2gene, heat_permutations, sizes, directed=
     heat_permutations -- list of heat permutations (dicts mapping gene name to heat score)
     sizes -- list of sizes for largest CC / min size for CCs to be counted (based on selection_fn)
     directed -- whether or not the graph constructed from the similarity matrix should be directed
-    parallel -- whether finding the best delta for each permuted network should be performed in parallel
+    num_cores -- number of cores to use for running in parallel
     selection_fn -- function that should be used for finding the best delta 
     
     """
-    if parallel:
-        pool = mp.Pool(25)
+    if num_cores != 1:
+        pool = mp.Pool(None if num_cores == -1 else num_cores)
         map_fn = pool.map
     else:
         map_fn = map
@@ -210,7 +210,7 @@ def heat_delta_selection(infmat, index2gene, heat_permutations, sizes, directed=
             for heat_permutation in heat_permutations]
     deltas = map_fn(heat_delta_wrapper, args)
 
-    if parallel:
+    if num_cores != 1:
         pool.close()
         pool.join()
     

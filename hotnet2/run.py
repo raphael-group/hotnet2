@@ -36,7 +36,7 @@ def run_helper(args, infmat_name, get_deltas_fn, extra_delta_args):
     # genes with score 0 cannot be in output components, but are eligible for heat in permutations
     heat, addtl_genes = hnheat.filter_heat(heat, None, False, 'There are ## genes with heat score 0')
     
-    deltas = get_deltas_fn(full_index2gene, heat, args.num_permutations, args.parallel, infmat, addtl_genes, *extra_delta_args)
+    deltas = get_deltas_fn(full_index2gene, heat, args.num_permutations, args.num_cores, infmat, addtl_genes, *extra_delta_args)
     
     sim, index2gene = hn.similarity_matrix(infmat, full_index2gene, heat, True)
 
@@ -54,13 +54,13 @@ def run_helper(args, infmat_name, get_deltas_fn, extra_delta_args):
         # calculate significance (using all genes with heat scores)
         print "* Performing permuted heat statistical significance..."
         heat_permutations = p.permute_heat(heat, full_index2gene.values(), args.num_permutations,
-                                           addtl_genes, args.parallel)
+                                           addtl_genes, args.num_cores)
         sizes = range(2, 11)
         print "\t- Using no. of components >= k (k \\in",
         print "[%s, %s]) as statistic" % (min(sizes), max(sizes))
         sizes2counts = stats.calculate_permuted_cc_counts(infmat, full_index2gene,
                                                           heat_permutations, delta, sizes, True,
-                                                          args.parallel)
+                                                          args.num_cores)
         real_counts = stats.num_components_min_size(G, sizes)
         size2real_counts = dict(zip(sizes, real_counts))
         sizes2stats = stats.compute_statistics(size2real_counts, sizes2counts, args.num_permutations)
@@ -101,19 +101,19 @@ def run_helper(args, infmat_name, get_deltas_fn, extra_delta_args):
         if args.display_score_file: viz_args += [ "-dsf", args.display_score_file ]
         MRW.run( MRW.get_parser().parse_args(viz_args) )
 
-def get_deltas_hotnet2(full_index2gene, heat, num_perms, parallel, _infmat, _addtl_genes,
+def get_deltas_hotnet2(full_index2gene, heat, num_perms, num_cores, _infmat, _addtl_genes,
                        permuted_networks_path, infmat_name, max_cc_sizes):
     # find smallest delta
     deltas = ft.get_deltas_for_network(permuted_networks_path, heat, infmat_name, full_index2gene,
-                                       MAX_CC_SIZE, max_cc_sizes, False, num_perms, parallel)
+                                       MAX_CC_SIZE, max_cc_sizes, False, num_perms, num_cores)
 
     # and run HotNet with the median delta for each size
     return [np.median(deltas[size]) for size in deltas]
 
-def get_deltas_classic(full_index2gene, heat, num_perms, parallel, infmat, addtl_genes, min_cc_size, max_cc_size):
+def get_deltas_classic(full_index2gene, heat, num_perms, num_cores, infmat, addtl_genes, min_cc_size, max_cc_size):
     # find delta that maximizes # CCs of size >= min_cc_size for each permuted data set
     deltas = ft.get_deltas_for_heat(infmat, full_index2gene, heat, addtl_genes, num_perms, NUM_CCS,
-                                    [min_cc_size], True, parallel)
+                                    [min_cc_size], True, num_cores)
 
     # find the multiple of the median delta s.t. the size of the largest CC in the real data
     # is <= MAX_CC_SIZE

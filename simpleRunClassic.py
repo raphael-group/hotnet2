@@ -31,10 +31,9 @@ def get_parser():
     parser.add_argument('-o', '--output_directory', default='hotnet_output',
                         help='Output directory. Files results.json, components.txt, and\
                               significance.txt will be generated in subdirectories for each delta.')
-    parser.add_argument('--parallel', dest='parallel', action='store_true',
-                        help='Run permutation tests in parallel.')
-    parser.add_argument('--no-parallel', dest='parallel', action='store_false',
-                        help='Run permutation tests sequentially.')
+    parser.add_argument('-c', '--num_cores', type=int, default=1,
+                        help='Number of cores to use for running permutation tests in parallel. If\
+                              -1, all available cores will be used.')
     parser.add_argument('-ef', '--edge_file',
                         help='Path to TSV file listing edges of the interaction network, where\
                               each row contains the indices of two genes that are connected in the\
@@ -47,7 +46,6 @@ def get_parser():
     parser.add_argument('-nn', '--network_name', default='Network',
                         help='Display name for the interaction network. (Used for subnetwork\
                               visualizations)')
-    parser.set_defaults(parallel=False)
     
     return parser
 

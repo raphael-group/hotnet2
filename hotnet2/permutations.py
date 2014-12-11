@@ -17,7 +17,7 @@ def heat_permutation_wrapper((heat_scores, eligible_genes)):
 
     return permuted_heat
 
-def permute_heat(heat, network_genes, num_permutations, addtl_genes=None, parallel=True):
+def permute_heat(heat, network_genes, num_permutations, addtl_genes=None, num_cores=1):
     """Return a list of num_permutation dicts, each mapping gene names to permuted heat scores.
     
     Arguments:
@@ -26,11 +26,11 @@ def permute_heat(heat, network_genes, num_permutations, addtl_genes=None, parall
     num_permutations -- number of heat permutations to produce
     addtl_genes -- iterable of names of genes that do not have heat scores in the real data but
                    which may have heat scores assigned in permutations. Defaults to None.
-    parallel -- whether heat permutations should be generated in parallel. Defaults to True.
+    num_cores -- number of cores to use for running in parallel
     
     """
-    if parallel:
-        pool = mp.Pool(25)
+    if num_cores != 1:
+        pool = mp.Pool(None if num_cores == -1 else num_cores)
         map_fn = pool.map
     else:
         map_fn = map
@@ -42,7 +42,7 @@ def permute_heat(heat, network_genes, num_permutations, addtl_genes=None, parall
     args = [(heat_scores, genes_eligible_for_heat)] * num_permutations
     permutations = map_fn(heat_permutation_wrapper, args)
     
-    if parallel:
+    if num_cores != 1:
         pool.close()
         pool.join()
 
@@ -63,7 +63,7 @@ def mutation_permuation_heat_wrapper((samples, genes, cnas, gene2length, bmr, ge
 
 def generate_mutation_permutation_heat(heat_fn, sample_file, gene_file, genes_in_network, snv_file,
                                        gene_length_file, bmr, bmr_file, cna_file, gene_order_file,
-                                       cna_filter_threshold, min_freq, num_permutations, parallel=True):
+                                       cna_filter_threshold, min_freq, num_permutations, num_cores=1):
     """Return a list of num_permutation dicts, each mapping gene names to heat scores calculated
     from permuted mutation data.
     
@@ -96,7 +96,7 @@ def generate_mutation_permutation_heat(heat_fn, sample_file, gene_file, genes_in
     min_freq -- the minimum number of samples in which a gene must have an SNV to be considered
                 mutated in the heat score calculation.
     num_permutations -- the number of permuted data sets to be generated
-    parallel -- whether to generate permuted data sets in parallel
+    num_cores -- number of cores to use for running in parallel
     
     """
     if heat_fn != "load_mutation_heat":
@@ -119,8 +119,8 @@ def generate_mutation_permutation_heat(heat_fn, sample_file, gene_file, genes_in
     #only generate mutations for genes that are in the network
     genes = set(genes).intersection(genes_in_network)
     
-    if parallel:
-        pool = mp.Pool(25)
+    if num_cores != 1:
+        pool = mp.Pool(None if num_cores == -1 else num_cores)
         map_fn = pool.map
     else:
         map_fn = map
@@ -129,7 +129,7 @@ def generate_mutation_permutation_heat(heat_fn, sample_file, gene_file, genes_in
              cna_filter_threshold, min_freq)] * num_permutations
     heat_permutations = map_fn(mutation_permuation_heat_wrapper, args)
     
-    if parallel:
+    if num_cores != 1:
         pool.close()
         pool.join()
     

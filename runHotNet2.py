@@ -43,11 +43,9 @@ def get_parser():
                                help='Smallest connected component size to count in permutation tests')
     parent_parser.add_argument('-l', '--cc_stop_size', type=int, default=10,
                                help='Largest connected component size to count in permutation tests')
-    parent_parser.add_argument('--parallel', dest='parallel', action='store_true',
-                               help='Run permutation tests in parallel.')
-    parent_parser.add_argument('--no-parallel', dest='parallel', action='store_false',
-                               help='Run permutation tests sequentially.')
-    parent_parser.set_defaults(parallel=False)
+    parent_parser.add_argument('-c', '--num_cores', type=int, default=1,
+                               help='Number of cores to use for running permutation tests in\
+                               parallel. If -1, all available cores will be used.')
     
     subparsers = parser.add_subparsers(title='Heat score type', dest='permutation_type')
     
@@ -113,7 +111,7 @@ def run(args):
             extra_genes = hnio.load_genes(args.permutation_genes_file) \
                             if args.permutation_genes_file else None
             heat_permutations = p.permute_heat(heat, full_index2gene.values(),
-                                               args.num_permutations, extra_genes, args.parallel)
+                                               args.num_permutations, extra_genes, args.num_cores)
         elif args.permutation_type == "mutations":
             if heat_params["heat_fn"] != "load_mutation_heat":
                     raise RuntimeError("Heat scores must be based on mutation data to perform\
@@ -125,7 +123,7 @@ def run(args):
                                     heat_params["snv_file"], args.gene_length_file, args.bmr,
                                     args.bmr_file, heat_params["cna_file"], args.gene_order_file,
                                     heat_params["cna_filter_threshold"], heat_params["min_freq"],
-                                    args.num_permutations, args.parallel)
+                                    args.num_permutations, args.num_cores)
         elif args.permutation_type == "network":
             pass    #nothing to do right now
         elif args.permutation_type == "precomputed":
@@ -185,7 +183,7 @@ def calculate_significance_network(args, permuted_networks_path, index2gene, G, 
     #size2counts is dict(size -> (list of counts, 1 per permutation))
     sizes2counts = stats.calculate_permuted_cc_counts_network(permuted_network_paths, args.infmat_name,
                                                         index2gene, heat, delta, sizes,
-                                                        not args.classic, args.parallel)
+                                                        not args.classic, args.num_cores)
     
     real_counts = stats.num_components_min_size(G, sizes)
     size2real_counts = dict(zip(sizes, real_counts))
@@ -200,7 +198,7 @@ def calculate_significance(args, infmat, infmat_index, G, delta, heat_permutatio
     #size2counts is dict(size -> (list of counts, 1 per permutation))
     sizes2counts = stats.calculate_permuted_cc_counts(infmat, infmat_index, heat_permutations,
                                                       delta, sizes, not args.classic,
-                                                      args.parallel)
+                                                      args.num_cores)
     real_counts = stats.num_components_min_size(G, sizes)
     size2real_counts = dict(zip(sizes, real_counts))
     return stats.compute_statistics(size2real_counts, sizes2counts, args.num_permutations)
