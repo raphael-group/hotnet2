@@ -45,11 +45,11 @@ For best performance, install a Fortran or C complier and run one of the followi
 
 With a Fortran compiler:
 
-    python setup_fortran.py build_src build_ext --inplace
+    python hotnet2/setup_fortran.py build_src build_ext --inplace
 
 With a C compiler:
 
-    python setup_c.py build_src build_ext --inplace
+    python hotnet2/setup_c.py build_src build_ext --inplace
 
 If you are unable to perform these steps, the code will transparently fall back to a pure Python
 implementation.
