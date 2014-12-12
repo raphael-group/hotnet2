@@ -7,12 +7,10 @@ import networkx as nx, numpy as np, scipy as sp
 try:
     import fortran_routines
     choice_creation_similarity_matrix = 1
-    print "FORTRAN SUCCESS"
 except ImportError:
     try:
         import c_routines
         choice_creation_similarity_matrix = 2
-        print "C SUCCESS"
     except ImportError:
         print("WARNING: Could not import either Fortran or C modules; "
               "falling back to NumPy for similarity matrix creation.")           
