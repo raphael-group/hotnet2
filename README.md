@@ -45,11 +45,11 @@ For best performance, install a Fortran or C complier and run one of the followi
 
 With a Fortran compiler:
 
-    python setup_fortran.py build_src build_ext --inplace
+    python hotnet2/setup_fortran.py build_src build_ext --inplace
 
 With a C compiler:
 
-    python setup_c.py build_src build_ext --inplace
+    python hotnet2/setup_c.py build_src build_ext --inplace
 
 If you are unable to perform these steps, the code will transparently fall back to a pure Python
 implementation.
@@ -84,24 +84,29 @@ interaction network you wish to use. If possible, use the `--matlab` flag for im
 Simple runs
 ------------------------
 Once you have performed the influence matrix creation step described above, you can use the
-`simpleRun.py` to get started running HotNet2 quickly and easily. You must provide the following
-parameters:
+`runHotNet2.py` script to get started running HotNet2 quickly and easily. You must provide the
+following parameters:
 
-        =====================================================================================
-        | PARAMETER NAME         | DESCRIPTION                                              |
-        =====================================================================================
-        |-mf/--infmat_file       |Path to .mat file containing influence matrix             |
-        -------------------------------------------------------------------------------------
-        |-if/--infmat_index_file |Path to gene-index mapping file                           |
-        -------------------------------------------------------------------------------------
-        |-hf/--heat_file         |Path to a tab-separated file containing a gene name in the|
-        |                        |first column and the heat score for that gene in the      |
-        |                        |second column of each line.                               |
-        -------------------------------------------------------------------------------------
-        |-pnp/                   |Path to influence matrices for permuted networks.  Include|
-        |--permuted_networks_path|'##NUM##' in the path to be replaced with the iteration   |
-        |                        |number                                                    |
-        -------------------------------------------------------------------------------------
+        ========================================================================================
+        | PARAMETER NAME          | DESCRIPTION                                                |
+        ========================================================================================
+        |-mf/--infmat_file        |Path to .mat file containing influence matrix               |
+        ----------------------------------------------------------------------------------------
+        |-if/--infmat_index_file  |Path to tab-separated file containing an index in the first |
+        |                         |column and the name of the gene represented at that index   |
+        |                         |in the second column of each line.                          |
+        ----------------------------------------------------------------------------------------
+        |-hf/--heat_file          |Path to heat file containing gene names and scores. This    |
+        |                         |can either be a JSON file created by generateHeat.py        |
+        |                         |(described below), in which case the file name must end in  |
+        |                         |.json, or a  tab-separated file containing a gene name in   |
+        |                         |the first column and the heat score for that gene in the    |
+        |                         |second  column of each line.                                |
+        ----------------------------------------------------------------------------------------
+        |-pnp                     |Path to influence matrices for permuted networks. Include   |
+        |--permuted_networks_path |##NUM## in the path to be replaced with the iteration       |
+        |                         |number                                                      |
+        ----------------------------------------------------------------------------------------
 
 Running with only the parameters specified above will create a 'hotnet_output' directory in your
 current working directory that contains 4 subdirectories each prefixed with `delta_`. Each of these
@@ -116,78 +121,88 @@ HotNet2 algorithm. The output files are:
 * `results.json`: Contains all of the above information plus the parameters used for the run in
   JSON format to faciliate further automated processing
 
-The `simpleRun.py` script can also be used to create a web visualization of the output subnetworks.
-To do so, include the `--edge_file` parameter:
+The `runHotNet2.py` script can also be used to create a web visualization of the output subnetworks.
+To do so, include the `--edge_file` parameter, and, optionally, other visauzliation-related parameters:
 
-        ========================================================================================================
-        | PARAMETER NAME         | DEFAULT          | DESCRIPTION                                              |
-        ========================================================================================================
-        |-ef/--edge_file         | None             |Path to TSV file listing edges of the interaction network,|
-        |                        |                  |where each row contains the indices of two genes that are |
-        |                        |                  |connected in the network. This is used to create          |
-        |                        |                  |subnetwork visualizations; if not provided, visualizations|
-        |                        |                  |will not be made.                                         |
-        --------------------------------------------------------------------------------------------------------
-        |-nn/--network_name      | Network          |Display name for the interaction network.                 |
-        --------------------------------------------------------------------------------------------------------
+        =============================================================================================================
+        | PARAMETER NAME          | DEFAULT   | DESCRIPTION                                                         |
+        =============================================================================================================
+        |-ef/--edge_file          | None               |Path to TSV file listing edges of the interaction network,  |
+        |                         |                    |where each row contains the indices of two genes that are   |
+        |                         |                    |connected in the network. This is used to create subnetwork |
+        |                         |                    |visualizations; if not provided, visualizations will not be |
+        |                         |                    |made.                                                       |
+        -------------------------------------------------------------------------------------------------------------
+        |-dsf                     | None               |Path to a tab-separated file containing a gene name in the  |
+        |--display_score_file     |                    |first column and the display score for that gene in the     |
+        |                         |                    |second column of each line.                                 |
+        -------------------------------------------------------------------------------------------------------------
+        |-nn/--network_name       | Network            |Display name for the interaction network.                   |
+        -------------------------------------------------------------------------------------------------------------
 
 This will result in a a `viz` subdirectory of the output directory. To view the visualizations,
 navigate to the `viz` directory and run `python -m SimpleHTTPServer`, then visit `http://localhost:8000`
 in a browser.
 
-When using `simpleRun.py`, you may also optionally provide any or all of the parameters listed
+When using `runHotNet2.py`, you may also optionally provide any or all of the parameters listed
 below. If one of these parameters is not provided, it will be set to the default value shown below.
 
-        ========================================================================================================
-        | PARAMETER NAME         | DEFAULT          | DESCRIPTION                                              |
-        ========================================================================================================
-        |-r/--runname            | None             |Name of run/disease. This is only for the user's          |
-        |                        |                  |record-keeping convenience; the parameter is not used by  |
-        |                        |                  |the HotNet algorithm.                                     |
-        --------------------------------------------------------------------------------------------------------
-        |-ccs/--min_cc_size      | 3                |Minimum size connected components that should be returned.|
-        --------------------------------------------------------------------------------------------------------
-        |-ms/--min_heat_score    | See description  |Minimum heat score for a gene to be eligible for inclusion|
-        |                        |                  |in a returned connected component. By default, all genes  |
-        |                        |                  |with positive heat scores will be included. (To include   |
-        |                        |                  |genes with score zero, set min_heat_score to 0).          |
-        --------------------------------------------------------------------------------------------------------
-        |-n/--num_permutations   | 100              |Number of permutations that should be used for parameter  |
-        |                        |                  |selection and statistical significance testing            |
-        --------------------------------------------------------------------------------------------------------
-        |--parallel              | Not default      |Include flag to run permutation tests in parallel.        |
-        --------------------------------------------------------------------------------------------------------
-        |--no-parallel           | Default          |Include flag to run permutation tests sequentially.       |
-        --------------------------------------------------------------------------------------------------------
-        |-o/--output_directory   | hotnet_output    |Output directory.                                         |
-        --------------------------------------------------------------------------------------------------------
+        =============================================================================================================
+        | PARAMETER NAME          | DEFAULT            | DESCRIPTION                                                |
+        =============================================================================================================
+        |-r/--runname             | None               |Name of run / disease.                                      |
+        -------------------------------------------------------------------------------------------------------------
+        |-ccs/--min_cc_size       | 2                  |Minimum size connected components that should be returned.  |
+        -------------------------------------------------------------------------------------------------------------
+        |-c/--num_cores           | 1                  |Number of cores to use for running permutation tests in     |
+        |                         |                    |parallel. If -1, all available cores will be used.          |
+        -------------------------------------------------------------------------------------------------------------
+        |-dp/--delta_permutations | 100                |Number of permutations to be used for delta parameter       |
+        |                         |                    |selection.                                                  |
+        -------------------------------------------------------------------------------------------------------------
+        |-sp                      | 100                |Number of permutations to be used for statistical           |
+        |--significance_permutatio|                    |significance testing.                                       |
+        -------------------------------------------------------------------------------------------------------------
+        |-o/--output_directory    | hotnet_output      |Output directory. Files results.json, components.txt, and   |
+        |                         |                    |significance.txt will be generated in subdirectories for    |
+        |                         |                    |each delta.                                                 |
+        -------------------------------------------------------------------------------------------------------------
 
-For simple runs on classic HotNet, use the `simpleRunClassic.py` Python script.  The following
+For simple runs on classic HotNet, use the `runClassicHotNet.py` Python script.  The following
 parameters are required:
 
-        =====================================================================================
-        | PARAMETER NAME         | DESCRIPTION                                              |
-        =====================================================================================
-        |-mf/--infmat_file       |Path to .mat file containing influence matrix             |
-        -------------------------------------------------------------------------------------
-        |-if/--infmat_index_file |Path to gene-index mapping file                           |
-        -------------------------------------------------------------------------------------
-        |-hf/--heat_file         |Path to a tab-separated file containing a gene name in the|
-        |                        |first column and the heat score for that gene in the      |
-        |                        |second column of each line.                               |
-        -------------------------------------------------------------------------------------
+        ========================================================================================
+        | PARAMETER NAME          | DESCRIPTION                                                |
+        ========================================================================================
+        |-mf/--infmat_file        |Path to .mat file containing influence matrix               |
+        ----------------------------------------------------------------------------------------
+        |-if/--infmat_index_file  |Path to tab-separated file containing an index in the first |
+        |                         |column and the name of the gene represented at that index   |
+        |                         |in the second column of each line.                          |
+        ----------------------------------------------------------------------------------------
+        |-hf/--heat_file          |Path to heat file containing gene names and scores. This    |
+        |                         |can either be a JSON file created by generateHeat.py        |
+        |                         |(described below), in which case the file name must end in  |
+        |                         |.json, or a  tab-separated file containing a gene name in   |
+        |                         |the first column and the heat score for that gene in the    |
+        |                         |second  column of each line.                                |
+        ----------------------------------------------------------------------------------------
+        |-pnp                     |Path to influence matrices for permuted networks. Include   |
+        |--permuted_networks_path |##NUM## in the path to be replaced with the iteration       |
+        |                         |number                                                      |
+        ----------------------------------------------------------------------------------------
 
 Running with only the parameters specified above will create a 'hotnet_output' directory in your
 current working directory that contains 5 subdirectories each prefixed with `delta_`. Each of these
 subdirectories contains results files for a different value of the delta parameter used by the
 classic HotNet algorithm.  The contents of the directories are identical to those described above
-for simple runs of HotNet2 algorithm using `simpleRun.py`. Similarily, the `simpleRunClassic.py`
-script accepts the same optional parameters as the `simpleRun.py` script.
+for simple runs of HotNet2 algorithm using `runHotNet2.py`. Similarily, the `runClassicHotNet.py`
+script accepts the same optional parameters as the `runHotNet2.py` script.
 
 
 Advanced use
 ------------------------
-The `simpleRun.py` and `simpleRunClassic.py` scripts described above runs the entire HotNet
+The `runHotNet2.py` and `runClassicHotNet.py` scripts described above run the entire HotNet
 pipeline in one command. For more advanced use cases, you can also perform each step individually.
 In particular, you may wish to follow the steps below when using mutation data.  Note that the
 code described below is used for both HotNet2 and classic HotNet; in all cases, passing a
@@ -240,12 +255,13 @@ The steps of the algorithm and the code provided for each step are described bel
         |                         |                    |script instead of SciPy.                                    |
         -------------------------------------------------------------------------------------------------------------
 
-    If desired, the scripts `createPPRMat.py` and `permuteNetwork.py` can be used to performed the
-    infividual steps of creating influence matrices and permuting edge lists, respectively.
+    If desired, the scripts `bin/createPPRMat.py` and `bin/permuteNetwork.py` can be used to
+    perform the individual steps of creating influence matrices and permuting edge lists,
+    respectively.
 
     ####Classic HotNet influence matrices####
     Classic HotNet does not use permuted influence matrices, and thus requires only the single real
-    influence matrix. This can be created using the `createClassicInfmat.py` script. The required
+    influence matrix. This can be created using the `bin/createClassicInfmat.py` script. The required
     and optional parameters to the script are as follows:
 
         =============================================================================================================
@@ -283,80 +299,76 @@ The steps of the algorithm and the code provided for each step are described bel
 
             python generateHeat.py scores <additional_parameters>
 
-        ========================================================================================================
-        | PARAMETER NAME         | REQUIRED/DEFAULT | DESCRIPTION                                              |
-        ========================================================================================================
-        |-hf/--heat_file         | REQUIRED         |Path to a tab-separated file containing a gene name in the|
-        |                        |                  |first column and the heat score for that gene in the      |
-        |                        |                  |second column of each line.                               |
-        --------------------------------------------------------------------------------------------------------
-        |-ms/--min_heat_score    | See description  |Minimum heat score for a gene to be eligible for inclusion|
-        |                        |                  |in a returned connected component. By default, all genes  |
-        |                        |                  |with positive heat scores will be included. (To include   |
-        |                        |                  |genes with score zero, set min_heat_score to 0).          |
-        --------------------------------------------------------------------------------------------------------
-        |-gff/--gene_filter_file | None             |Path to file listing genes whose heat scores should be    |
-        |                        |                  |preserved. If present, heat scores for all genes not      |
-        |                        |                  |listed in the file will be discarded.                     |
-        --------------------------------------------------------------------------------------------------------
-        |-egf/                   | None             |File path to which the list of genes that were excluded   |
-        |--excluded_genes_output_file               |from the heat score output due to the specified filtering |
-        |                        |                  |parameters should be writte, on gene per line. If no genes|
-        |                        |                  |were filtered and a path is specified, the resulting file |
-        |                        |                  |will be empty.                                            |
-        --------------------------------------------------------------------------------------------------------
-        |-o/--output_file        | None             |Output file. If none, output will be written to stdout.   |
-        --------------------------------------------------------------------------------------------------------
+        =============================================================================================================
+        | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
+        =============================================================================================================
+        |-hf/--heat_file          | REQUIRED           |Path to a tab-separated file containing a gene name in the  |
+        |                         |                    |first column and the heat score for that gene in the second |
+        |                         |                    |column of each line.                                        |
+        -------------------------------------------------------------------------------------------------------------
+        |-ms/--min_heat_score     | 0                  |Minimum heat score for genes to have their original heat    |
+        |                         |                    |score in the resulting output file. Genes with score below  |
+        |                         |                    |this value will be assigned score 0.                        |
+        -------------------------------------------------------------------------------------------------------------
+        |-gff/--gene_filter_file  | None               |Path to file listing genes whose heat scores should be      |
+        |                         |                    |preserved, one per line. If present, all other heat scores  |
+        |                         |                    |will be discarded.                                          |
+        -------------------------------------------------------------------------------------------------------------
+        |-o/--output_file         | None               |Output file. If none given, output will be written to       |
+        |                         |                    |stdout.                                                     |
+        -------------------------------------------------------------------------------------------------------------
 
     If heat scores are to be calculated from mutation data, the first argument to `generateHeat.py`
     should be `mutation`, e.g.:
 
             python generateHeat.py mutation <additional_parameters>
 
-        ========================================================================================================
-        | PARAMETER NAME         | REQUIRED/DEFAULT | DESCRIPTION                                              |
-        ========================================================================================================
-        |--snv_file              | REQUIRED         |Path to a tab-separated file containing single nucleotide |
-        |                        |                  |variants(SNVs) where the first column of each line is a   |
-        |                        |                  |sample ID and subsequent columns contain the names of     |
-        |                        |                  |genes with SNVs in that sample. Lines starting with '#'   |     
-        |                        |                  |will be ignored.                                          |
-        --------------------------------------------------------------------------------------------------------
-        |--cna_file              | REQUIRED         |Path to a tab-separated file containing copy number       |
-        |                        |                  |aberrations (CNAs) where the first column of each line is |
-        |                        |                  |a sample ID and subsequent columns contain gene names     |
-        |                        |                  |followed by "(A)" or "(D)" indicating an amplification or |
-        |                        |                  |deletion in that gene for the sample. Lines starting with |
-        |                        |                  |'#' will be ignored.                                      |
-        --------------------------------------------------------------------------------------------------------
-        |--sample_file           | None             |Path to file listing sample IDs, one per line. Any SNVs or|
-        |                        |                  |CNAs in samples not listed in this file will be ignored.  |
-        |                        |                  |If HotNet is run with mutation permutation testing, all   |
-        |                        |                  |samples in this file will be eligible for random mutations|
-        |                        |                  |even if the sample did not have any mutations in the real |
-        |                        |                  |data. If not provided, the set of samples is assumed to be|
-        |                        |                  |all samples that are provided in the SNV or CNA data.     |
-        --------------------------------------------------------------------------------------------------------
-        |--gene_file             | None             |Path to file listing gene names, one per line. Mutations  |
-        |                        |                  |in genes not listed in this file will be ignored. If      |
-        |                        |                  |HotNet is run with mutation permutation testing, every    |
-        |                        |                  |gene in this file will be eligible for random mutations   |
-        |                        |                  |even if the gene did not have mutations in any samples in |
-        |                        |                  |the original data. If not provided, the set of tested     |
-        |                        |                  |genes is assumed to be all genes that have mutations in   |
-        |                        |                  |either the SNV or CNA data.                               |
-        --------------------------------------------------------------------------------------------------------
-        |--min_freq              | 1                |The minimum number of samples in which a gene must have an|
-        |                        |                  |SNV in order to be considered mutated in the heat score   |
-        |                        |                  |calculation.                                              |
-        --------------------------------------------------------------------------------------------------------
-        |--cna_filter_threshold  | None             |Proportion of CNAs in a gene across samples that must     |
-        |                        |                  |share the same CNA type in order for the CNAs to be       |
-        |                        |                  |included. This must either be > .5, or the default, None, |
-        |                        |                  |in which case all CNAs will be included.                  |
-        --------------------------------------------------------------------------------------------------------
-        |-o/--output_file        | None             |Output file. If none, output will be written to stdout.   |
-        --------------------------------------------------------------------------------------------------------
+        =============================================================================================================
+        | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
+        =============================================================================================================
+        |--snv_file               | REQUIRED           |Path to a tab-separated file containing SNVs where the      |
+        |                         |                    |first column of each line is a sample ID and subsequent     |
+        |                         |                    |columns contain the names of genes with SNVs in that        |
+        |                         |                    |sample. Lines starting with "#" will be ignored.            |
+        -------------------------------------------------------------------------------------------------------------
+        |--cna_file               | None               |Path to a tab-separated file containing CNAs where the      |
+        |                         |                    |first column of each line is a sample ID and subsequent     |
+        |                         |                    |columns contain gene names followed by "(A)" or "(D)"       |
+        |                         |                    |indicating an amplification or deletion in that gene for    |
+        |                         |                    |the sample. Lines starting with "#" will be ignored.        |
+        -------------------------------------------------------------------------------------------------------------
+        |--sample_file            | None               |File listing samples. Any SNVs or CNAs in samples not       |
+        |                         |                    |listed in this file will be ignored. If HotNet is run with  |
+        |                         |                    |mutation permutation testing, all samples in this file will |
+        |                         |                    |be eligible for random mutations even if the sample did not |
+        |                         |                    |have any mutations in the real data. If not provided, the   |
+        |                         |                    |set of samples is assumed to be all samples that are        |
+        |                         |                    |provided in the SNV or CNA data.                            |
+        -------------------------------------------------------------------------------------------------------------
+        |--sample_type_file       | None               |File listing type (e.g. cancer, datasets, etc.) of samples  |
+        |                         |                    |(see --sample_file). Each line is a space-separated row     |
+        |                         |                    |listing one sample and its type. The sample types are used  |
+        |                         |                    |for creating the HotNet(2) web output.                      |
+        -------------------------------------------------------------------------------------------------------------
+        |--gene_file              | None               |File listing tested genes. SNVs or CNAs in genes not listed |
+        |                         |                    |in this file will be ignored. If HotNet is run with         |
+        |                         |                    |mutation permutation testing, every gene in this file will  |
+        |                         |                    |be eligible for random mutations even if the gene did not   |
+        |                         |                    |have mutations in any samples in the original data. If not  |
+        |                         |                    |provided, the set of tested genes is assumed to be all      |
+        |                         |                    |genes that have mutations in either the SNV or CNA data.    |
+        -------------------------------------------------------------------------------------------------------------
+        |--min_freq               | 1                  |The minimum number of samples in which a gene must have an  |
+        |                         |                    |SNV to be considered mutated in the heat score calculation. |
+        -------------------------------------------------------------------------------------------------------------
+        |--cna_filter_threshold   | None               |Proportion of CNAs in a gene across samples that must share |
+        |                         |                    |the same CNA type in order for the CNAs to be included.     |
+        |                         |                    |This must either be > .5, or the default, None, in which    |
+        |                         |                    |case all CNAs will be included.                             |
+        -------------------------------------------------------------------------------------------------------------
+        |-o/--output_file         | None               |Output file. If none given, output will be written to       |
+        |                         |                    |stdout.                                                     |
+        -------------------------------------------------------------------------------------------------------------
 
     If heat scores are to be calculated from MutSig data, the first argument to `generateHeat.py`
     should be `mutsig`, e.g.:
@@ -445,152 +457,149 @@ The steps of the algorithm and the code provided for each step are described bel
 
     * Permuted mutation data (recommended for classic HotNet when mutation data is used to generate scores)
     
-    The Python script `findThreshold.py` can be used to run the delta selection procedure. The
+    The Python script `bin/findThreshold.py` can be used to run the delta selection procedure. The
     required and optional parameters to the script are described below.
     
     For the permuted networks test, precomputed network permutations are required as input. In this
     case, the first parameter to `findThreshold.py` should be `network`, e.g.:
     
-            python findThreshold.py network <additional_parameters>
+            python bin/findThreshold.py network <additional_parameters>
             
-        ========================================================================================================
-        | PARAMETER NAME         | REQUIRED/DEFAULT | DESCRIPTION                                              |
-        ========================================================================================================
-        |-r/--runname            | None             |Name of run/disease. This is only for the user's          |
-        |                        |                  |record-keeping convenience; the parameter is not used by  |
-        |                        |                  |the HotNet algorithm.                                     |
-        --------------------------------------------------------------------------------------------------------
-        |-mn/--infmat_name       | Li               |Variable name of the influence matrices in the .mat files.|
-        --------------------------------------------------------------------------------------------------------
-        |-if/--infmat_index_file | REQUIRED         |Path to tab-separated file containing an index in the     |
-        |                        |                  |first column and the name of the gene represented at that |
-        |                        |                  |index in the second column of each line.                  |
-        --------------------------------------------------------------------------------------------------------
-        |-hf/--heat_file         | REQUIRED         |JSON heat score file generated via generateHeat.py        |
-        --------------------------------------------------------------------------------------------------------
-        |-s/--test_statistic     | max_cc_size      |If 'max_cc_size', select smallest delta for each permuted |
-        |                        |                  |dataset such that the size of the largest CC is <= l. If  |
-        |                        |                  |'num_ccs', select for each permuted dataset the delta that|
-        |                        |                  |maximizes the number of CCs of size >= l.                 |
-        --------------------------------------------------------------------------------------------------------
-        |-l/--sizes              | 5, 10, 15, 20    |See test_statistic. For test_statistic 'num_ccs', default |
-        |                        |                  |is 3.                                                     |
-        --------------------------------------------------------------------------------------------------------
-        |-pnp/                   | REQUIRED         |Path to influence matrices for permuted networks.  Include|
-        |--permuted_networks_path|                  |'##NUM##' in the path to be replaced with the iteration   |
-        |                        |                  |number                                                    |
-        --------------------------------------------------------------------------------------------------------
-        |-n/--num_permutations   | REQUIRED         |Number of permuted data sets to generate.                 |
-        --------------------------------------------------------------------------------------------------------
-        |--parallel              | Not default      |Include flag to run permutation tests in parallel.        |
-        --------------------------------------------------------------------------------------------------------
-        |--no-parallel           | Default          |Include flag to run permutation tests sequentially.       |
-        --------------------------------------------------------------------------------------------------------
-        |-o/--output_file        | None             |Output file. If none, output will be written to stdout.   |
-        --------------------------------------------------------------------------------------------------------
-        |-c/--classic            | None             |Run classic HotNet (rather than HotNet2).                 |
-        --------------------------------------------------------------------------------------------------------
+        =============================================================================================================
+        | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
+        =============================================================================================================
+        |-r/--runname             | None               |Name of run / disease.                                      |
+        -------------------------------------------------------------------------------------------------------------
+        |-mn/--infmat_name        | PPR                |Variable name of the influence matrices in the .mat files   |
+        -------------------------------------------------------------------------------------------------------------
+        |-if/--infmat_index_file  | REQUIRED           |Path to tab-separated file containing an index in the first |
+        |                         |                    |column and the name of the gene represented at that index   |
+        |                         |                    |in the second column of each line.                          |
+        -------------------------------------------------------------------------------------------------------------
+        |-hf/--heat_file          | REQUIRED           |JSON heat score file generated via generateHeat.py          |
+        -------------------------------------------------------------------------------------------------------------
+        |-n/--num_permutations    | REQUIRED           |Number of permuted data sets to generate                    |
+        -------------------------------------------------------------------------------------------------------------
+        |-s/--test_statistic      | max_cc_size        |If max_cc_size, select smallest delta for each permuted     |
+        |                         |                    |dataset such that the size of the largest CC is <= l. If    |
+        |                         |                    |num_ccsselect for each permuted dataset the delta that      |
+        |                         |                    |maximizes the number of CCs of size >= l.                   |
+        -------------------------------------------------------------------------------------------------------------
+        |-l/--sizes               | 5, 10, 15, 20      |See test_statistic. For test_statistic 'num_ccs', default   |
+        |                         |                    |is 3.                                                       |
+        -------------------------------------------------------------------------------------------------------------
+        |-c/--num_cores           | 1                  |Number of cores to use for running permutation tests in     |
+        |                         |                    |parallel. If -1, all available cores will be used.          |
+        -------------------------------------------------------------------------------------------------------------
+        |--classic                | False              |Run classic (instead of directed) HotNet.                   |
+        -------------------------------------------------------------------------------------------------------------
+        |-o/--output_file         | None               |Output file. If none given, output will be written to       |
+        |                         |                    |stdout.                                                     |
+        -------------------------------------------------------------------------------------------------------------
+        |-pnp                     | REQUIRED           |Path to influence matrices for permuted networks. Include   |
+        |--permuted_networks_path |                    |##NUM## in the path to be replaced with the iteration       |
+        |                         |                    |number                                                      |
+        -------------------------------------------------------------------------------------------------------------
+
 
     For the permuted heat scores test, heat scores will simply be shuffled among genes. In this
     case, the first parameter to `findTheshold.py` should be `heat`, e.g.:
 
-            python findThreshold.py heat <additional_parameters>
+            python bin/findThreshold.py heat <additional_parameters>
 
-        ========================================================================================================
-        | PARAMETER NAME         | REQUIRED/DEFAULT | DESCRIPTION                                              |
-        ========================================================================================================
-        |-r/--runname            | None             |Name of run/disease. This is only for the user's          |
-        |                        |                  |record-keeping convenience; the parameter is not used by  |
-        |                        |                  |the HotNet algorithm.                                     |
-        --------------------------------------------------------------------------------------------------------
-        |-mf/--infmat_file       | REQUIRED         |Path to .mat file containing influence matrix.            |
-        --------------------------------------------------------------------------------------------------------
-        |-mn/--infmat_name       | Li               |Variable name of the influence matrix in the .mat file.   |
-        --------------------------------------------------------------------------------------------------------
-        |-if/--infmat_index_file | REQUIRED         |Path to tab-separated file containing an index in the     |
-        |                        |                  |first column and the name of the gene represented at that |
-        |                        |                  |index in the second column of each line.                  |
-        --------------------------------------------------------------------------------------------------------
-        |-hf/--heat_file         | REQUIRED         |JSON heat score file generated via generateHeat.py        |
-        --------------------------------------------------------------------------------------------------------
-        |-s/--test_statistic     | max_cc_size      |If 'max_cc_size', select smallest delta for each permuted |
-        |                        |                  |dataset such that the size of the largest CC is <= l. If  |
-        |                        |                  |'num_ccs', select for each permuted dataset the delta that|
-        |                        |                  |maximizes the number of CCs of size >= l.                 |
-        --------------------------------------------------------------------------------------------------------
-        |-l/--sizes              | 5, 10, 15, 20    |See test_statistic. For test_statistic 'num_ccs', default |
-        |                        |                  |is 3.                                                     |
-        --------------------------------------------------------------------------------------------------------
-        |-pgf/                   | None             |Path to file containing a list of additional genes that   |
-        |--permutation_genes_file|                  |can have permuted heat values assigned to them in         |
-        |                        |                  |permutation tests.                                        |
-        --------------------------------------------------------------------------------------------------------
-        |-n/--num_permutations   | REQUIRED         |Number of permuted data sets to generate.                 |
-        --------------------------------------------------------------------------------------------------------
-        |--parallel              | Not default      |Include flag to run permutation tests in parallel.        |
-        --------------------------------------------------------------------------------------------------------
-        |--no-parallel           | Default          |Include flag to run permutation tests sequentially.       |
-        --------------------------------------------------------------------------------------------------------
-        |-o/--output_file        | None             |Output file. If none, output will be written to stdout.   |
-        --------------------------------------------------------------------------------------------------------
-        |-c/--classic            | None             |Run classic HotNet (rather than HotNet2).                 |
-        --------------------------------------------------------------------------------------------------------
+        =============================================================================================================
+        | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
+        =============================================================================================================
+        |-r/--runname             | None               |Name of run / disease.                                      |
+        -------------------------------------------------------------------------------------------------------------
+        |-mn/--infmat_name        | PPR                |Variable name of the influence matrices in the .mat files   |
+        -------------------------------------------------------------------------------------------------------------
+        |-if/--infmat_index_file  | REQUIRED           |Path to tab-separated file containing an index in the first |
+        |                         |                    |column and the name of the gene represented at that index   |
+        |                         |                    |in the second column of each line.                          |
+        -------------------------------------------------------------------------------------------------------------
+        |-hf/--heat_file          | REQUIRED           |JSON heat score file generated via generateHeat.py          |
+        -------------------------------------------------------------------------------------------------------------
+        |-n/--num_permutations    | REQUIRED           |Number of permuted data sets to generate                    |
+        -------------------------------------------------------------------------------------------------------------
+        |-s/--test_statistic      | max_cc_size        |If max_cc_size, select smallest delta for each permuted     |
+        |                         |                    |dataset such that the size of the largest CC is <= l. If    |
+        |                         |                    |num_ccsselect for each permuted dataset the delta that      |
+        |                         |                    |maximizes the number of CCs of size >= l.                   |
+        -------------------------------------------------------------------------------------------------------------
+        |-l/--sizes               | 5, 10, 15, 20      |See test_statistic. For test_statistic 'num_ccs', default   |
+        |                         |                    |is 3.                                                       |
+        -------------------------------------------------------------------------------------------------------------
+        |-c/--num_cores           | 1                  |Number of cores to use for running permutation tests in     |
+        |                         |                    |parallel. If -1, all available cores will be used.          |
+        -------------------------------------------------------------------------------------------------------------
+        |--classic                | False              |Run classic (instead of directed) HotNet.                   |
+        -------------------------------------------------------------------------------------------------------------
+        |-o/--output_file         | None               |Output file. If none given, output will be written to       |
+        |                         |                    |stdout.                                                     |
+        -------------------------------------------------------------------------------------------------------------
+        |-mf/--infmat_file        | REQUIRED           |Path to .mat file containing influence matrix               |
+        -------------------------------------------------------------------------------------------------------------
+        |-pgf                     | None               |Path to file containing a list of additional genes that can |
+        |--permutation_genes_file |                    |have permuted heat values assigned to them in permutation   |
+        |                         |                    |tests                                                       |
+        -------------------------------------------------------------------------------------------------------------
+
 
     For the permuted mutation data test, SNVs will be randomly generated in genes according to a
     specified background mutation rate, and each CNA block will be randomly placed on an equally-
     sized group of genes in the same chromosome. In this case, the first parameter to `findTheshold.py`
     should be `mutations`, e.g.:
 
-        	python findThreshold.py mutations <additional_parameters>
+        	python bin/findThreshold.py mutations <additional_parameters>
 
-        ========================================================================================================
-        | PARAMETER NAME         | REQUIRED/DEFAULT | DESCRIPTION                                              |
-        ========================================================================================================
-        |-r/--runname            | None             |Name of run/disease. This is only for the user's          |
-        |                        |                  |record-keeping convenience; the parameter is not used by  |
-        |                        |                  |the HotNet algorithm.                                     |
-        --------------------------------------------------------------------------------------------------------
-        |-mf/--infmat_file       | REQUIRED         |Path to .mat file containing influence matrix.            |
-        --------------------------------------------------------------------------------------------------------
-        |-mn/--infmat_name       | Li               |Variable name of the influence matrix in the .mat file.   |
-        --------------------------------------------------------------------------------------------------------
-        |-if/--infmat_index_file | REQUIRED         |Path to tab-separated file containing an index in the     |
-        |                        |                  |first column and the name of the gene represented at that |
-        |                        |                  |index in the second column of each line.                  |
-        --------------------------------------------------------------------------------------------------------
-        |-hf/--heat_file         | REQUIRED         |JSON heat score file generated via generateHeat.py        |
-        --------------------------------------------------------------------------------------------------------
-        |-s/--test_statistic     | max_cc_size      |If 'max_cc_size', select smallest delta for each permuted |
-        |                        |                  |dataset such that the size of the largest CC is <= l. If  |
-        |                        |                  |'num_ccs', select for each permuted dataset the delta that|
-        |                        |                  |maximizes the number of CCs of size >= l.                 |
-        --------------------------------------------------------------------------------------------------------
-        |-l/--sizes              | 5, 10, 15, 20    |See test_statistic. For test_statistic 'num_ccs', default |
-        |                        |                  |is 3.                                                     |
-        --------------------------------------------------------------------------------------------------------
-        |-glf/--gene_length_file | REQUIRED         |Path to tab-separated file containing gene names in the   |
-        |                        |                  |first column and the length of the gene in base pairs in  |
-        |                        |                  |the second column                                         |
-        --------------------------------------------------------------------------------------------------------
-        |-gof/--gene_order_file  | REQUIRED         |Path to file containing tab-separated lists of genes on   |
-        |                        |                  |each chromosme, in order of their position on the         |
-        |                        |                  |chromosome, one chromosome per line                       |
-        --------------------------------------------------------------------------------------------------------
-        |-b/--bmr                | REQUIRED         |Default background mutation rate                          |
-        --------------------------------------------------------------------------------------------------------
-        |-bf/--bmr_file          | None             |File listing gene-specific BMRs. If none, the default BMR |
-        |                        |                  |will be used for all genes.                               |
-        --------------------------------------------------------------------------------------------------------
-        |-n/--num_permutations   | REQUIRED         |Number of permuted data sets to generate.                 |
-        --------------------------------------------------------------------------------------------------------
-        |--parallel              | Not default      |Include flag to run permutation tests in parallel.        |
-        --------------------------------------------------------------------------------------------------------
-        |--no-parallel           | Default          |Include flag to run permutation tests sequentially.       |
-        --------------------------------------------------------------------------------------------------------
-        |-o/--output_file        | None             |Output file. If none, output will be written to stdout.   |
-        --------------------------------------------------------------------------------------------------------
-        |-c/--classic            | None             |Run classic HotNet (rather than HotNet2).                 |
-        --------------------------------------------------------------------------------------------------------
+        =============================================================================================================
+        | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
+        =============================================================================================================
+        |-r/--runname             | None               |Name of run / disease.                                      |
+        -------------------------------------------------------------------------------------------------------------
+        |-mn/--infmat_name        | PPR                |Variable name of the influence matrices in the .mat files   |
+        -------------------------------------------------------------------------------------------------------------
+        |-if/--infmat_index_file  | REQUIRED           |Path to tab-separated file containing an index in the first |
+        |                         |                    |column and the name of the gene represented at that index   |
+        |                         |                    |in the second column of each line.                          |
+        -------------------------------------------------------------------------------------------------------------
+        |-hf/--heat_file          | REQUIRED           |JSON heat score file generated via generateHeat.py          |
+        -------------------------------------------------------------------------------------------------------------
+        |-n/--num_permutations    | REQUIRED           |Number of permuted data sets to generate                    |
+        -------------------------------------------------------------------------------------------------------------
+        |-s/--test_statistic      | max_cc_size        |If max_cc_size, select smallest delta for each permuted     |
+        |                         |                    |dataset such that the size of the largest CC is <= l. If    |
+        |                         |                    |num_ccsselect for each permuted dataset the delta that      |
+        |                         |                    |maximizes the number of CCs of size >= l.                   |
+        -------------------------------------------------------------------------------------------------------------
+        |-l/--sizes               | 5, 10, 15, 20      |See test_statistic. For test_statistic 'num_ccs', default   |
+        |                         |                    |is 3.                                                       |
+        -------------------------------------------------------------------------------------------------------------
+        |-c/--num_cores           | 1                  |Number of cores to use for running permutation tests in     |
+        |                         |                    |parallel. If -1, all available cores will be used.          |
+        -------------------------------------------------------------------------------------------------------------
+        |--classic                | False              |Run classic (instead of directed) HotNet.                   |
+        -------------------------------------------------------------------------------------------------------------
+        |-o/--output_file         | None               |Output file. If none given, output will be written to       |
+        |                         |                    |stdout.                                                     |
+        -------------------------------------------------------------------------------------------------------------
+        |-mf/--infmat_file        | REQUIRED           |Path to .mat file containing influence matrix               |
+        -------------------------------------------------------------------------------------------------------------
+        |-glf/--gene_length_file  | REQUIRED           |Path to tab-separated file containing gene names in the     |
+        |                         |                    |first column and the length of the gene in base pairs in    |
+        |                         |                    |the second column                                           |
+        -------------------------------------------------------------------------------------------------------------
+        |-gof/--gene_order_file   | REQUIRED           |Path to file containing tab-separated lists of genes on     |
+        |                         |                    |each chromosme, in order of their position on the           |
+        |                         |                    |chromosome, one chromosome per line                         |
+        -------------------------------------------------------------------------------------------------------------
+        |-b/--bmr                 | REQUIRED           |Default background mutation rate                            |
+        -------------------------------------------------------------------------------------------------------------
+        |-bf/--bmr_file           | None               |File listing gene-specific BMRs. If none, the default BMR   |
+        |                         |                    |will be used for all genes.                                 |
+        -------------------------------------------------------------------------------------------------------------
+
 
 4. ###HotNet run###
 
@@ -598,15 +607,15 @@ The steps of the algorithm and the code provided for each step are described bel
     matrix and heat score, removing edges with weight less than delta, and extracting the resulting
     connected components.
 
-    The Python script `runHotnet2.py` can be used to perform the HotNet run.  The required and
+    The Python script `bin/findComponents.py` can be used to perform the HotNet run.  The required and
     optional parameters to the script are described in the tables below.  In addition to performing
-    the run of the core algorithm, `runHotnet2.py` also runs the significance testing described in
+    the run of the core algorithm, `findComponents.py` also runs the significance testing described in
     step 5.
 
-    To run HotNet without statistical significance testing, the final parameter to `runHotnet2.py`
+    To run HotNet without statistical significance testing, the final parameter to `findComponents.py`
     should be `none`, e.g.:
 
-            python runHotnet2.py <additional_parameters> none
+            python bin/findComponents.py <additional_parameters> none
 
         ========================================================================================================
         | PARAMETER NAME         | REQUIRED/DEFAULT | DESCRIPTION                                              |
@@ -643,7 +652,7 @@ The steps of the algorithm and the code provided for each step are described bel
     expected number from permuted data. As with delta selection, either heat scores or mutation data
     can be be permuted to generate the random data sets.
 
-    As mentioned above, statistical significance testing is included as part of `runHotnet2.py`. The
+    As mentioned above, statistical significance testing is included as part of `findComponents.py`. The
     additional required and optional parameters for including significance testing in the HotNet
     run are described below.
 
@@ -651,7 +660,7 @@ The steps of the algorithm and the code provided for each step are described bel
     after the parameters described in step 4, then include any additional parameters for the
     permutation test, e.g.:
 
-            python runHotNet.py <params_from_step_4> heat <additional_significance_testing_params>
+            python bin/findComponents.py <params_from_step_4> heat <additional_significance_testing_params>
 
         ========================================================================================================
         | PARAMETER NAME         | REQUIRED/DEFAULT | DESCRIPTION                                              |
@@ -666,9 +675,8 @@ The steps of the algorithm and the code provided for each step are described bel
         --------------------------------------------------------------------------------------------------------
         |-l/--cc_stop_size       | 10               |Largest connected component size to count                 |
         --------------------------------------------------------------------------------------------------------
-        |--parallel              | Not default      |Include flag to run permutation tests in parallel.        |
-        --------------------------------------------------------------------------------------------------------
-        |--no-parallel           | Default          |Include flag to run permutation tests sequentially.       |
+        |-c/--num_cores          | 1                |Number of cores to use for running permutation tests in   |
+        |                        |                  |parallel. If -1, all available cores will be used.        |
         --------------------------------------------------------------------------------------------------------
 
     To run statistical significance testing with permuted mutation data, include `mutations` as a
@@ -699,9 +707,8 @@ The steps of the algorithm and the code provided for each step are described bel
         --------------------------------------------------------------------------------------------------------
         |-l/--cc_stop_size       | 10               |Largest connected component size to count                 |
         --------------------------------------------------------------------------------------------------------
-        |--parallel              | Not default      |Include flag to run permutation tests in parallel.        |
-        --------------------------------------------------------------------------------------------------------
-        |--no-parallel           | Default          |Include flag to run permutation tests sequentially.       |
+        |-c/--num_cores          | 1                |Number of cores to use for running permutation tests in   |
+        |                        |                  |parallel. If -1, all available cores will be used.        |
         --------------------------------------------------------------------------------------------------------
 
 6. ###Visualization###

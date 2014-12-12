@@ -3,6 +3,8 @@ import json
 import os
 import shutil
 import sys
+import os.path
+sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 import hotnet2
 from hotnet2 import hnap, hnio, viz
 from hotnet2.constants import VIZ_INDEX, VIZ_SUBNETWORKS
@@ -27,7 +29,7 @@ def get_parser():
     return parser
 
 def run(args):
-    subnetworks_file = '%s/viz_files/%s' % (hotnet2.__file__.rsplit('/', 1)[0], VIZ_SUBNETWORKS)
+    subnetworks_file = '%s/viz_files/%s' % (str(hotnet2.__file__).rsplit('/', 1)[0], VIZ_SUBNETWORKS)
 
     # create output directory if doesn't exist; warn if it exists and is not empty
     outdir = args.output_directory
@@ -69,7 +71,7 @@ def run(args):
             for cc in ccs:
                 output['mutation_matrices'][delta].append(viz.get_oncoprint_json(cc, snvs, cnas))
 
-            if 'sample_type_file' in heat_parameters:
+            if heat_parameters.get('sample_type_file'):
                 with open(heat_parameters['sample_type_file']) as f:
                     output['sampleToTypes'] = dict(l.rstrip().split() for l in f if not l.startswith("#") )
                     output['typeToSamples'] = dict((t, []) for t in set(output['sampleToTypes'].values()))

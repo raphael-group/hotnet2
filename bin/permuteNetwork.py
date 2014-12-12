@@ -2,6 +2,8 @@
 
 # Load required modules
 import sys, networkx as nx
+import os.path
+sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 from hotnet2 import hnap
 
 # Parse arguments

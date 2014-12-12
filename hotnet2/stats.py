@@ -16,7 +16,8 @@ def num_components_min_size(G, sizes):
     
     """
     ccs = strong_ccs(G) if isinstance(G, nx.DiGraph) else nx.connected_components(G)
-    return [len([ cc for cc in ccs if len(cc) >= s]) for s in sizes]
+    cc_sizes = [len(cc) for cc in ccs]
+    return [sum(1 for cc_size in cc_sizes if cc_size >= s) for s in sizes]
 
 def significance_wrapper((infmat, index2gene, heat_permutation, delta, sizes, directed)):
     sim, index2gene = hn.similarity_matrix(infmat, index2gene, heat_permutation, directed)
@@ -30,12 +31,12 @@ def network_significance_wrapper((network_path, infmat_name, index2gene, heat, d
     return num_components_min_size(G, sizes)
 
 def calculate_permuted_cc_counts_network(network_paths, infmat_name, index2gene, heat, delta,
-                                         sizes=range(2,11), directed=True, parallel=True):
+                                         sizes=range(2,11), directed=True, num_cores=1):
     """Return a dict mapping a CC size to a list of the number of CCs of that size or greater in
     each permutation.
     """
-    if parallel:
-        pool = mp.Pool(25)
+    if num_cores != 1:
+        pool = mp.Pool(None if num_cores == -1 else num_cores)
         map_fn = pool.map
     else:
         map_fn = map
@@ -44,7 +45,7 @@ def calculate_permuted_cc_counts_network(network_paths, infmat_name, index2gene,
             for network_path in network_paths] 
     all_counts = map_fn(network_significance_wrapper, args)
     
-    if parallel:
+    if num_cores != 1:
         pool.close()
         pool.join()
 
@@ -56,7 +57,7 @@ def calculate_permuted_cc_counts_network(network_paths, infmat_name, index2gene,
     return size2counts
 
 def calculate_permuted_cc_counts(infmat, index2gene, heat_permutations, delta,
-                                 sizes=range(2,11), directed=True, parallel=True):
+                                 sizes=range(2,11), directed=True, num_cores=1):
     """Return a dict mapping a CC size to a list of the number of CCs of that size or greater in
     each permutation.
     
@@ -69,12 +70,11 @@ def calculate_permuted_cc_counts(infmat, index2gene, heat_permutations, delta,
     sizes -- list of sizes for which the number of connected components of that sizes should be
              calculated in each permutation
     directed -- whether the graph constructed from each permuted similarity matrix should be directed
-    parallel -- whether the similarity matrix and connected components for each permutation should
-                be calculated in parallel
+    num_cores -- number of cores to use for running in parallel
     
     """
-    if parallel:
-        pool = mp.Pool(25)
+    if num_cores != 1:
+        pool = mp.Pool(None if num_cores == -1 else num_cores)
         map_fn = pool.map
     else:
         map_fn = map
@@ -83,7 +83,7 @@ def calculate_permuted_cc_counts(infmat, index2gene, heat_permutations, delta,
             for heat_permutation in heat_permutations] 
     all_counts = map_fn(significance_wrapper, args)
     
-    if parallel:
+    if num_cores != 1:
         pool.close()
         pool.join()
 

@@ -1,9 +1,9 @@
 import sys
 from hotnet2 import run as hnrun, hnap
-from hotnet2.constants import ITERATION_REPLACEMENT_TOKEN
 
-MAX_CC_SIZES = [5, 10, 15, 20]
-INFMAT_NAME = "PPR"
+MIN_CC_SIZE = 3
+MAX_CC_SIZE = 25
+INFMAT_NAME = "Li"
 
 def get_parser():
     description = "Helper script for simple runs of generalized HotNet2, including automated\
@@ -25,10 +25,6 @@ def get_parser():
                               second column of each line.')
     parser.add_argument('-ccs', '--min_cc_size', type=int, default=2,
                         help='Minimum size connected components that should be returned.')
-    parser.add_argument('-pnp', '--permuted_networks_path', required=True,
-                        help='Path to influence matrices for permuted networks. Include ' +\
-                              ITERATION_REPLACEMENT_TOKEN + ' in the path to be replaced with the\
-                              iteration number')
     parser.add_argument('-dp', '--delta_permutations', type=int, default=100,
                         help='Number of permutations to be used for delta parameter selection.')
     parser.add_argument('-sp', '--significance_permutations', type=int, default=100,
@@ -55,8 +51,8 @@ def get_parser():
     return parser
 
 def run(args):
-    extra_delta_args = [args.permuted_networks_path, INFMAT_NAME, MAX_CC_SIZES]
-    hnrun.run_helper(args, INFMAT_NAME, hnrun.get_deltas_hotnet2, extra_delta_args)
-    
+    extra_delta_args = [MIN_CC_SIZE, MAX_CC_SIZE]
+    hnrun.run_helper(args, INFMAT_NAME, hnrun.get_deltas_classic, extra_delta_args)
+
 if __name__ == "__main__": 
     run(get_parser().parse_args(sys.argv[1:]))
