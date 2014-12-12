@@ -121,7 +121,7 @@ HotNet2 algorithm. The output files are:
 * `results.json`: Contains all of the above information plus the parameters used for the run in
   JSON format to faciliate further automated processing
 
-The `simpleRun.py` script can also be used to create a web visualization of the output subnetworks.
+The `runHotNet2.py` script can also be used to create a web visualization of the output subnetworks.
 To do so, include the `--edge_file` parameter, and, optionally, other visauzliation-related parameters:
 
         =============================================================================================================
@@ -144,7 +144,7 @@ This will result in a a `viz` subdirectory of the output directory. To view the 
 navigate to the `viz` directory and run `python -m SimpleHTTPServer`, then visit `http://localhost:8000`
 in a browser.
 
-When using `simpleRun.py`, you may also optionally provide any or all of the parameters listed
+When using `runHotNet2.py`, you may also optionally provide any or all of the parameters listed
 below. If one of these parameters is not provided, it will be set to the default value shown below.
 
         =============================================================================================================
@@ -168,7 +168,7 @@ below. If one of these parameters is not provided, it will be set to the default
         |                         |                    |each delta.                                                 |
         -------------------------------------------------------------------------------------------------------------
 
-For simple runs on classic HotNet, use the `simpleRunClassic.py` Python script.  The following
+For simple runs on classic HotNet, use the `runClassicHotNet.py` Python script.  The following
 parameters are required:
 
         ========================================================================================
@@ -196,13 +196,13 @@ Running with only the parameters specified above will create a 'hotnet_output' d
 current working directory that contains 5 subdirectories each prefixed with `delta_`. Each of these
 subdirectories contains results files for a different value of the delta parameter used by the
 classic HotNet algorithm.  The contents of the directories are identical to those described above
-for simple runs of HotNet2 algorithm using `simpleRun.py`. Similarily, the `simpleRunClassic.py`
-script accepts the same optional parameters as the `simpleRun.py` script.
+for simple runs of HotNet2 algorithm using `runHotNet2.py`. Similarily, the `runClassicHotNet.py`
+script accepts the same optional parameters as the `runHotNet2.py` script.
 
 
 Advanced use
 ------------------------
-The `simpleRun.py` and `simpleRunClassic.py` scripts described above runs the entire HotNet
+The `runHotNet2.py` and `runClassicHotNet.py` scripts described above run the entire HotNet
 pipeline in one command. For more advanced use cases, you can also perform each step individually.
 In particular, you may wish to follow the steps below when using mutation data.  Note that the
 code described below is used for both HotNet2 and classic HotNet; in all cases, passing a
