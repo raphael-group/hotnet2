@@ -551,7 +551,7 @@ The steps of the algorithm and the code provided for each step are described bel
     sized group of genes in the same chromosome. In this case, the first parameter to `findTheshold.py`
     should be `mutations`, e.g.:
 
-        	python findThreshold.py mutations <additional_parameters>
+        	python bin/findThreshold.py mutations <additional_parameters>
 
         =============================================================================================================
         | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
