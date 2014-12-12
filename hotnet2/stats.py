@@ -16,7 +16,8 @@ def num_components_min_size(G, sizes):
     
     """
     ccs = strong_ccs(G) if isinstance(G, nx.DiGraph) else nx.connected_components(G)
-    return [len([ cc for cc in ccs if len(cc) >= s]) for s in sizes]
+    cc_sizes = [len(cc) for cc in ccs]
+    return [len([1 for cc_size in cc_sizes if cc_size >= s]) for s in sizes]
 
 def significance_wrapper((infmat, index2gene, heat_permutation, delta, sizes, directed)):
     sim, index2gene = hn.similarity_matrix(infmat, index2gene, heat_permutation, directed)
