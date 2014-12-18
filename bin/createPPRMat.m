@@ -6,6 +6,6 @@
 
 load params;
 n = length(W);
-PPR = (1-alpha)*inv(eye(n,n)-alpha*W')
+PPR = (1-alpha)*inv(eye(n,n)-alpha*W');
 save(outputfile, 'PPR');
 

@@ -22,8 +22,12 @@ def get_parser():
     parser.add_argument('-a', '--alpha', required=True, type=float,
 	                help="Page Rank dampening factor.")
     parser.add_argument("--matlab", default=False, action="store_true",
-	                help="Create the PPR matrix using an external call "\
+                    help="Create the PPR matrix using an external call "\
                              "to a MATLAB script instead of Scipy.")
+    parser.add_argument("--path_to_matlab_script", default='createPPRMat.m',
+                    help="Path to MATLAB script if you want to use MATLAB to"\
+                         " create the PPR matrix. Change this path if you are not"\
+                         " running this script in the same directory as createPPRMat.m.")
     return parser
 
 def run(args):
@@ -88,7 +92,9 @@ def run(args):
         scipy.io.savemat( "params.mat", params, oned_as='column')
 
         # Run the MATLAB script, then cleanup the params file
-        os.system('matlab -nojvm -nodisplay -nodesktop -nosplash < createPPRMat.m')
+        if not os.path.isfile(args.path_to_matlab_script):
+            sys.stderr.write("Warning: {} script not found! Proceeding anyway...".format(args.path_to_matlab_script))
+        os.system('matlab -nojvm -nodisplay -nodesktop -nosplash < {}'.format(args.path_to_matlab_script))
         os.system( 'rm params.mat' )
 
 
