@@ -738,6 +738,32 @@ The steps of the algorithm and the code provided for each step are described bel
     To view the resulting visualizations, navigate to the output directory and run
     `python -m SimpleHTTPServer`, then visit `http://localhost:8000` in a browser.
 
+7. ###Consensus procedure###
+
+    You can produce consensus output from multiple HotNet2 runs (e.g. on different protein-protein
+    interaction networks) using the procedure described in the HotNet2 paper (see References below). To do
+    so, use the `identifyConsensus.py` script, which takes the following parameters:
+
+        ========================================================================================================
+        | PARAMETER NAME         | REQUIRED/DEFAULT | DESCRIPTION                                              |
+        ========================================================================================================
+        |-r/--results_files      | REQUIRED         |Paths to results.json files output by HotNet2. Multiple   |
+        |                        |                  |file paths may be passed.                                 |
+        --------------------------------------------------------------------------------------------------------
+        |-n/--networks           | REQUIRED         |List of network names, one per result file.               |
+        --------------------------------------------------------------------------------------------------------
+        |-o/--output_file        | REQUIRED         |Output directory.                                         |
+        --------------------------------------------------------------------------------------------------------
+        |-ms/--min_cc_size       | REQUIRED         |Restrict consensus to subnetworks of at least this size.  |
+        |                        |                  |Default: 2.                                               |
+        --------------------------------------------------------------------------------------------------------
+
+    The output file is a table where each line is a consensus subnetwork of the form `"[Core]\tExtended"`.
+    The core nodes are those found in every network, and extended nodes are those found in at least one network.
+    The groups of nodes are `", "`-delimited. Note that you can provide multiple results files per network
+    (i.e. using different heat scores), so finding core nodes are not necessarily found in every results file.
+    The output file also includes a list of "linker" genes, which are genes connected to multiple consensus subnetworks.
+
 
 Passing parameters
 ------------------------
