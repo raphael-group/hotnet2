@@ -2,6 +2,8 @@
 
 # Load required modules
 import sys, os, networkx as nx, scipy as sp, scipy.io
+import os.path
+sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 from hotnet2 import hnap
 
 # Parse arguments
@@ -93,7 +95,7 @@ def run(args):
 
         # Run the MATLAB script, then cleanup the params file
         if not os.path.isfile(args.path_to_matlab_script):
-            sys.stderr.write("Warning: {} script not found! Proceeding anyway...".format(args.path_to_matlab_script))
+            sys.stderr.write("Warning: {} script not found! Proceeding anyway...\n".format(args.path_to_matlab_script))
         os.system('matlab -nojvm -nodisplay -nodesktop -nosplash < {}'.format(args.path_to_matlab_script))
         os.system( 'rm params.mat' )
 
