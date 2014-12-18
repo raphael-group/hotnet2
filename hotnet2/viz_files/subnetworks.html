@@ -459,13 +459,15 @@ function subnetwork(params) {
 			.attr('width', heatLegendWidth)
 			.attr('height', heatLegendHeight);
 
+		// Create a unique ID for the heat gradient
+		var gradientID = 'heat_gradient' + Date.now();
 		gradient.append('svg:defs')
 			.append('svg:linearGradient')
 			  .attr('x1', '0%')
 			  .attr('y1', '0%')
 			  .attr('x2', '100%')
 			  .attr('y2', '0%')
-			  .attr('id', 'heat_gradient')
+			  .attr('id', gradientID)
 			  .call(function (gradient) {
 				gradient.append('svg:stop')
 				  .attr('offset', '0%')
@@ -478,7 +480,7 @@ function subnetwork(params) {
 		gradient.append('rect')
 			.attr('width', heatLegendWidth)
 			.attr('height', heatLegendHeight)
-			.style('fill', 'url(#heat_gradient)');
+			.style('fill', 'url(#' + gradientID + ')');
 
 		var labels = heatLegend.append('div')
 			.style('clear', 'both');
