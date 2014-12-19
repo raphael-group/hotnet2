@@ -48,15 +48,19 @@ def get_parser():
                         help='Path to a tab-separated file containing a gene name in the first\
                         column and the display score for that gene in the second column of\
                         each line.')
+    parser.add_argument('-dnf', '--display_name_file',
+                        help='Path to a tab-separated file containing a gene name in the first\
+                        column and the display name for that gene in the second column of\
+                        each line.')
     parser.add_argument('-nn', '--network_name', default='Network',
                         help='Display name for the interaction network. (Used for subnetwork\
                               visualizations)')
-    
+
     return parser
 
 def run(args):
     extra_delta_args = [args.permuted_networks_path, INFMAT_NAME, MAX_CC_SIZES]
     hnrun.run_helper(args, INFMAT_NAME, hnrun.get_deltas_hotnet2, extra_delta_args)
-    
+
 if __name__ == "__main__": 
     run(get_parser().parse_args(sys.argv[1:]))

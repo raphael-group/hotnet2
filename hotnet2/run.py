@@ -101,6 +101,7 @@ def run_helper(args, infmat_name, get_deltas_fn, extra_delta_args):
         viz_args += ["-ef", args.edge_file, "-o", args.output_directory + "/viz" ]
         if args.network_name: viz_args += [ "-nn", args.network_name ]
         if args.display_score_file: viz_args += [ "-dsf", args.display_score_file ]
+        if args.display_name_file: viz_args += [ "-dnf", args.display_name_file ]
         MRW.run( MRW.get_parser().parse_args(viz_args) )
 
 def get_deltas_hotnet2(full_index2gene, heat, num_perms, num_cores, _infmat, _addtl_genes,

@@ -22,6 +22,10 @@ def get_parser():
                         help='Path to a tab seperated file contain a gene name in the first\
                               column and the display score for that gene in the second column\
                               of each line.')
+    parser.add_argument('-dnf', '--display_name_file',
+                        help='Path to a tab seperated file contain a gene name in the first\
+                              column and the display name for that gene in the second column\
+                              of each line.')
     parser.add_argument('-nn', '--network_name', default='Network',
                         help='Display name for the interaction network.')
     parser.add_argument('-o', '--output_directory', required=True,
@@ -50,6 +54,7 @@ def run(args):
         gene2heat = heat_file['heat']
         heat_parameters = heat_file['parameters']
         d_score = hnio.load_display_score_tsv(args.display_score_file) if args.display_score_file else None
+        d_name = hnio.load_display_name_tsv(args.display_name_file) if args.display_name_file else dict()
         edges = hnio.load_ppi_edges(args.edge_file, hnio.load_index(results['parameters']['infmat_index_file']))
         delta = format(results['parameters']['delta'], 'g')
         output['deltas'].append(delta)
@@ -58,7 +63,7 @@ def run(args):
         output["subnetworks"][delta] = []
         for cc in ccs:
             output['subnetworks'][delta].append(viz.get_component_json(cc, gene2heat, edges,
-                                                                args.network_name, d_score))
+                                                                args.network_name, d_score, d_name))
             
         # make oncoprints if heat file was generated from mutation data
         if 'heat_fn' in heat_parameters and heat_parameters['heat_fn'] == 'load_mutation_heat':
@@ -69,7 +74,7 @@ def run(args):
             cnas = hnio.load_cnas(heat_parameters['cna_file'], genes, samples) if heat_parameters['cna_file'] else []
 
             for cc in ccs:
-                output['mutation_matrices'][delta].append(viz.get_oncoprint_json(cc, snvs, cnas))
+                output['mutation_matrices'][delta].append(viz.get_oncoprint_json(cc, snvs, cnas, d_name))
 
             if heat_parameters.get('sample_type_file'):
                 with open(heat_parameters['sample_type_file']) as f:

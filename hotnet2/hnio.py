@@ -60,13 +60,22 @@ def load_heat_tsv(heat_file):
 def load_display_score_tsv(d_score_file):
     """Load scores from a file and return a dict mapping gene names to display scores.
 
-    Arguements
+    Arguments
     d_score_file -- path to TSV file with gene names in the first column and heat scores in the second
 
     """
     with open(d_score_file) as f:
         arrs = [l.split() for l in f]
         return dict((arr[0], float(arr[1])) for arr in arrs)
+
+def load_display_name_tsv(d_name_file):
+    """Load names from a file and return a dict mapping gene names to display names.
+
+    Arguments
+    d_name_file -- path to TSV file with gene names in the first column and alternate name in the second
+
+    """
+    with open(d_name_file) as f: return dict( l.split("\t")[:2] for l in f )
 
 def load_genes(gene_file):
     """Load tested genes from a file and return as a set.
