@@ -78,8 +78,16 @@ For other networks, and for creating influence matrices for use with the classic
 see the "Advanced use" section below.
 
 Note that this step will take a long time. Fortunately, though, you only need to do it once per
-interaction network you wish to use. If possible, use the `--matlab` flag for improved performance.
+interaction network you wish to use. We provide 1000 permuted networks for the HINT+HI2012,
+iRefIndex 9, and Multinet interaction networks for download:
 
+* [HINT+HI2012](http://compbio-research.cs.brown.edu/software/hotnet2/permuted_networks/hint+hi2012.tar) (~500Mb)
+* [iRefIndex 9](http://compbio-research.cs.brown.edu/software/hotnet2/permuted_networks/iref9.tar) (~1.2Gb)
+* [Multinet](http://compbio-research.cs.brown.edu/software/hotnet2/permuted_networks/multinet.tar) (~1.4Gb)
+
+You can use these permuted networks instead of generating your own. However, you will
+still need to generate the influence matrices for each of the permuted networks. See 
+the "Advanced Use" section below.
 
 Simple runs
 ------------------------
