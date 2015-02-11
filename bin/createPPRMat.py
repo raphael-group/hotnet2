@@ -25,7 +25,7 @@ def get_parser():
 	                help="Page Rank dampening factor.")
     parser.add_argument("--matlab", default=False, action="store_true",
                     help="Create the PPR matrix using an external call "\
-                             "to a MATLAB script instead of Scipy.")
+                             "to a MATLAB script instead of SciPy.")
     parser.add_argument("--path_to_matlab_script", default='createPPRMat.m',
                     help="Path to MATLAB script if you want to use MATLAB to"\
                          " create the PPR matrix. Change this path if you are not"\
@@ -78,7 +78,8 @@ def run(args):
     ## Create the PPR matrix either using Scipy or MATLAB
     # Create "walk" matrix (normalized adjacency matrix)
     print "* Creating PPR  matrix..."
-    W = nx.to_numpy_matrix( G , nodelist=nodes, dtype='f' )
+    W = nx.to_numpy_matrix( G , nodelist=nodes, dtype=np.float64 )
+    W = np.asarray(W)
     W = W / W.sum(axis=1) # normalization step
 
     if not args.matlab:
