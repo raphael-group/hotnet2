@@ -26,10 +26,11 @@ Requirements
 * [NumPy 1.6.2](http://www.numpy.org/)
 * [SciPy 0.10.1](http://www.scipy.org/)
 * [NetworkX 1.7](http://networkx.github.io/)
+* [h5py 2.4.0](http://www.h5py.org/)
 * MATLAB (optional but recommended for performance)
 * Fortran or C compiler (optional but recommended for performance)
 
-HotNet2 will likely work with additional versions of Python, NetworkX, NumPy, and SciPy, but
+HotNet2 will likely work with additional versions of Python, h5py, NetworkX, NumPy, and SciPy, but
 alternative configurations have not been tested.
 
 Support
@@ -122,7 +123,7 @@ HotNet2 algorithm. The output files are:
   JSON format to faciliate further automated processing
 
 The `runHotNet2.py` script can also be used to create a web visualization of the output subnetworks.
-To do so, include the `--edge_file` parameter, and, optionally, other visauzliation-related parameters:
+To do so, include the `--edge_file` parameter, and, optionally, other visualization-related parameters:
 
         =============================================================================================================
         | PARAMETER NAME          | DEFAULT   | DESCRIPTION                                                         |
