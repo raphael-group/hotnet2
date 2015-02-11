@@ -1,5 +1,5 @@
 from collections import defaultdict
-import json
+import json, h5py
 from constants import SNV, AMP, DEL, INACTIVE_SNV, Mutation, Fusion
 
 ################################################################################
@@ -355,6 +355,8 @@ def write_gene_list(output_file, genelist):
         for gene in genelist:
             out_f.write(gene+'\n')
 
+################################################################################
+# General data loading and saving functions        
 
 def load_file(file_path):
     with open(file_path) as f:
@@ -363,4 +365,15 @@ def load_file(file_path):
 def write_file(file_path, text):
     with open(file_path, 'w') as f:
         f.write(text)
+
+def load_hdf5(file_path):     
+    f = h5py.File(file_path, 'r')
+    dictionary = {key:f[key].value for key in f}
+    f.close()
+    return dictionary
+
+def save_hdf5(file_path,dictionary):    
+    f = h5py.File(file_path, 'w')
+    for key in dictionary:
+        f[key] = dictionary[key]
     f.close()

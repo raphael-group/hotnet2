@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import networkx as nx, sys, os, scipy.io
+import networkx as nx, sys, os
 import os.path
 sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 from hotnet2 import hnap, hnio
@@ -49,14 +49,12 @@ def run(args):
     
     print "* Computing Laplacian..."
     L = nx.laplacian_matrix(G)
-    scipy.io.savemat("{}/{}_laplacian.mat".format(args.output_dir, args.prefix),
-                     dict(L=L),oned_as='column')
+    hnio.save_hdf5("{}/{}_laplacian.mat".format(args.output_dir, args.prefix), dict(L=L})
 
     # Exponentiate the Laplacian for the given time and save it
     from scipy.linalg import expm
     Li = expm( -args.time * L )
-    scipy.io.savemat("{}/{}_inf_{}.mat".format(args.output_dir, args.prefix, args.time),
-                     dict(Li=Li), oned_as='column')
+    hnio.save_hdf5("{}/{}_inf_{}.mat".format(args.output_dir, args.prefix, args.time), dict(Li=Li))
 
     # Save the index to gene mapping
     index_output_file = "{}/{}_index_genes".format(args.output_dir, args.prefix)

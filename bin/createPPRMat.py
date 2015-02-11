@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
 # Load required modules
-import sys, os, networkx as nx, scipy as sp, scipy.io
+import sys, os, numpy as np, networkx as nx, scipy as sp
 import os.path
 sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
-from hotnet2 import hnap
+from hotnet2 import hnap, hnio
 
 # Parse arguments
 def get_parser():
@@ -85,21 +85,19 @@ def run(args):
     if not args.matlab:
         ## Create PPR matrix using Python
         from scipy.linalg import inv
-        PPR = (1.0-args.alpha)*inv(sp.eye(n)-args.alpha*sp.transpose(W))            
-        scipy.io.savemat( pprfile, dict(PPR=PPR), oned_as='column')
+        PPR = (1.0-args.alpha)*inv(sp.eye(n)-args.alpha*sp.transpose(W))
+        hnio.save_hdf5(pprfile, dict(PPR=PPR))
         
     else:
         ## Create PPR matrix using MATLAB
         # Set up a params file
-        params = dict(W=W, outputfile=pprfile, alpha=args.alpha)
-        scipy.io.savemat( "params.mat", params, oned_as='column')
+        hnio.save_hdf5('params.hdf5', dict(W=W, outputfile=pprfile, alpha=args.alpha))
 
         # Run the MATLAB script, then cleanup the params file
         if not os.path.isfile(args.path_to_matlab_script):
             sys.stderr.write("Warning: {} script not found! Proceeding anyway...\n".format(args.path_to_matlab_script))
         os.system('matlab -nojvm -nodisplay -nodesktop -nosplash < {}'.format(args.path_to_matlab_script))
-        os.system( 'rm params.mat' )
-
+        os.system('rm params.hdf5')
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))

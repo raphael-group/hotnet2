@@ -1,12 +1,11 @@
 import json
 import os
 import numpy as np
-import scipy.io
 from constants import MAX_CC_SIZE, NUM_CCS, HEAT_JSON, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV
 from bin import findThreshold as ft
 import heat as hnheat
-import hnio
 import hotnet2 as hn
+import hnio
 import stats
 import permutations as p
 
@@ -19,8 +18,8 @@ def run_helper(args, infmat_name, get_deltas_fn, extra_delta_args):
     if len(os.listdir(args.output_directory)) > 0:
         print("WARNING: Output directory is not empty. Any conflicting files will be overwritten. "
               "(Ctrl-c to cancel).")
-    
-    infmat = scipy.io.loadmat(args.infmat_file)[infmat_name]
+
+    permuted_mat = hnio.load_hdf5(args.infmat_file)[infmat_name]
     full_index2gene = hnio.load_index(args.infmat_index_file)
     
     using_json_heat = os.path.splitext(args.heat_file.lower())[1] == '.json'
