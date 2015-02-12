@@ -366,14 +366,47 @@ def write_file(file_path, text):
     with open(file_path, 'w') as f:
         f.write(text)
 
-def load_hdf5(file_path):
+def load_hdf5(file_path, keys=None):
+    """
+    Load a dictionary from an HDF5 file
+
+    file_path:
+        HDF5 filename
+    keys (optional):
+        if given, return a dictionary with only the provided keys (provided that
+        they are also keys in f); otherwise, return a dictionary with every key
+        in f
+    dictionary:
+        dictionary loaded from the HDF5 file
+    """
     f = h5py.File(file_path, 'r')
-    dictionary = {key:f[key].value for key in f}
+    if keys:
+        dictionary = {key:f[key].value for key in keys if key in f}
+    else:
+        dictionary = {key:f[key].value for key in f}
     f.close()
     return dictionary
 
-def save_hdf5(file_path,dictionary):
-    f = h5py.File(file_path, 'w')
+def save_hdf5(file_path, dictionary, compression=False):
+    """
+    Save or append a dictionary to an HDF5 file
+
+    file_path:
+        HDF5 filename
+    dictionary:
+        dictionary to save to the HDF5 file; if any of the keys in dictionary
+        are already keys in f, then the corresponding values in dictionary
+        overwrite the existing values in f
+    compression (optional):
+        if given as True, compress values of the dictionary; otherwise, do not
+        compress the values
+    """
+    f = h5py.File(file_path, 'a')
     for key in dictionary:
-        f[key] = dictionary[key]
+        if key in f:
+            del f[key]
+        if compression:
+            f.create_dataset(key, data=dictionary[key], compression='gzip')
+        else:
+            f[key] = dictionary[key]
     f.close()
