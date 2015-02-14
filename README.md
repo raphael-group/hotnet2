@@ -130,7 +130,7 @@ HotNet2 algorithm. The output files are:
   JSON format to faciliate further automated processing
 
 The `runHotNet2.py` script can also be used to create a web visualization of the output subnetworks.
-To do so, include the `--edge_file` parameter, and, optionally, other visauzliation-related parameters:
+To do so, include the `--edge_file` parameter, and, optionally, other visualization-related parameters:
 
         =============================================================================================================
         | PARAMETER NAME          | DEFAULT   | DESCRIPTION                                                         |
