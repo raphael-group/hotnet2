@@ -1,5 +1,5 @@
 from collections import defaultdict
-import json, h5py
+import json, h5py, sys, numpy as np, scipy.io
 from constants import SNV, AMP, DEL, INACTIVE_SNV, Mutation, Fusion
 
 ################################################################################
@@ -365,6 +365,23 @@ def load_file(file_path):
 def write_file(file_path, text):
     with open(file_path, 'w') as f:
         f.write(text)
+
+
+def load_infmat(file_path, infmat_name):
+    """
+    Load an influence matrix from the file path, using the file path extension
+    to figure out how to load the file.
+    """
+    lower_file_path = file_path.lower()
+    if lower_file_path.endswith(".hdf5"):
+        return load_hdf5(file_path)[infmat_name]
+    elif lower_file_path.endswith(".npy"):
+        return np.load(file_path)
+    elif lower_file_path.endswith(".mat"):
+        return scipy.io.loadmat(file_path)[infmat_name]
+    else:
+        sys.stderr.write("Influence matrix format not recognized.\n")
+        sys.exit(1)
 
 def load_hdf5(file_path, keys=None):
     """

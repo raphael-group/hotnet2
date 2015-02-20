@@ -6,7 +6,7 @@ MAX_CC_SIZE = 25
 INFMAT_NAME = "Li"
 
 def get_parser():
-    description = "Helper script for simple runs of generalized HotNet2, including automated\
+    description = "Helper script for simple runs of generalized HotNet, including automated\
                    parameter selection."
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
 

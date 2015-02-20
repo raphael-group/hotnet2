@@ -19,7 +19,7 @@ def run_helper(args, infmat_name, get_deltas_fn, extra_delta_args):
         print("WARNING: Output directory is not empty. Any conflicting files will be overwritten. "
               "(Ctrl-c to cancel).")
 
-    infmat = hnio.load_hdf5(args.infmat_file)[infmat_name]
+    infmat = hnio.load_infmat(args.infmat_file, infmat_name)
     full_index2gene = hnio.load_index(args.infmat_index_file)
     
     using_json_heat = os.path.splitext(args.heat_file.lower())[1] == '.json'
