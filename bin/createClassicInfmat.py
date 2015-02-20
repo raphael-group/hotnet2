@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import networkx as nx, sys, os
+import networkx as nx, sys, os, scipy as sp, numpy as np
 import os.path
 sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 from hotnet2 import hnap, hnio
@@ -24,6 +24,13 @@ def get_parser():
     parser.add_argument('-f', '--format', default='hdf5', type=str, required=False,
                         choices=['hdf5', 'npy'], help="Output file format.")
     return parser                                                               
+
+def expm_eig(A):
+    """
+    Compute the matrix exponential for a square, symmetric matrix.
+    """
+    D, V = sp.linalg.eigh(A)
+    return sp.dot(sp.exp(D) * V, sp.linalg.inv(V))
 
 def run(args):
     # Load input graph
@@ -54,9 +61,9 @@ def run(args):
     L = nx.laplacian_matrix(G)
 
     # Exponentiate the Laplacian for the given time and save it
-    print "*Computing diffusion matrix..."
-    from scipy.linalg import expm
-    Li = expm( -args.time * L )
+    print "* Computing diffusion matrix..."
+    Li = expm_eig( -args.time * L.todense() )
+    #Li = sp.sparse.linalg.expm( -args.time * L)
     output_prefix = "{}/{}_inf_{}".format(args.output_dir, args.prefix, args.time)
     if args.format == 'hdf5':
         hnio.save_hdf5(output_prefix + ".hdf5", dict(Li=Li))
@@ -64,21 +71,21 @@ def run(args):
         np.save(output_prefix + ".npy", Li)
 
     # Save the index to gene mapping
-    index_output_file = "{}/{}_index_genes".format(args.output_dir, args.prefix)
+    indexOutputFile = "{}/{}_index_genes".format(args.output_dir, args.prefix)
     nodes = G.nodes()
-    gene_index_output = ["{} {}".format(i+args.start_index, index2gene[node])
+    geneIndexOutput = ["{} {}".format(i+args.start_index, indexToGene[node])
                          for i, node in enumerate(nodes)]
-    hnio.write_file(index_output_file, "\n".join(gene_index_output))
+    hnio.write_file(indexOutputFile, "\n".join(geneIndexOutput))
 
     # Create edge list with revised indices
-    edge_indices = []
+    edgeIndices = []
     for u, v in G.edges():
         i = nodes.index(u) + args.start_index
         j = nodes.index(v) + args.start_index
-        edge_indices.append( sorted([i, j]) )
-    edge_output_file = "{}/{}_edge_list".format(args.output_dir, args.prefix)
-    edge_output = ["{} {} 1".format(u, v) for u, v in edge_indices]
-    hnio.write_file(edge_output_file, "\n".join(edge_output))
+        edgeIndices.append( sorted([i, j]) )
+    edgeOutputFile = "{}/{}_edge_list".format(args.output_dir, args.prefix)
+    edgeOutput = ["{} {} 1".format(u, v) for u, v in edgeIndices]
+    hnio.write_file(edgeOutputFile, "\n".join(edgeOutput))
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))
