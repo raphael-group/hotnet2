@@ -113,6 +113,9 @@ def run(args):
         # Run the MATLAB script, then cleanup the params file
         if not os.path.isfile(args.path_to_matlab_script):
             sys.stderr.write("Warning: {} script not found! Proceeding anyway...\n".format(args.path_to_matlab_script))
+        # Remove the output file if it already exists. Required because HDF5 does not want
+        # to overwrite the file in MATLAB.
+        if os.path.isfile(pprfile): os.unlink(pprfile)
         os.system('matlab -nojvm -nodisplay -nodesktop -nosplash < {}'.format(args.path_to_matlab_script))
         os.system('rm params.hdf5')
 
