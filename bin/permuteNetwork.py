@@ -67,7 +67,7 @@ def run(args):
     n = args.num_permutations
     if args.parallel:
         jobArgs = [ (G, Q, numEdges, outputFileName(i), i+1, n) for i in range(n) ]
-        pool    = mp.Pool(25)
+        pool    = mp.Pool(mp.cpu_count())
         swaps = pool.map(permute_network_wrapper, jobArgs)
         pool.close()
         pool.join()

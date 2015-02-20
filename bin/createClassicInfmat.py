@@ -21,14 +21,17 @@ def get_parser():
     parser.add_argument('-s', '--start_index', default=1, type=int,
                         help='Minimum index in the index file.')
     parser.add_argument('-t', '--time', required=True, type=float, help='Diffusion time.')
+    parser.add_argument('-f', '--format', default='hdf5', type=str, required=False,
+                        choices=['hdf5', 'npy'], help="Output file format.")
     return parser                                                               
 
 def run(args):
     # Load input graph
     print "* Loading input graph..."
-    G = nx.Graph()
-    G.add_edges_from([map(int, l.rstrip().split()[:2]) for l in open(args.edgelist_file)])
-    print "\t{} nodes with {} edges".format(len(G.nodes()), len(G.edges()))
+    with open(args.edgelist_file) as infile:
+        G = nx.Graph()
+        G.add_edges_from([map(int, l.rstrip().split()[:2]) for l in infile])
+        print "\t{} nodes with {} edges".format(len(G.nodes()), len(G.edges()))
 
     # Remove self-loops and zero degree nodes, and
     # restrict to the largest connected component
@@ -41,7 +44,7 @@ def run(args):
     print "\t{} nodes with {} edges remaining".format(len(G.nodes()), len(G.edges()))
 
     # Load gene index
-    index2gene = hnio.load_index(args.gene_index_file)
+    indexToGene = hnio.load_index(args.gene_index_file)
 
     # Compute and save Laplacian
     if not os.path.exists(args.output_dir):
@@ -49,12 +52,16 @@ def run(args):
     
     print "* Computing Laplacian..."
     L = nx.laplacian_matrix(G)
-    hnio.save_hdf5("{}/{}_laplacian.mat".format(args.output_dir, args.prefix), dict(L=L})
 
     # Exponentiate the Laplacian for the given time and save it
+    print "*Computing diffusion matrix..."
     from scipy.linalg import expm
     Li = expm( -args.time * L )
-    hnio.save_hdf5("{}/{}_inf_{}.mat".format(args.output_dir, args.prefix, args.time), dict(Li=Li))
+    output_prefix = "{}/{}_inf_{}".format(args.output_dir, args.prefix, args.time)
+    if args.format == 'hdf5':
+        hnio.save_hdf5(output_prefix + ".hdf5", dict(Li=Li))
+    elif args.format == 'npy':
+        np.save(output_prefix + ".npy", Li)
 
     # Save the index to gene mapping
     index_output_file = "{}/{}_index_genes".format(args.output_dir, args.prefix)
