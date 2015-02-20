@@ -25,8 +25,8 @@ def get_parser():
                         help='Output directory.')
     parser.add_argument('-n', '--num_permutations', default=100, type=int,
                         help='Number of permuted networks to create.')
-    parser.add_argument('--parallel', default=False, action='store_true',
-                        help='Use multiple processors.')
+    parser.add_argument('-c', '--cores', default=1, type=int,
+                        help='Use given number of cores. Pass -1 to use all available.')
 
     return parser
 
@@ -65,9 +65,10 @@ def run(args):
         return "{}/{}_edgelist_{}".format(args.output_dir, args.output_prefix, i+1)
 
     n = args.num_permutations
-    if args.parallel:
+    if args.cores > 1:
+        cores = mp.cpu_count() if args.cores == -1 else min(args.cores, mp.cpu_count)
         jobArgs = [ (G, Q, numEdges, outputFileName(i), i+1, n) for i in range(n) ]
-        pool    = mp.Pool(mp.cpu_count())
+        pool    = mp.Pool(cores)
         swaps = pool.map(permute_network_wrapper, jobArgs)
         pool.close()
         pool.join()
