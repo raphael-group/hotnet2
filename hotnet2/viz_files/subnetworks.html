@@ -353,16 +353,17 @@ function subnetwork(params) {
 
 	  for (var i = 0; i < networks.length; i++) {
 		var net = networks[i],
+			netName = net.split('.').join('');
 			netColor = colorSchemes.network[networks[i]];
 			activeNetworks[net] = true;
 
-			var inNet = fig.selectAll('.' + net)
+		var inNet = fig.selectAll('.' + netName)
 				.data(links.filter(function (link) {
 				  return link.networks && link.networks.indexOf(net) != -1;
 				}))
 				.enter()
 				.append('line')
-				  .classed(net, true)
+				  .classed(netName, true)
 				  .style('stroke-width', edgeWidth)
 				  .style('stroke', netColor);
 
