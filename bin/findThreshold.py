@@ -92,12 +92,12 @@ def run(args):
     heat, heat_params = hnio.load_heat_json(args.heat_file)
 
     if args.perm_type == "heat":
-        infmat = hnio.load_hdf5(args.infmat_file)[args.infmat_name]
+        infmat = hnio.load_infmat(args.infmat_file, args.infmat_name)
         addtl_genes = hnio.load_genes(args.permutation_genes_file) if args.permutation_genes_file else None
         deltas = get_deltas_for_heat(infmat, infmat_index, heat, addtl_genes, args.num_permutations,
                                      args.test_statistic, args.sizes, args.classic, args.num_cores)
     elif args.perm_type == "mutations":
-        infmat = hnio.load_hdf5(args.infmat_file)[args.infmat_name]
+        infmat = hnio.load_infmat(args.infmat_file, args.infmat_name)
         deltas = get_deltas_for_mutations(args, infmat, infmat_index, heat_params)
     elif args.perm_type == "network":
         deltas = get_deltas_for_network(args.permuted_networks_path, heat, args.infmat_name,

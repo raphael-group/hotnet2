@@ -8,9 +8,9 @@
 % MATLAB stores matrices in column-major order, so we transpose
 % W' and PPR below.
 
-W = h5read('params.hdf5','/W');
-beta = h5read('params.hdf5','/beta');
-outputfile = char(h5read('params.hdf5','/outputfile'));
+W = h5read('params.h5','/W');
+beta = h5read('params.h5','/beta');
+outputfile = char(h5read('params.h5','/outputfile'));
 
 n = length(W);
 PPR = beta*inv(eye(n,n)-(1-beta)*W)';

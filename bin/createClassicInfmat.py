@@ -66,7 +66,7 @@ def run(args):
     #Li = sp.sparse.linalg.expm( -args.time * L)
     output_prefix = "{}/{}_inf_{}".format(args.output_dir, args.prefix, args.time)
     if args.format == 'hdf5':
-        hnio.save_hdf5(output_prefix + ".hdf5", dict(Li=Li))
+        hnio.save_hdf5(output_prefix + ".h5", dict(Li=Li))
     elif args.format == 'npy':
         np.save(output_prefix + ".npy", Li)
 

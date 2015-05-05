@@ -74,7 +74,9 @@ def run(args):
     os.system( 'mkdir -p ' + args.output_dir )
     output_dir = os.path.normpath(os.getcwd() + "/" + args.output_dir)
     output_prefix = "{}/{}".format(output_dir, args.prefix)
-    pprfile = "{}_ppr_{:g}.{}".format(output_prefix, args.beta, args.format)
+    if args.format == 'hdf5': ext = 'h5'
+    else: ext = args.format
+    pprfile = "{}_ppr_{:g}.{}".format(output_prefix, args.beta, ext)
 
     # Index mapping for genes
     index_map = [ "{} {}".format(i+args.start_index, nodes[i]) for i in range(n) ]
@@ -108,7 +110,7 @@ def run(args):
     else:
         ## Create PPR matrix using MATLAB
         # Set up a params file
-        hnio.save_hdf5('params.hdf5', dict(W=W, outputfile=pprfile, beta=args.beta))
+        hnio.save_hdf5('params.h5', dict(W=W, outputfile=pprfile, beta=args.beta))
 
         # Run the MATLAB script, then cleanup the params file
         if not os.path.isfile(args.path_to_matlab_script):

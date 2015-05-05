@@ -98,7 +98,7 @@ def run(args):
               "(Ctrl-c to cancel).")
     
     # load data
-    infmat = hnio.load_hdf5(args.infmat_file)[args.infmat_name]
+    infmat = hnio.load_infmat(args.infmat_file, args.infmat_name)
     full_index2gene = hnio.load_index(args.infmat_index_file)
     heat, heat_params = hnio.load_heat_json(args.heat_file)
   
