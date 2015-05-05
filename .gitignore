@@ -4,4 +4,5 @@
 .pydevproject
 .project
 c_routinesmodule.c
-._* #ignore Mac OS X junk
+build/
+*/._* #ignore Mac OS X junk
