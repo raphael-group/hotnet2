@@ -5,7 +5,7 @@ import sys, os, json, pickle, os.path, scipy.io
 sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 from hotnet2 import hotnet2 as hn
 from hotnet2 import hnap, hnio, heat as hnheat
-from hotnet2.hierarchy import HD, convertToLinkage
+from hotnet2.hierarchy import HD, convertToLinkage, convertToNewick
 
 # Parse arguments
 def get_parser():
@@ -44,20 +44,21 @@ def createDendrogram(sim, genespace, output_directory, params, verbose=False):
 	Z, D = convertToLinkage(T)
 	labels = [ D[i] for i in range(len(genespace)) ]
 	hierarchyOutput = dict(Z=Z, labels=labels, params=params)
+	newickOutput = convertToNewick(T)
 
-	# Output the linkage matrix to JSON and pickle file
-	if verbose: print '\t- Outputting to JSON and Pickle files...'
+	# Output the linkage matrix to JSON and Newick file
+	if verbose: print '\t- Outputting to JSON and Newick files...'
 	with open('{}/hn2-hierarchy.json'.format(output_directory), "w") as out:
 	    json.dump(hierarchyOutput, out)
 
-	with open('{}/hn2-hierarchy.pickle'.format(output_directory), "wb") as out:
-	    pickle.dump(dict(T=T, params=params), out, protocol=-1)
+	with open('{}/hn2-hierarchy.newick.txt'.format(output_directory), "w") as out:
+	    out.write(newickOutput)
 
 # Run
 def run(args):
 	# Load the input data
 	if args.verbose: print '* Loading infmat and heat files...'
-	infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
+	infmat = hnio.load_infmat(args.infmat_file, args.infmat_name)
 	full_index2gene = hnio.load_index(args.infmat_index_file)
 
 	using_json_heat = os.path.splitext(args.heat_file.lower())[1] == '.json'
