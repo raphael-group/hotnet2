@@ -32,7 +32,7 @@ For example, the edge from vertex `a` to vertex `b` has weight `10.`.
 
 For our implementation, the entries of the list `V` may be any hashable type, e.g., integers and/or strings.  The entries of the NumPy array `A` must be double-precision floating-point numbers.  The entries of `A` need not be unique.  An exception is raised when the graph described by `A` is not strongly connected.
 
-To generate the hierarchical decomposition tree, import `hierarchicalClustering.py` and run
+To generate the hierarchical decomposition tree, import `hierarchical_clustering.py` and run
 
     T = HD(V,A,increasing)
 
@@ -91,7 +91,7 @@ Consider the following minimal working example.  Note that `increasing` has been
 
 ** Input **
 
-    from hierarchicalClustering import *
+    from hierarchical_clustering import *
     V = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
     A = np.array([[  0.,  10.,   0.,   0.,   0.,   0.,  15.],
                   [ 12.,   0.,  30.,   0.,   0.,   0.,   0.],

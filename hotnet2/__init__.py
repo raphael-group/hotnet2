@@ -9,3 +9,4 @@ import run
 import stats
 import union_find
 import viz
+import hierarchy

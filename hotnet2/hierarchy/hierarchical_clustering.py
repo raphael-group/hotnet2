@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 ###############################################################################
 #
 #   Setup
@@ -8,10 +10,15 @@ import math
 import numpy as np
 
 try:
-    import fortran_routines
-    available_routines = 1
+    try:
+        from .. import fortran_routines
+        available_routines = 1
+    except ImportError:
+        import fortran_routines
+        available_routines = 1
 except ImportError:
     available_routines = 0
+    print "not_available_routines"
 
 ###############################################################################
 #
@@ -37,8 +44,17 @@ except ImportError:
 
 def HD(V,A,increasing=False):
 
-    if len(strongly_connected_components(A))>1:
-        raise Exception('Graph has more than one strongly connected component.')
+    SCCs = strongly_connected_components(A)
+
+    if len(SCCs)>1:
+        largest_component_size = max(map(len,SCCs))
+        number_vertices = len(V)
+        for component in SCCs:
+            if len(component)==largest_component_size:
+                break
+        A = A[np.ix_(component,component)]
+        V = slice_vertices(V,component)
+        print 'The graph has %d strongly connected components, but the hierarchical decomposition requires a strongly connected graph.  The decomposition tree considers a subgraph defined by a largest strongly connected component of the original graph %d of its %d vertices.' % (len(SCCs),largest_component_size,number_vertices)
 
     if increasing:
         base = 0.0
@@ -102,19 +118,19 @@ def tarjan_HD(V,A,T,i):
                 if len(SCC)>1:
                     B = slice_array(A_j,SCC,SCC)
                     k = subproblem_index(B,weight_i)
-                    X = reorder_vertices(V,SCC)
+                    X = slice_vertices(V,SCC)
                     S,root = tarjan_HD(X,B,{},k)
                     T.update(S)
                     W.append(root)
                 else:
-                    W.extend(reorder_vertices(V,SCC))
+                    W.extend(slice_vertices(V,SCC))
 
             B = condense_graph(A,SCCs)
             k = subproblem_index(B,weight_j)
             return tarjan_HD(W,B,T,k)
 
 #
-# cluster(T)
+# clustering(T)
 #
 #   This function finds the clusters of vertices given in the hierarchical
 #   decomposition tree T.  Each vertex of the original graph forms its own
@@ -129,7 +145,7 @@ def tarjan_HD(V,A,T,i):
 #       clusters: clusters of vertices corresponding to each weight
 #
 
-def cluster(T):
+def clustering(T):
 
     condensations = [v for v in T if len(v)==2]
     increasing = condensations[0][0]<T[condensations[0]][0]
@@ -140,9 +156,9 @@ def cluster(T):
     i = 0
     n = len(inner_nodes)
 
-    for weight in weights:
+    for delta in weights:
 
-        while i<n and inner_nodes[i][0]==weight:
+        while i<n and inner_nodes[i][0]==delta:
             children = [v for v in condensations if T[v]==inner_nodes[i]]
             for v in children:
                 condensations.remove(v)
@@ -160,7 +176,7 @@ def cluster(T):
     return weights,clusters
 
 #
-# delta_cluster(T,delta)
+# delta_clustering(T,delta)
 #
 #   This function finds the clusters of vertices given in the hierarchical
 #   decomposition tree T for a particular delta.  Compare this to cluster,
@@ -174,7 +190,7 @@ def cluster(T):
 #       clusters: clusters of vertices corresponding to delta
 #
 
-def delta_cluster(T,delta):
+def delta_clustering(T,delta):
 
     condensations = [v for v in T if len(v)==2]
     increasing = condensations[0][0]<T[condensations[0]][0]
@@ -202,13 +218,71 @@ def delta_cluster(T,delta):
 
     return sorted(clusters)
 
+#
+# cluster_cutoffs(T)
+#
+#   This function finds the clusters of vertices given in the hierarchical
+#   decomposition tree T with a minimum number and minimum size.
+#
+#   Input:
+#       T: hierarchical decomposition tree
+#       selection_criterion: whether minimum number corresponds to number of
+#           clusters of satisfying criteria or number of vertices satisfying
+#           criteria
+#       minimum_number: minimum number of clusters of given size
+#       minimum_size: minimum size of clusters
+#       truncated: whether or not to include singletons (default is not)
+#
+#   Outputs:
+#       clusters: first partition of vertices satisfying criteria
+#       delta: first weight at which criteria are satisfied
+#
+
+def cluster_cutoffs(T,selection_criterion,minimum_number,minimum_size,truncated=True):
+
+    condensations = [v for v in T if len(v)==2]
+    increasing = condensations[0][0]<T[condensations[0]][0]
+    inner_nodes = sorted(list(set(T.values())), key=lambda e: e[0], reverse=not increasing)
+    weights = sorted(list(set([e[0] for e in inner_nodes])), reverse=not increasing)
+
+    i = 0
+    n = len(inner_nodes)
+
+    for delta in weights:
+
+        while i<n and inner_nodes[i][0]==delta:
+            children = [v for v in condensations if T[v]==inner_nodes[i]]
+            for v in children:
+                condensations.remove(v)
+            condensations.append(inner_nodes[i])
+            i += 1
+
+        counts = [len(v[1:]) for v in condensations if len(v[1:])>=minimum_size]
+
+        if selection_criterion==0:
+            if len(counts)>=minimum_number:
+                if truncated:
+                    clusters = [v[1:] for v in condensations if len(v[1:])>=minimum_size]
+                if not truncated:
+                    clusters = [v[1:] for v in condensations]
+                break
+        elif selection_criterion==1:
+            if sum(counts)>=minimum_number:
+                if truncated:
+                    clusters = [v[1:] for v in condensations if len(v[1:])>=minimum_size]
+                if not truncated:
+                    clusters = [v[1:] for v in condensations]
+                break
+
+    return clusters, delta
+
 ###############################################################################
 #
 #   Helper functions
 #
 ###############################################################################
 
-def closest(x,Y):
+def closest(Y,x):
 
     m = len(Y)//2
     n = len(Y)//2
@@ -236,6 +310,10 @@ def closest(x,Y):
             index = q
 
     return index
+
+def closest_reversed(Y,x):
+
+    return len(Y)-1-closest(Y[::-1],x)
 
 def condense_graph(A,SCCs):
 
@@ -280,7 +358,7 @@ def remove_edges(A,weight):
         B[B>weight] = 0
         return B
 
-def reorder_vertices(vertices,indices):
+def slice_vertices(vertices,indices):
 
     return [vertices[index] for index in indices]
 
@@ -310,7 +388,7 @@ def reverse_tree(V,A,S):
 
     for e in interior_nodes:
         u = -e[0]+shift
-        w = weights[closest(u,weights)]
+        w = weights[closest(weights,u)]
         mapping[e] = tuple([w]+list(e[1:]))
 
     return {mapping[v]: mapping[S[v]] for v in S}
@@ -390,7 +468,7 @@ def strongly_connected_components_from_matrix(A):
 def subproblem_index(B,A_weight):
 
     C = np.unique(B)
-    index = closest(A_weight,C)
+    index = closest(C,A_weight)
     maximum_index = len(C)-1
 
     while C[index]<A_weight and index<maximum_index:
@@ -398,71 +476,6 @@ def subproblem_index(B,A_weight):
     while C[index]>A_weight and index>0:
         index -= 1
     return index
-
-###############################################################################
-#
-#   Output functions
-#
-###############################################################################
-
-# The next function converts a tree from our specialized format to SciPy's
-# linkage matrix format.  The dictionary D converts the cluster indices in the
-# linkage matrix Z to the vertex labels in the tree T.
-
-def linkage(T):
-
-    condensations = sorted([v for v in T if len(v)==2])
-    base = condensations[0][0]
-    increasing = condensations[0][0]<T[condensations[0]][0]
-    inner_nodes = sorted(list(set(T.values())), key=lambda e: e[0], reverse=not increasing)
-
-    L = {v:i for i,v in enumerate(condensations)}
-    D = {i:v[1] for i,v in enumerate(condensations)}
-    k = len(condensations)
-
-    Z = []
-
-    for w in inner_nodes:
-
-        children = [v for v in condensations if T[v]==w]
-        weight = w[0]
-
-        x = children[0]
-        for y in children[1:]:
-            z = tuple([weight]+sorted(x[1:]+y[1:]))
-            Z.append([L[x],L[y],abs(weight-base),len(z[1:])])
-            L[z] = k
-            D[k] = z[1:]
-            x = z
-            k += 1
-
-        for v in children:
-            condensations.remove(v)
-        condensations.append(w)
-
-    return np.array(Z),D
-    
-# The next function converts a tree from our specialized format to the
-# standard Newick format.
-
-def newick(T):
-
-    condensations = [v for v in T if len(v)==2]
-    increasing = condensations[0][0]<T[condensations[0]][0]
-    inner_nodes = sorted(list(set(T.values())), key=lambda e: e[0], reverse=not increasing)
-    root = inner_nodes.pop()
-
-    mapping = {v:str(v[1])+':'+str(abs(T[v][0]-v[0])) for v in condensations}
-
-    for w in inner_nodes:
-        children = [v for v in condensations if T[v]==w]
-        mapping[w] = '('+','.join([mapping[v] for v in children])+'):'+str(abs(T[w][0]-w[0]))
-        for v in children:
-            condensations.remove(v)
-        condensations.append(w)
-
-    children = [v for v in condensations if T[v]==root]
-    return '('+','.join([mapping[v] for v in children])+');'
 
 if __name__ == "__main__":
 
@@ -790,22 +803,19 @@ if __name__ == "__main__":
     #   (12.0, 'a', 'b') : (35.0, 'a', 'b', 'g')
 
     # First, we run our implementation of Tarjan's HD algorithm on the example
-    # given in Tarjan (1983) and output the tree in both our specialized format
-    # and Newick format, condensing weights, and vertex clusters.  We reverse
-    # the edge order from increasing weights to decreasing weights and repeat.
+    # given in Tarjan (1983) and output the tree, the condensing weights, and
+    # the vertex clusters.  We reverse the edge order from increasing weights
+    # to decreasing weights and repeat.
 
     print '=== Test 1 ==='
     V, A, E = tarjan_1983_example()
 
     T = HD(V,A,increasing=True)
     weights, clusters = cluster(T)
-    representation = newick(T)
 
     print 'Weights added in increasing order:'
     print ''
-    print 'Tree in Newick format:'
-    print prettify(representation)
-    print 'Tree in our specialized format:'
+    print 'Tree:'
     print prettify(T)
     print 'Condensing weights:'
     print prettify(weights)
@@ -814,13 +824,10 @@ if __name__ == "__main__":
 
     T = HD(V,A,increasing=False)
     weights, clusters = cluster(T)
-    representation = newick(T)
 
     print 'Weights added in decreasing order:'
     print ''
-    print 'Tree in Newick format:'
-    print prettify(representation)
-    print 'Tree in our specialized format:'
+    print 'Tree:'
     print prettify(T)
     print 'Condensing weights:'
     print prettify(weights)

@@ -1,5 +1,5 @@
 import json
-import os
+import sys, os
 import numpy as np
 from constants import MAX_CC_SIZE, NUM_CCS, HEAT_JSON, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV
 from bin import findThreshold as ft
@@ -92,6 +92,12 @@ def run_helper(args, infmat_name, get_deltas_fn, extra_delta_args):
         results_files.append( os.path.abspath(delta_out_dir) + "/" + JSON_OUTPUT )
         
         hnio.write_components_as_tsv(os.path.abspath(delta_out_dir) + "/" + COMPONENTS_TSV, ccs)
+
+    # create the hierarchy if necessary
+    if args.output_hierarchy:
+        from bin import createDendrogram as CD
+        params = vars(args)
+        CD.createDendrogram( sim, index2gene.values(), args.output_directory, params, verbose=False)
 
     # write visualization output if edge file given
     if args.edge_file:
