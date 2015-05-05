@@ -807,13 +807,12 @@ details.
 
 Citation
 ------------------------
-If you use HotNet2 in your work, please cite:
+If you use HotNet2 in your work, please cite (\* denotes equal contribution):
 
-M.D.M. Leiserson, F. Vandin, H.T. Wu, J.R. Dobson, J.V. Eldridge, J.L. Thomas, A. Papoutsaki,
+M.D.M. Leiserson\*, F. Vandin\*, H.T. Wu, J.R. Dobson, J.V. Eldridge, J.L. Thomas, A. Papoutsaki,
 Y. Kim, B. Niu, M. McLellan, M.S. Lawrence, A.G. Perez, D. Tamborero, Y. Cheng, G.A. Ryslik,
 N. Lopez-Bigas, G. Getz, L. Ding, and B.J. Raphael.  (2014) Pan-Cancer Network Analysis Identifies
-Combinations of Rare Somatic Mutations across Pathways and Protein Complexes. Nature Genetics.
-In press.
+Combinations of Rare Somatic Mutations across Pathways and Protein Complexes. Nature Genetics **47**, 106–114 (2015). 
 
 If you use HotNet in your work, please cite:
 
