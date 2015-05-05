@@ -27,7 +27,7 @@ Requirements
 * [SciPy 0.10.1](http://www.scipy.org/)
 * [NetworkX 1.7](http://networkx.github.io/)
 * [h5py 2.4.0](http://www.h5py.org/)
-* MATLAB (optional but recommended for performance)
+* MATLAB (optional)
 * Fortran or C compiler (optional but recommended for performance)
 
 HotNet2 will likely work with additional versions of Python, h5py, NetworkX, NumPy, and SciPy, but
@@ -72,14 +72,14 @@ directories:
 
 * `{hprd/iref}_index_genes`: Gene-index file for the largest component in the given network.
 * `{hprd/iref}_edge_list`: Edge list file for the largest component in the given network.
-* `{hprd/iref}_ppr_{alpha}.mat`: Personalized page-rank influence matrix in MATLAB .mat format.
+* `{hprd/iref}_ppr_{alpha}.h5`: Personalized page-rank influence matrix in HDF5 format.
 * `permuted`: directory containing 100 subdirectories with the above files for permuted matrices
 
 For other networks, and for creating influence matrices for use with the classic HotNet algorithm,
 see the "Advanced use" section below.
 
 Note that this step will take a long time. Fortunately, though, you only need to do it once per
-interaction network you wish to use. If possible, use the `--matlab` flag for improved performance.
+interaction network you wish to use.
 
 
 Simple runs
@@ -91,7 +91,8 @@ following parameters:
         ========================================================================================
         | PARAMETER NAME          | DESCRIPTION                                                |
         ========================================================================================
-        |-mf/--infmat_file        |Path to .mat file containing influence matrix               |
+        |-mf/--infmat_file        |Path to HDF5 (.h5) file containing influence matrix. NumPy  |
+        |                         | (.np) and MATLAB files also supported.                     |
         ----------------------------------------------------------------------------------------
         |-if/--infmat_index_file  |Path to tab-separated file containing an index in the first |
         |                         |column and the name of the gene represented at that index   |
