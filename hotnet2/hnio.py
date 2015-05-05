@@ -1,5 +1,5 @@
 from collections import defaultdict
-import json
+import json, h5py, sys, numpy as np, scipy.io
 from constants import SNV, AMP, DEL, INACTIVE_SNV, Mutation, Fusion
 
 ################################################################################
@@ -355,6 +355,8 @@ def write_gene_list(output_file, genelist):
         for gene in genelist:
             out_f.write(gene+'\n')
 
+################################################################################
+# General data loading and saving functions
 
 def load_file(file_path):
     with open(file_path) as f:
@@ -363,4 +365,65 @@ def load_file(file_path):
 def write_file(file_path, text):
     with open(file_path, 'w') as f:
         f.write(text)
+
+
+def load_infmat(file_path, infmat_name):
+    """
+    Load an influence matrix from the file path, using the file path extension
+    to figure out how to load the file.
+    """
+    lower_file_path = file_path.lower()
+    if lower_file_path.endswith(".hdf5"):
+        return load_hdf5(file_path)[infmat_name]
+    elif lower_file_path.endswith(".npy"):
+        return np.load(file_path)
+    elif lower_file_path.endswith(".mat"):
+        return scipy.io.loadmat(file_path)[infmat_name]
+    else:
+        sys.stderr.write("Influence matrix format not recognized.\n")
+        sys.exit(1)
+
+def load_hdf5(file_path, keys=None):
+    """
+    Load a dictionary from an HDF5 file
+
+    file_path:
+        HDF5 filename
+    keys (optional):
+        if given, return a dictionary with only the provided keys (provided that
+        they are also keys in f); otherwise, return a dictionary with every key
+        in f
+    dictionary:
+        dictionary loaded from the HDF5 file
+    """
+    f = h5py.File(file_path, 'r')
+    if keys:
+        dictionary = {key:f[key].value for key in keys if key in f}
+    else:
+        dictionary = {key:f[key].value for key in f}
+    f.close()
+    return dictionary
+
+def save_hdf5(file_path, dictionary, compression=False):
+    """
+    Save or append a dictionary to an HDF5 file
+
+    file_path:
+        HDF5 filename
+    dictionary:
+        dictionary to save to the HDF5 file; if any of the keys in dictionary
+        are already keys in f, then the corresponding values in dictionary
+        overwrite the existing values in f
+    compression (optional):
+        if given as True, compress values of the dictionary; otherwise, do not
+        compress the values
+    """
+    f = h5py.File(file_path, 'a')
+    for key in dictionary:
+        if key in f:
+            del f[key]
+        if compression:
+            f.create_dataset(key, data=dictionary[key], compression='gzip')
+        else:
+            f[key] = dictionary[key]
     f.close()

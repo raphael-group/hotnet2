@@ -1,9 +1,9 @@
 # -*- coding: iso-8859-1 -*-
 from collections import defaultdict
 import multiprocessing as mp
-import scipy.io
 import networkx as nx
 import hotnet2 as hn
+import hnio
 
 strong_ccs = nx.strongly_connected_components
 
@@ -25,7 +25,7 @@ def significance_wrapper((infmat, index2gene, heat_permutation, delta, sizes, di
     return num_components_min_size(G, sizes)
 
 def network_significance_wrapper((network_path, infmat_name, index2gene, heat, delta, sizes, directed)):
-    permuted_mat = scipy.io.loadmat(network_path)[infmat_name]   
+    permuted_mat = hnio.load_hdf5(network_path)[infmat_name]
     sim, index2gene = hn.similarity_matrix(permuted_mat, index2gene, heat, directed)
     G = hn.weighted_graph(sim, index2gene, delta, directed)
     return num_components_min_size(G, sizes)

@@ -1,6 +1,5 @@
 # -*- coding: iso-8859-1 -*-
 import json
-import scipy.io
 import sys
 import os.path
 sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
@@ -93,12 +92,12 @@ def run(args):
     heat, heat_params = hnio.load_heat_json(args.heat_file)
 
     if args.perm_type == "heat":
-        infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
+        infmat = hnio.load_infmat(args.infmat_file, args.infmat_name)
         addtl_genes = hnio.load_genes(args.permutation_genes_file) if args.permutation_genes_file else None
         deltas = get_deltas_for_heat(infmat, infmat_index, heat, addtl_genes, args.num_permutations,
                                      args.test_statistic, args.sizes, args.classic, args.num_cores)
     elif args.perm_type == "mutations":
-        infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
+        infmat = hnio.load_infmat(args.infmat_file, args.infmat_name)
         deltas = get_deltas_for_mutations(args, infmat, infmat_index, heat_params)
     elif args.perm_type == "network":
         deltas = get_deltas_for_network(args.permuted_networks_path, heat, args.infmat_name,
@@ -136,7 +135,6 @@ def get_deltas_for_heat(infmat, index2gene, gene2heat, addtl_genes, num_permutat
 
 def get_deltas_for_mutations(args, infmat, index2gene, heat_params):
     print "* Performing permuted mutation data delta selection..."
-    infmat = scipy.io.loadmat(args.infmat_file)[args.infmat_name]
     index2gene = hnio.load_index(args.infmat_index_file)
     
     heat_permutations = permutations.generate_mutation_permutation_heat(

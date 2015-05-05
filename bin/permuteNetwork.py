@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # Load required modules
-import sys, networkx as nx
+import sys, networkx as nx, multiprocessing as mp
 import os.path
 sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 from hotnet2 import hnap
@@ -25,50 +25,62 @@ def get_parser():
                         help='Output directory.')
     parser.add_argument('-n', '--num_permutations', default=100, type=int,
                         help='Number of permuted networks to create.')
+    parser.add_argument('-c', '--cores', default=1, type=int,
+                        help='Use given number of cores. Pass -1 to use all available.')
 
     return parser
 
-def permute_network( G, Q, num_edges, output_file ):
-    # Permutes network by swapping edges Q * num_edges times
+def permute_network( G, Q, numEdges, outputFile ):
+    # Permutes network by swapping edges Q * numEdges times
     H = G.copy()
-    nswap = Q*num_edges
+    nswap = Q*numEdges
     swaps = nx.connected_double_edge_swap(H, nswap=nswap)
-    nx.write_edgelist(H, output_file)
+    nx.write_edgelist(H, outputFile)
     return swaps
 
+store = dict(maxSeen=-1)
+def permute_network_wrapper((G, Q, numEdges, outputFile, i, n)):
+    swaps = permute_network( G, Q, numEdges, outputFile )
+    store['maxSeen'] = max(store['maxSeen'], i)
+    sys.stdout.write("\r{}/{}".format(store['maxSeen'], n))
+    sys.stdout.flush()
+    return swaps
+    
 def run(args):
     # Load graph
     print "* Loading edge list.."
     G = nx.Graph()
-    G.add_edges_from([ l.rstrip().split()[:2] for l in open(args.edgelist_file) ])
-    num_edges, num_nodes = len(G.edges()), len(G.nodes())
+    with open(args.edgelist_file) as infile:
+        G.add_edges_from([ l.rstrip().split()[:2] for l in infile ])
+    numEdges, numNodes = len(G.edges()), len(G.nodes())
 
     # Report info about the graph and number of swaps
     Q = args.Q
-    print "\t- {} edges among {} nodes.".format(num_edges, num_nodes)
-    print "\t- No. swaps to attempt = {}".format(Q*num_edges)
+    print "\t- {} edges among {} nodes.".format(numEdges, numNodes)
+    print "\t- No. swaps to attempt = {}".format(Q*numEdges)
 
     # Permute graph the prescribed number of times
     print "* Creating permuted networks..."
-    prefix, output_dir = args.output_prefix, args.output_dir
-    swaps_performed = []
-    increment = args.num_permutations/80. if args.num_permutations > 80 else 1
-    for i in range(args.start_index, args.start_index + args.num_permutations):
-        # Create a simple progress bar
-        if int((i - args.start_index + 1) % increment) == 0:
-            sys.stdout.write("+")
-            sys.stdout.flush()
+    def outputFileName(i):
+        return "{}/{}_edgelist_{}".format(args.output_dir, args.output_prefix, i+1)
 
-        # Create a new permuted network
-        output_file = "{}/{}_edgelist_{}".format(output_dir, prefix, i)
-        swaps = permute_network( G, Q, num_edges, output_file )
-        swaps_performed.append( swaps * 1. )
+    n = args.num_permutations
+    if args.cores > 1:
+        cores = mp.cpu_count() if args.cores == -1 else min(args.cores, mp.cpu_count)
+        jobArgs = [ (G, Q, numEdges, outputFileName(i), i+1, n) for i in range(n) ]
+        pool    = mp.Pool(cores)
+        swaps = pool.map(permute_network_wrapper, jobArgs)
+        pool.close()
+        pool.join()
+    else:
+        swaps = [ permute_network_wrapper((G, Q, numEdges, outputFileName(i), i+1, n))
+                  for i in range(n) ]
 
     print
 
     # Report how many swaps were actually made
-    avg_swaps = int(sum(swaps_performed) / float(len(swaps_performed)))
-    print "* Avg. No. Swaps Made: {}".format(avg_swaps)
+    avgSwaps = int(sum(swaps) / float(len(swaps)))
+    print "* Avg. No. Swaps Made: {}".format(avgSwaps)
             
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))

@@ -3,9 +3,9 @@ from collections import namedtuple, defaultdict
 import multiprocessing as mp
 import numpy as np
 import scipy as sp
-import scipy.io
 import networkx as nx
 import hotnet2 as hn
+import hnio
 from union_find import UnionFind
 
 strong_ccs = nx.strongly_connected_components
@@ -128,7 +128,7 @@ def get_edges(sim, start=.05):
 
 def network_delta_wrapper((network_path, infmat_name, index2gene, heat, sizes, directed,
                            selection_function)):
-    permuted_mat = scipy.io.loadmat(network_path)[infmat_name]   
+    permuted_mat = hnio.load_infmat(network_path, infmat_name)
     sim, index2gene = hn.similarity_matrix(permuted_mat, index2gene, heat, directed)
     if selection_function is find_best_delta_by_largest_cc:
         return selection_function(sim, index2gene, sizes, directed)

@@ -1,11 +1,18 @@
 %% Create a personalized pagerank matrix from an input walk matrix.
-% Params are passed in via a params.mat file. Required params:
+% Params are passed in via a params.hdf5 file. Required params:
 %  - Walk matrix W
-%  - Page Rank dampening factor alpha
-%  - Outputfile (must end in .mat)
+%  - Restart probability beta
+%  - Outputfile
 
-load params;
+% By default, hdf5 stores matrices in row-major order and
+% MATLAB stores matrices in column-major order, so we transpose
+% W' and PPR below.
+
+W = h5read('params.h5','/W');
+beta = h5read('params.h5','/beta');
+outputfile = char(h5read('params.h5','/outputfile'));
+
 n = length(W);
-PPR = (1-alpha)*inv(eye(n,n)-alpha*W');
-save(outputfile, 'PPR');
-
+PPR = beta*inv(eye(n,n)-(1-beta)*W)';
+h5create(outputfile,'/PPR',size(PPR))
+h5write(outputfile,'/PPR',PPR)

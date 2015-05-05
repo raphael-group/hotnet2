@@ -12,7 +12,8 @@ def get_parser():
 
     parser.add_argument('-r', '--runname', help='Name of run / disease.')
     parser.add_argument('-mf', '--infmat_file', required=True,
-                        help='Path to .mat file containing influence matrix')
+                        help='Path to HDF5 (.h5) file containing influence matrix. '\
+                        'NumPy (.npy) and MATLAB (.mat) files also supported.')
     parser.add_argument('-if', '--infmat_index_file', required=True,
                         help='Path to tab-separated file containing an index in the first column\
                               and the name of the gene represented at that index in the second\

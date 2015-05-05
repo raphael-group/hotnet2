@@ -5,7 +5,6 @@ import sys
 import os.path
 sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 import numpy as np
-import scipy.io
 from hotnet2 import hnap, hnio, hotnet2 as hn, permutations as p, stats
 from hotnet2.constants import ITERATION_REPLACEMENT_TOKEN, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV
 
@@ -99,7 +98,7 @@ def run(args):
               "(Ctrl-c to cancel).")
     
     # load data
-    infmat = np.array(scipy.io.loadmat(args.infmat_file)[args.infmat_name])
+    infmat = hnio.load_infmat(args.infmat_file, args.infmat_name)
     full_index2gene = hnio.load_index(args.infmat_index_file)
     heat, heat_params = hnio.load_heat_json(args.heat_file)
   
