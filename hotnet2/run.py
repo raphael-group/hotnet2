@@ -1,7 +1,7 @@
 import json
-import sys, os
+import sys, os, shutil
 import numpy as np
-from constants import MAX_CC_SIZE, NUM_CCS, HEAT_JSON, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV
+from constants import MAX_CC_SIZE, NUM_CCS, HEAT_JSON, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV, HIERARCHY_WEB_FILE
 from bin import findThreshold as ft
 import heat as hnheat
 import hotnet2 as hn
@@ -96,8 +96,14 @@ def run_helper(args, infmat_name, get_deltas_fn, extra_delta_args):
     # create the hierarchy if necessary
     if args.output_hierarchy:
         from bin import createDendrogram as CD
+
+        hierarchy_out_dir = '{}/hierarchy/'.format(args.output_directory)
+        if not os.path.isdir(hierarchy_out_dir): os.mkdir(hierarchy_out_dir)
+
         params = vars(args)
-        CD.createDendrogram( sim, index2gene.values(), args.output_directory, params, verbose=False)
+        CD.createDendrogram( sim, index2gene.values(), hierarchy_out_dir, params, verbose=False)
+        hierarchyFile = '{}/viz_files/{}'.format(str(hn.__file__).rsplit('/', 1)[0], HIERARCHY_WEB_FILE)
+        shutil.copy(hierarchyFile, '{}/index.html'.format(hierarchy_out_dir))
 
     # write visualization output if edge file given
     if args.edge_file:
