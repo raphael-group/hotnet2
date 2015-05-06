@@ -11,6 +11,8 @@ from hotnet2.hierarchy import HD, convertToLinkage, convertToNewick
 def get_parser():
     description = 'Create a hierarchical decomposition of the HotNet2 similarity matrix.'
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
+    parser.add_argument('-r', '--run_name', required=False, default='Hotnet2',
+                        help='Name of run to appear in output files.')
     parser.add_argument('-mf', '--infmat_file', required=True,
                         help='Path to .mat file containing influence matrix')
     parser.add_argument('-if', '--infmat_index_file', required=True,
@@ -41,9 +43,9 @@ def createDendrogram(sim, genespace, output_directory, params, verbose=False):
 
 	# Convert to SciPy linkage matrix (http://goo.gl/yd6z3V)
 	if verbose: print '\t- Converting into SciPy linkage matrix format...'
-	Z, D = convertToLinkage(T)
-	labels = [ D[i] for i in range(len(genespace)) ]
+	Z, labels = convertToLinkage(T)
 	hierarchyOutput = dict(Z=Z, labels=labels, params=params)
+
 	newickOutput = convertToNewick(T)
 
 	# Output the linkage matrix to JSON and Newick file

@@ -220,18 +220,18 @@ def linkage(T):
     import  scipy.cluster, sys
     sys.setrecursionlimit(100000)
 
-    Y = [(a,b,abs(c-base),d) for (a,b,c,d) in Z]
+    Y = [[a,b,base-c,d] for (a,b,c,d) in Z]
     R = scipy.cluster.hierarchy.dendrogram(Y,labels=V,orientation='right', no_plot=True)
     W = list(reversed(R["ivl"]))
 
     n = len(W)
-    for (a,b,c,d) in Z:
-        if a<n:
-            a = W.index(V[a])
-        if b<n:
-            b = W.index(V[b])
+    for row in Y:
+        if row[0] < n:
+            row[0] = W.index(V[row[0]])
+        if row[1] < n:
+            row[1] = W.index(V[row[1]])
 
-    return Z,W
+    return Y,W
 
 # The next function converts a tree from our specialized format to the
 # standard Newick format.
