@@ -83,6 +83,8 @@ def run(args):
                     for s, ty in output['sampleToTypes'].iteritems():
                         output['typeToSamples'][ty].append( s )
             else:
+                if not samples:
+                    samples = set( m.sample for m in snvs ) | set( m.sample for m in cnas )
                 output['sampleToTypes'] = dict( (s, "Cancer") for s in samples )
                 output['typeToSamples'] = dict(Cancer=list(samples))
 
