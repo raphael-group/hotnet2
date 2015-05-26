@@ -373,7 +373,7 @@ def load_infmat(file_path, infmat_name):
     to figure out how to load the file.
     """
     lower_file_path = file_path.lower()
-    if lower_file_path.endswith(".hdf5"):
+    if lower_file_path.endswith(".hdf5") or lower_file_path.endswith(".h5"):
         return load_hdf5(file_path)[infmat_name]
     elif lower_file_path.endswith(".npy"):
         return np.load(file_path)
