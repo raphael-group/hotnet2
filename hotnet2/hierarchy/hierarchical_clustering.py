@@ -18,7 +18,6 @@ try:
         available_routines = 1
 except ImportError:
     available_routines = 0
-    print "not_available_routines"
 
 ###############################################################################
 #
