@@ -48,7 +48,7 @@ def run(args):
     # make real PPR
     print "\nCreating PPR matrix for real network"
     print "--------------------------------------"
-    margs = '-e %s -i %s -o %s -p %s -s %s -a %s' % (args.edgelist_file, args.gene_index_file, args.output_dir,
+    margs = '-e %s -i %s -o %s -p %s -s %s -b %s' % (args.edgelist_file, args.gene_index_file, args.output_dir,
                                                         args.prefix, args.index_file_start_index, args.beta)
     ppr.run(ppr.get_parser().parse_args(margs.split()))
 
@@ -74,7 +74,7 @@ def run(args):
         edgelist_file = '%s/%s_edgelist_%s' % (perm_dir, args.prefix, i)
         output_dir = '%s/%s' % (perm_dir, i)
         if not os.path.exists(output_dir): os.makedirs(output_dir)
-        pargs = '-e %s -i %s -o %s -p %s -s %s -a %s ' % (edgelist_file, largest_cc_index_file, output_dir,
+        pargs = '-e %s -i %s -o %s -p %s -s %s -b %s ' % (edgelist_file, largest_cc_index_file, output_dir,
                                                           args.prefix, args.index_file_start_index, args.beta)
         ppr.run(ppr.get_parser().parse_args(pargs.split()))
         os.remove(edgelist_file)

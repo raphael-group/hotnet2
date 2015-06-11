@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # Load required modules
-import sys, os, numpy as np, networkx as nx, scipy as sp
+import sys, os, numpy as np, networkx as nx, scipy as sp, scipy.io
 import os.path
 sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 from hotnet2 import hnap, hnio
@@ -63,9 +63,11 @@ def run(args):
     os.system( 'mkdir -p ' + args.output_dir )
     output_dir = os.path.normpath(os.getcwd() + "/" + args.output_dir)
     output_prefix = "{}/{}".format(output_dir, args.prefix)
+
     if args.format == 'hdf5': ext = 'h5'
-    if args.format == 'matlab': ext = 'mat'
+    elif args.format == 'matlab': ext = 'mat'
     else: ext = args.format
+
     pprfile = "{}_ppr_{:g}.{}".format(output_prefix, args.beta, ext)
 
     # Index mapping for genes
