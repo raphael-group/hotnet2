@@ -22,9 +22,9 @@ def get_parser():
                         help='Output prefix.')
     parser.add_argument('-is', '--index_file_start_index', default=1, type=int,
                         help='Minimum index in the index file.')
-    parser.add_argument('-a', '--alpha', required=True, type=float,
-                        help='Page Rank dampening factor, equal to 1-beta (where beta is the\
-                              restart probability for insulated heat diffusion|process).')
+    parser.add_argument('-b', '--beta', required=True, type=float,
+                        help='Beta is the restart probability for the '\
+                        'insulated heat diffusion process.')
 
     parser.add_argument('-q', '--Q', default=115, type=float,
                         help='Edge swap constant. The script will attempt Q*|E| edge swaps')
@@ -35,13 +35,6 @@ def get_parser():
 
     parser.add_argument('-o', '--output_dir', required=True,
                         help='Output directory.')
-    parser.add_argument("--matlab", default=False, action="store_true",
-                        help="Create the PPR matrix using an external call "\
-                             "to a MATLAB script instead of SciPy.")
-    parser.add_argument("--path_to_matlab_script", default='bin/createPPRMat.m',
-                    help="Path to MATLAB script if you want to use MATLAB to"\
-                         " create the PPR matrix. Change this path if you are not"\
-                         " running this script in default directory.")
 
     return parser
 
@@ -55,9 +48,8 @@ def run(args):
     # make real PPR
     print "\nCreating PPR matrix for real network"
     print "--------------------------------------"
-    margs = '-e %s -i %s -o %s -p %s -s %s -a %s %s --path_to_matlab_script %s' % (args.edgelist_file, args.gene_index_file, args.output_dir,
-                                                        args.prefix, args.index_file_start_index, args.alpha,
-                                                        '--matlab' if args.matlab else '', args.path_to_matlab_script)
+    margs = '-e %s -i %s -o %s -p %s -s %s -b %s' % (args.edgelist_file, args.gene_index_file, args.output_dir,
+                                                        args.prefix, args.index_file_start_index, args.beta)
     ppr.run(ppr.get_parser().parse_args(margs.split()))
 
     # get the output edge list and index files (for the largest connected component) for permutations
@@ -82,9 +74,8 @@ def run(args):
         edgelist_file = '%s/%s_edgelist_%s' % (perm_dir, args.prefix, i)
         output_dir = '%s/%s' % (perm_dir, i)
         if not os.path.exists(output_dir): os.makedirs(output_dir)
-        pargs = '-e %s -i %s -o %s -p %s -s %s -a %s %s --path_to_matlab_script %s' % (edgelist_file, largest_cc_index_file, output_dir,
-                                                            args.prefix, args.index_file_start_index, args.alpha,
-                                                            '--matlab' if args.matlab else '', args.path_to_matlab_script)
+        pargs = '-e %s -i %s -o %s -p %s -s %s -b %s ' % (edgelist_file, largest_cc_index_file, output_dir,
+                                                          args.prefix, args.index_file_start_index, args.beta)
         ppr.run(ppr.get_parser().parse_args(pargs.split()))
         os.remove(edgelist_file)
 
