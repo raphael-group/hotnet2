@@ -1,4 +1,4 @@
-B#!/usr/bin/python
+#!/usr/bin/python
 import json
 import os
 import shutil
