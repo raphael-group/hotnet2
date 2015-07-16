@@ -215,23 +215,10 @@ def linkage(T):
             condensations.remove(v)
         condensations.append(w)
 
-    # Using the label ordering provided by SciPy's dendrogram function,
-    # reorder the leaf nodes in Z and V.
-    import  scipy.cluster, sys
-    sys.setrecursionlimit(100000)
-
     Y = [[a,b,base-c,d] for (a,b,c,d) in Z]
-    R = scipy.cluster.hierarchy.dendrogram(Y,labels=V,orientation='right', no_plot=True)
-    W = list(reversed(R["ivl"]))
+    reordered_Y, reordered_V = reorder(Y,V)
 
-    n = len(W)
-    for row in Y:
-        if row[0] < n:
-            row[0] = W.index(V[row[0]])
-        if row[1] < n:
-            row[1] = W.index(V[row[1]])
-
-    return Y,W
+    return reordered_Y, reordered_V
 
 # The next function converts a tree from our specialized format to the
 # standard Newick format.
@@ -254,6 +241,69 @@ def newick(T):
 
     children = [v for v in condensations if T[v]==root]
     return '('+','.join([mapping[v] for v in children])+');'
+
+# The next function is a helper function for the linkage function that
+# reorders the leaf nodes to prevent crossings in the dendrogram.
+
+def reorder(Z, V):
+
+    # Check if the linkage matrix is constructed properly.
+
+    for i in range(len(Z)-1):
+        if Z[i][2]>Z[i+1][2]:
+            raise Warning("The rows in the linkage matrix are not monotonically nondecreasing by distance; crossings may occur in the dendrogram.")
+            break
+
+    # Below, we have the following variables:
+
+    #     m: index for reordered leaf nodes
+    #     n: number of leaf nodes
+    #     queue: list of inner nodes, which we append and pop as we work from right to left and from top to bottom in the dendrogram.
+    #     order: dictionary for the reordering of the leaf nodes
+    #     transpose_order: transpose the key, value pairs in order
+
+    m = 0
+    n = len(V)
+    queue = [len(Z)-1]
+    order = {}
+    transpose_order = {}
+
+    # Continue while inner nodes remain.
+
+    while len(queue):
+
+        # Consider the right-most inner node.
+
+        i = queue.pop()
+        subqueue = []
+
+        # For the children of the inner node, reorder them if they are leaf nodes and append them if they are inner nodes.
+
+        for j in reversed(range(2)):
+            if Z[i][j]<n:
+                order[Z[i][j]] = n-m-1
+                transpose_order[n-m-1] = Z[i][j]
+                m += 1
+            else:
+                subqueue.append(Z[i][j]-n)
+
+        subqueue = sorted(subqueue, key=lambda i:Z[i][2])
+        queue.extend(subqueue)
+
+    # Construct the linkage matrix and list of leaf nodes for the reordered leaf nodes.
+
+    reordered_Z = [[y for y in z] for z in Z]
+
+    for i in range(len(Z)):
+        for j in reversed(range(2)):
+            if Z[i][j]<n:
+                reordered_Z[i][j] = order[Z[i][j]]
+
+    reordered_V = [V[transpose_order[i]] for i in range(n)]
+
+    # Return the results.
+
+    return reordered_Z, reordered_V
 
 ########################################################################
 #
@@ -406,16 +456,16 @@ if __name__ == "__main__":
             output.append('Sum of implanted cluster size(s):')
             output.append('    '+str(sum(map(len,clusters))))
             print '\n'.join(output)
-   
+
         sorted_heats = np.sort(heats)
         implanted_heats = np.empty(len(heats))
         np.random.seed(seed=permutation_choice)
         implanted_heats[hot_indices] = np.random.permutation(sorted_heats[-len(hot_indices):])
-        implanted_heats[cold_indices] = np.random.permutation(sorted_heats[:-len(hot_indices)])        
+        implanted_heats[cold_indices] = np.random.permutation(sorted_heats[:-len(hot_indices)])
 
         sim = infmat*implanted_heats
         T = HD(genes,sim)
-        Z, labels = linkage(T)      
+        Z, labels = linkage(T)
 
     # Compute hierarchical decomposition tree and linkage matrix and labels.
 
