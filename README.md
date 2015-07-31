@@ -27,7 +27,6 @@ Requirements
 * [SciPy 0.10.1](http://www.scipy.org/)
 * [NetworkX 1.7](http://networkx.github.io/)
 * [h5py 2.4.0](http://www.h5py.org/)
-* MATLAB (optional)
 * Fortran or C compiler (optional but recommended for performance)
 
 HotNet2 will likely work with additional versions of Python, h5py, NetworkX, NumPy, and SciPy, but
@@ -72,7 +71,7 @@ directories:
 
 * `{hprd/iref}_index_genes`: Gene-index file for the largest component in the given network.
 * `{hprd/iref}_edge_list`: Edge list file for the largest component in the given network.
-* `{hprd/iref}_ppr_{alpha}.h5`: Personalized page-rank influence matrix in HDF5 format.
+* `{hprd/iref}_ppr_{beta}.h5`: Personalized page-rank influence matrix in HDF5 format.
 * `permuted`: directory containing 100 subdirectories with the above files for permuted matrices
 
 For other networks, and for creating influence matrices for use with the classic HotNet algorithm,
@@ -246,9 +245,8 @@ The steps of the algorithm and the code provided for each step are described bel
         |-is                      | 1                  |Minimum index in the index file.                            |
         |--index_file_start_index |                    |                                                            |
         -------------------------------------------------------------------------------------------------------------
-        |-a/--alpha               | REQUIRED           |Page Rank dampening factor, equal to 1-beta (where beta is  |
-        |                         |                    |the restart probability for insulated heat                  |
-        |                         |                    |diffusion|process).                                         |
+        |-b/--beta                | REQUIRED           |Beta is the restart probability for the insulated heat      |
+        |                         |                    |diffusion process.                                          |
         -------------------------------------------------------------------------------------------------------------
         |-q/--Q                   | 115                |Edge swap constant. The script will attempt Q*|E| edge      |
         |                         |                    |swaps                                                       |
@@ -260,10 +258,7 @@ The steps of the algorithm and the code provided for each step are described bel
         -------------------------------------------------------------------------------------------------------------
         |-o/--output_dir          | REQUIRED           |Output directory.                                           |
         -------------------------------------------------------------------------------------------------------------
-        |--matlab                 | False              |Create the PPR matrix using an external call to a MATLAB    |
-        |                         |                    |script instead of SciPy.                                    |
-        -------------------------------------------------------------------------------------------------------------
-
+        
     If desired, the scripts `bin/createPPRMat.py` and `bin/permuteNetwork.py` can be used to
     perform the individual steps of creating influence matrices and permuting edge lists,
     respectively.

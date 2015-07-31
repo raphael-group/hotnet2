@@ -36,7 +36,7 @@ def find_best_delta_by_largest_cc(permuted_sim, permuted_index, sizes, directed,
     print "Finding smallest delta such that size of largest CC is <= l"
     component_fn = strong_ccs if directed else nx.connected_components
     # Construct weighted digraphs for each network for each delta
-    sorted_edges = sorted(sp.ndarray.flatten(permuted_sim))
+    sorted_edges = np.unique(permuted_sim) # unique edge weights in sorted ascending
     size2delta = dict()
     for max_size in sizes:
         # print "\t\tk=", max_size

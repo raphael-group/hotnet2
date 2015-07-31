@@ -73,6 +73,12 @@ def run(args):
             snvs = hnio.load_snvs(heat_parameters['snv_file'], genes, samples) if heat_parameters['snv_file'] else []
             cnas = hnio.load_cnas(heat_parameters['cna_file'], genes, samples) if heat_parameters['cna_file'] else []
 
+            # Get the samples and genes from the mutations directly if they weren't provided
+            if not samples:
+                samples = set( m.sample for m in snvs ) | set( m.sample for m in cnas )
+            if not genes:
+                genes = set( m.gene for m in snvs) | set( m.gene for m in cnas )
+
             for cc in ccs:
                 output['mutation_matrices'][delta].append(viz.get_oncoprint_json(cc, snvs, cnas, d_name))
 
@@ -89,11 +95,7 @@ def run(args):
                 output['typeToSamples'] = dict(Cancer=list(samples))
 
         output['stats'][delta] = results['statistics']
-        for k in sorted(map(int, results['statistics'].keys())):
-            ks.add(k)
-            continue
-            stats = results['statistics'][str(k)]
-            output['stats'][delta].append( dict(k=k, expected=stats['expected'], observed=stats['observed'], pval=stats['pval']))
+        ks |= set(map(int, results['statistics'].keys()))
 
     output['ks'] = range(min(ks), max(ks)+1)
     with open('%s/subnetworks.json' % outdir, 'w') as out:
