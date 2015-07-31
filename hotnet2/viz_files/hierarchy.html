@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang='en' xml:lang='en' xmlns='http://www.w3.org/1999/xhtml'>
+<head>
+	<meta content='text/html;charset=UTF-8' http-equiv='content-type'>
+	<title>Dendrogram</title>
+	<style type="text/css" media="screen">
+		body { font-family: "Helvetica Neue", Helvetica, sans-serif; }
+		abbr{ font-weight:bold; color:rgb(36,64,144); border:1px solid rgb(36,64,144); cursor:help; font-size:80%; padding:0px 2px 0px 2px; margin-left:10px; }
+	</style>
+</head>
+<body>
+<b style="margin-right:10px">Parameters</b>
+<form action="javascript:void(0)">
+	<i>Width:</i>
+	<input style="width:50px" type="number" value="1100" id="width" />
+	<i>Height:</i>
+	<input style="width:50px" type="number" value="700" id="height" />
+	<button id="refresh">Refresh</button>
+</form>
+<hr/>
+<h2 id="dendrogram-title"><span></span> Dendrogram</h2>
+<div id='dendrogram'></div>
+</body>
+</html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+<script src="https://cdn.rawgit.com/raphael-group/gd3/master/gd3.js" charset="utf-8"></script>
+<script>
+
+// Watch the selects for changes
+var widthInput = d3.select("input#width"),
+	heightInput = d3.select("input#height"),
+	refreshButton = d3.select("button#refresh").on("click", updateParams);
+
+// Draw a new dendrogram when the selects are updated
+function updateParams(){
+	// Fetch the current values of the parameters
+	var width = widthInput.node().value,
+		height = heightInput.node().value,
+		filename = "hn2-hierarchy.json";
+
+	// Remove the old dendrogram info
+	d3.select("#dendrogram").selectAll("*").remove();
+
+
+	// And add the new dendrogram
+	d3.json(filename, function(data){
+		// Update the title
+		d3.select("h2#dendrogram-title span").text(data.params.run_name);
+
+		dendrogramSlider("#dendrogram", data, {width: width, height: height});
+	});
+}
+
+updateParams();
+
+function dendrogramSlider(el, data, params){
+	///////////////////////////////////////////////////////////////////////////
+	// Parse the parameters
+	var params = params || {},
+		maxNodes = params.maxNodes || 20,
+		width = params.width || 20,
+		height = params.height || 20;
+
+	// Add a div to hold the dendrogram, but we'll actually draw it later
+	var figure = d3.select(el).append("div").attr("id", "figure");
+
+	// Add a link for downloading the JSON of the filtered linkage matrix
+	var downloads = d3.select(el).append("div").attr("id", "download-links").style("font-size", "85%");
+	downloads.append("b").text("Download: ");
+	var downloadData = downloads.append("a").attr("href", "#").attr("id", "download-data").text("JSON");
+	downloads.append("span").html("&nbsp;&nbsp;&nbsp;")
+	var downloadSVG = downloads.append("a").attr("href", "#").attr("id", "download-svg").text("SVG");
+
+	///////////////////////////////////////////////////////////////////////////
+	// Reset the dendrogram when the max number of nodes is changed
+	var edgeWeights;
+	function deltaFromMaxNodes(){
+		// First find the weight at which there are N nodes
+		var numNodes = 0,
+			i = 0,
+			m = data.Z.length,
+			n = data.labels.length;
+
+		while (numNodes < maxNodes && i < m){
+			numNodes += data.Z[i][0] < n;
+			numNodes += data.Z[i][1] < n;
+			i += 1;
+		}
+		// Then restrict the slider to only those edges
+		edgeWeights = data.Z.slice(0, i).map(function(row){ return row[2]; });
+
+		return i-1;
+	}
+
+	function resetDendrogram(){
+		deltaFromMaxNodes();
+		updateDendrogram();
+	}
+
+	// Update the dendrogram whenever the slider is changed
+	// slider.on("change", updateDendrogram);
+
+	function updateDendrogram(){
+		// Get the current edge weight to cut at
+		var val = edgeWeights[slider.node().value];
+		delta.html(val);
+
+		// Cut the dendrogram at the given value
+		dendro.setDelta(val);
+		updateDownloadButton(val);
+
+	}
+
+	function updateDownloadButton(edgeWeight){
+		// Add a download button for the JSON data used to create the dendrogram
+		var obj = window.URL.createObjectURL(new Blob([JSON.stringify(figure.datum())],
+											 		  {type: 'application/json'}));
+		downloadData.attr("download", "linkage-d" + edgeWeight + ".json")
+			.attr("href", obj);
+
+		// Add a download button for the SVG
+		setTimeout(function(){
+			var svgXML = figure.select("svg").node().outerHTML;
+			downloadSVG.attr("download", "dendrogram.svg")
+				.attr("href", window.URL.createObjectURL(new Blob([svgXML], {type: 'image/svg+xml'})));
+		}, dendro.animationSpeed());
+	}
+
+	// Initialize the dendrogram
+	var edgeIndex = deltaFromMaxNodes(),
+		dendro = gd3.dendrogram({style: {width: width, height: height}})
+					.showSlider()
+					.setDelta(edgeWeights[edgeIndex]);
+
+	figure.datum(data).call(dendro);
+	updateDownloadButton(edgeWeights[edgeIndex]);
+}
+
+
+</script>

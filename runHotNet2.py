@@ -56,6 +56,8 @@ def get_parser():
     parser.add_argument('-nn', '--network_name', default='Network',
                         help='Display name for the interaction network. (Used for subnetwork\
                               visualizations)')
+    parser.add_argument('--output_hierarchy', default=False, required=False, action='store_true',
+                        help='Output the hierarchical decomposition of the HotNet2 similarity matrix.')
 
     return parser
 
