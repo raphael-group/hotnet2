@@ -45,10 +45,12 @@ def run(args):
 
     ks = set()
     output = dict(deltas=[], subnetworks=dict(), mutation_matrices=dict(), stats=dict())
-    subnetworks = dict()
+    predictions = set()
+    multipleHeatFiles = False
     for results_file in args.results_files:
-        results = json.load(open(results_file))
-        ccs = results['components']
+        with open(results_file, 'r') as IN:
+            results = json.load(IN)
+            ccs = results['components']
 
         heat_file = json.load(open(results['parameters']['heat_file']))
         gene2heat = heat_file['heat']
@@ -58,13 +60,18 @@ def run(args):
         edges = hnio.load_ppi_edges(args.edge_file, hnio.load_index(results['parameters']['infmat_index_file']))
         delta = format(results['parameters']['delta'], 'g')
         output['deltas'].append(delta)
-        subnetworks[delta] = ccs
 
         output["subnetworks"][delta] = []
+        predictions |= set( g for cc in ccs for g in cc )
         for cc in ccs:
             output['subnetworks'][delta].append(viz.get_component_json(cc, gene2heat, edges,
                                                                 args.network_name, d_score, d_name))
-            
+        # Record the heat scores
+        if 'geneToHeat' in output:
+            if any( output['geneToHeat'][g] != h for g, h in gene2heat.iteritems() ) or len(gene2heat.keys()) != len(output['geneToHeat'].keys()):
+                multipleHeatFiles = True
+        output['geneToHeat'] = gene2heat
+
         # make oncoprints if heat file was generated from mutation data
         if 'heat_fn' in heat_parameters and heat_parameters['heat_fn'] == 'load_mutation_heat':
             output['mutation_matrices'][delta] = list()
@@ -97,6 +104,13 @@ def run(args):
         output['stats'][delta] = results['statistics']
         ks |= set(map(int, results['statistics'].keys()))
 
+    # Print a warning if there were multiple heat files referenced by
+    # the results files
+    if multipleHeatFiles:
+        sys.stderr.write('Warning: results files used multiple heat files. Only the last heat file will be used to tabulate scores.\n')
+
+    # Output to file
+    output['predictions'] = sorted(predictions) # list of nodes found in any run
     output['ks'] = range(min(ks), max(ks)+1)
     with open('%s/subnetworks.json' % outdir, 'w') as out:
         json.dump(output, out, indent=4)

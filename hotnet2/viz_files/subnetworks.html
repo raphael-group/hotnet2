@@ -1,23 +1,15 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <title>HotNet2 Subnetworks</title>
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/s/dt/dt-1.10.10/datatables.min.css"/>
 <style>
 	body{
 		font-family:"Helvetica","Arial";
 		padding:10px;
 	}
 	div.container{
-		width:900px;
-		margin:0px auto;
 		background:"#F6F6F6";
-	}
-	div#instructions{
-		width:450px;
-		float:left;
-	}
-	div#filters{
-		width:450px;
-		float:right;
 	}
 	abbr{
 		font-weight:bold;
@@ -28,21 +20,6 @@
 		padding:0px 2px 0px 2px;
 		float:right;
 		margin-left:30px;
-	}
-	div#figures{
-		padding:5px;
-		clear:both;
-	}
-	div#figures h3 small#stats{
-		float:right;
-		font-size:80%;
-	}
-	hr{
-		clear:both;
-		padding-bottom:0px;
-		margin:0px;
-		border:0;
-		border-bottom:1px solid #eee;
 	}
 	div#figures hr{
 		clear:both;
@@ -63,8 +40,8 @@
 <div class="container">
 	<h1>HotNet2 Results</h1>
 	<hr/>
-	<div style="border-bottom:1px solid #eee;padding-bottom:10px">
-		<div id="instructions">
+	<div class="col-lg-12 row">
+		<div id="instructions" class="col-lg-6">
 			<h3>Instructions</h3>
 			This page shows the results of a HotNet2 run. Select the parameters &delta; and <i>k</i>
 			on the right to view the subnetworks identified by HotNet2, and their statistical significance.
@@ -80,56 +57,104 @@
 					<em>This view is only visible if you created the heat file used by HotNet2 from mutation data</em>.
 				</li>
 			</ul>
+			We also list all genes input to HotNet2 with their heat scores, and mark those reported by HotNet2 in some subnetwork.
+			<br/><br/>
 		</div>
-		<div id="filters">
+		<div id="filters" class="col-lg-6">
 			<h3>Parameters</h3>
-			<table>
+			<table class="table table-hover">
 				<tr>
-					<td><label>Minimum edge weight &delta;</label>:</td>
+					<th><label>Minimum edge weight &delta;</label></th>
 					<td>
-						<select id="deltas"></select>
+						<select class='form-control' id="deltas"></select>
+					</td>
+					<td>
 						<abbr title="Select one of the deltas automatically chosen by HotNet2. HotNet2 reports a collection of subnetworks and their significance for each automatically chosen delta.">?</abbr>
 					</td>
 				</tr>
 				<tr>
-					<td><label>Minimum subnetwork size <i>k</i></label>:</td>
-					<td>
+					<th>Minimum subnetwork size <i>k</i></th>
+					<td class='text-center'>
 						<input type="range" id="k" min="2" value="2" max="10" step="1" />
 						<span id="k">2</span>
+					</td>
+					<td>
 						<abbr title="Hide subnetworks of size less than k.">?</abbr>
 					</td>
 				</tr>
 			</table>
 		</div>
-		<br style="clear:both"/>
 	</div>
-	<div id="figures">
-		<h3>
-			Subnetworks
-                        <small id="params"></small>
-                        <small id="download">
-                          <a title="Download subnetworks."></a>
-                        </small>
-			<small id="stats">
-				<span id="observed"></span>
-				<span id="expected"></span>
-				<span id="pval"></span>
-			</small>
-		</h3>
-                <br/>
+	<div id="genes-by-heat" class="row col-lg-12">
+		<div class="panel panel-default">
+			<div class="panel-heading" role="button" data-toggle="collapse" href="#heatTableWrapper" aria-expanded="false" aria-controls="heatTableWrapper">
+				Table of input heat scores
+				<span style="float:right">(click to toggle)</span>
+			</div>
+			<div id="heatTableWrapper" class="panel-collapse collapse">
+				<div class="panel-body">
+					<table class="table" id="heatTable">
+						<thead><tr style="background:#d3d3d3"><th>Gene</th><th>Heat</th><th>Found by HotNet2?</th></thead>
+						<tbody></tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="subnetworks" class="row col-lg-12">
+		<div class="panel panel-default">
+			<div class="panel-heading" role="button" data-toggle="collapse" href="#subnetworkFigures" aria-expanded="true" aria-controls="subnetworkFigures">
+				Subnetworks identified by HotNet2
+				<span style="float:right">(click to toggle)</span>
+			</div>
+			<div class="panel-body panel-collapse collapse in" id="subnetworkFigures">
+				<div class="row">
+					<div class="col-lg-4 text-left" id="params"></div>
+					<div class="col-lg-4 text-center" id="download"><a title="Download subnetworks."></a></div>
+					<div class="col-lg-4 text-right" id="stats"><span id="observed"></span>, <span id="expected"></span>, <span id="pval"></span></div>
+				<hr/>
+				<div id="figures"></div>
+			</div>
 	</div>
 </div>
-<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.9/d3.js" type="text/javascript"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/js/bootstrap.min.js" type="text/javascript"></script>
+<script src="https://cdn.datatables.net/s/dt/dt-1.10.10/datatables.min.js" type="text/javascript"></script>
 <script>
 var heatFormat = d3.format(".3r");
 
 // Add the subnetworks
 d3.json('subnetworks.json', function(json) {
+	// Populate the table of genes by heat
+	var geneToHeat = json.geneToHeat,
+			predictions = json.predictions,
+			predicted = {};
+
+	var geneByHeat = Object.keys(geneToHeat).sort(function(a, b){
+		return d3.descending(geneToHeat[a], geneToHeat[b]);
+	});
+	geneByHeat.forEach(function(g){ predicted[g] = false; })
+	predictions.forEach(function(g){ predicted[g] = true; })
+
+	var heatTbl = d3.select('div#genes-by-heat table tbody');
+	var heatRows = heatTbl.selectAll('.heat-row')
+				 .data(geneByHeat).enter()
+				 .append('tr');
+
+	 heatRows.append('td').text(function(d){ return d; });
+	 heatRows.append('td').text(function(d){ return geneToHeat[d]; });
+	 heatRows.append('td').text(function(d){ return predicted[d]; });
+
+	 $('div#genes-by-heat table').dataTable();
+
 	// Populate the delta select and the ks slider
-	var deltaSelect = d3.select("div#filters select");
+	var deltaSelect = d3.select("div#filters select"),
+			numDeltas = json.deltas.length;
 	deltaSelect.selectAll(".delta")
-		.data(json.deltas.sort()).enter()
+		.data(json.deltas.sort(function(a, b){ return d3.ascending(+a, +b); })).enter()
 		.append("option")
+		.attr("selected", function(d, i){ return i === numDeltas-1 ? "selected" : ""; })
 		.attr("value", function(d){ return d; })
 		.text(function(d){ return d; })
 
@@ -141,8 +166,9 @@ d3.json('subnetworks.json', function(json) {
 	deltaSelect.on("change", drawSubnetworks);
 	kSlider.on("change", filterSubnetworks);
 
-	var delta = json.deltas[0],
+	var delta = json.deltas[numDeltas-1],
 		fig = d3.select("#figures");
+
 	function drawSubnetworks(){
 		// Retrieve the current delta
 		if (d3.select(this).node().value){
@@ -152,7 +178,7 @@ d3.json('subnetworks.json', function(json) {
 		// Remove the old subnetworks
 		fig.selectAll("div").remove();
 
-		// Create an object that contains any changes to the default styles 
+		// Create an object that contains any changes to the default styles
 		var styling = {
 			fontColor: '#34495E',
 			heatLegendWidth: 300,
@@ -202,13 +228,13 @@ d3.json('subnetworks.json', function(json) {
 		filterSubnetworks();
 	} // end drawSubnetworks
 
-	var stats = d3.select("div#figures h3 small#stats");
+	var stats = d3.select("div#stats");
 	function filterSubnetworks(){
 		// Get the current value of k from the slider
 		var k = kSlider.node().value;
 
 		// Update the title to reflect the new subnetworks and significance
-		d3.select("div#figures h3 small#params").html("&delta; = " + delta + ", k = " + k);
+		d3.select("div#params").html("&delta; = " + delta + ", k = " + k);
 
 		// Update the slider value, and update the signficance
 		d3.select("span#k").text(k);
@@ -226,11 +252,10 @@ d3.json('subnetworks.json', function(json) {
                 var filteredSubnets = json.subnetworks[delta].filter(function(d){ return d.nodes.length >= k; })
                      .map(function(d){ return d.nodes.map(function(n){ return n.name; }).join("\t"); })
                      .join("\n");
-                d3.select("small#download a")
+                d3.select("div#download a")
                   .attr("download", "subnetworks-d" + delta + "-k" + k + ".txt")
                   .attr("href", window.URL.createObjectURL(new Blob([filteredSubnets], {type: 'text/plain'})))
-                  .style("font-size", "75%")
-                  .text("Download as text file");
+                  .text("Download text file of subnetworks");
 	}
 
 	function filterSamples(genes, M, samples){
@@ -2099,7 +2124,7 @@ function mutation_matrix(params) {
 chart.addOnClick = function (fn) {
     addOnClick = true;
     onclickFunction = fn;
-    return chart; 
+    return chart;
   }
 
 
