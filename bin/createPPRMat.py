@@ -89,7 +89,7 @@ def run(args):
     print "* Creating PPR  matrix..."
     W = nx.to_numpy_matrix( G , nodelist=nodes, dtype=np.float64 )
     W = np.asarray(W)
-    W = W / W.sum(axis=1) # normalization step
+    W = W / W.sum(axis=0) # normalization step
 
     ## Create PPR matrix using Python
     from scipy.linalg import inv
