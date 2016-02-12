@@ -3,15 +3,22 @@
 import sys, json, argparse, networkx as nx, os
 from collections import defaultdict
 
+def convert_arg_line_to_args(self, arg_line):
+    for arg in arg_line.split():
+        if not arg.strip():
+            continue
+        yield arg
+
 def get_parser():
     description = 'Constructs consensus subnetworks from HotNet(2) results.'
     parser = argparse.ArgumentParser(description=description)
+    parser.convert_arg_line_to_args = convert_arg_line_to_args
     parser.add_argument('-r', '--results_files',
-                        nargs="*", help='Paths to HotNet(2) results files.', required=True)
+                        nargs="*", help='Paths to HotNet(2) results files (/directories if -d flag is set).', required=True)
     parser.add_argument('-n', '--networks', nargs="*", required=True,
-                        help='List the network that corresponds to each results file.')
+                        help='List the network that corresponds to each results file (/directory if -d flag is set).')
     parser.add_argument('-d', '--delta_choice', action='store_true',
-                        help='Test automated delta selection. Expects a directory of results for each network.')
+                        help='Automated delta selection. If flag is set, -r will expect a single directory per HotNet2 run.')
     parser.add_argument('-o', '--output_file',required=True,
                         help='Output file. Text output by default. Use a .json extension to get JSON output.')
     parser.add_argument('-ms', '--min_cc_size', help='Min CC size.', type=int, default=2)
@@ -41,11 +48,7 @@ def choose_results( results_files, networks, min_cc_size, delta_choice ):
                                       if int( k ) >= min_cc_size ]
                 delta_list.extend( result_delta_list )
             # Choosing results json file with the lowest p-value, then the lowest k, then the lowest delta
-            for i in [2, 1, 0]:
-                delta_list.sort( key=lambda d: d[i] )
-                min_value = delta_list[0][i]
-                delta_list = filter( lambda d: d[i] == min_value, delta_list )
-            results_files.append( delta_list[0][3] )
+            results_files.append( sorted( delta_list )[0][3] )
 
     return results_files, networks
 
