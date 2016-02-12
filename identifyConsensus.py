@@ -1,18 +1,13 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
+# Load required modules
 import sys, json, argparse, networkx as nx, os
 from collections import defaultdict
 
-def convert_arg_line_to_args(self, arg_line):
-    for arg in arg_line.split():
-        if not arg.strip():
-            continue
-        yield arg
-
+# Argument parser
 def get_parser():
     description = 'Constructs consensus subnetworks from HotNet(2) results.'
-    parser = argparse.ArgumentParser(description=description)
-    parser.convert_arg_line_to_args = convert_arg_line_to_args
+    parser = argparse.ArgumentParser(description=description, fromfile_prefix_chars='@')
     parser.add_argument('-r', '--results_files',
                         nargs="*", help='Paths to HotNet(2) results files (/directories if -d flag is set).', required=True)
     parser.add_argument('-n', '--networks', nargs="*", required=True,
