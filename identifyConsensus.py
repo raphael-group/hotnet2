@@ -14,38 +14,40 @@ def get_parser():
                         help='List the network that corresponds to each results file (/directory if -d flag is set).')
     parser.add_argument('-d', '--delta_choice', action='store_true',
                         help='Automated delta selection. If flag is set, -r will expect a single directory per HotNet2 run.')
+    parser.add_argument('-t', '--p_value_threshold', type=float, default=0.01,
+                        help='Threshold for p-values; default is 0.01.')
     parser.add_argument('-o', '--output_file',required=True,
                         help='Output file. Text output by default. Use a .json extension to get JSON output.')
     parser.add_argument('-ms', '--min_cc_size', help='Min CC size.', type=int, default=2)
 
     return parser
 
-# Choose results files to use for consensus (1 per network)
-def choose_results( results_files, networks, min_cc_size, delta_choice ):
+# Choose results files to use for consensus (1 per network-score combination)
+def choose_results( results_files, min_cc_size, delta_choice, p_value_threshold ):
     if delta_choice:
         networks_results = defaultdict( lambda: set(), dict() )
         network_dirs = results_files
         results_files = []
-        for network_dir, network in zip( network_dirs, networks ):
+        for network_dir in network_dirs:
             results_dirs = [ os.path.join(network_dir, dir)
                              for dir in os.listdir(network_dir)
                              if os.path.isdir(os.path.join(network_dir, dir)) & ( dir.split('_')[0] == 'delta' ) ]
             for results_dir in results_dirs:
-                networks_results[network].add( results_dir + "/results.json" )
-        for network in networks:
+                networks_results[network_dir].add( results_dir + "/results.json" )
+        for network_dir in network_dirs:
             delta_list = []
             # Loading results json files and adding entries if k (size) > min_cc_size into a list of
-            # tuples: ( delta, k, p-value, results json file )
-            for results_file in networks_results[network]:
+            # tuples: ( # p-values > threshold, delta, results json file )
+            for results_file in networks_results[network_dir]:
                 with open( results_file ) as f: obj = json.load( f )
-                result_delta_list = [ ( float( obj['parameters']['delta'] ), int( k ), stats['pval'], results_file )
-                                      for k, stats in obj['statistics'].iteritems()
-                                      if int( k ) >= min_cc_size ]
-                delta_list.extend( result_delta_list )
-            # Choosing results json file with the lowest p-value, then the lowest k, then the lowest delta
-            results_files.append( sorted( delta_list )[0][3] )
+                delta_list.append(( sum( 1 for k, stats in obj['statistics'].iteritems() if stats['pval'] >= p_value_threshold and int(k) >= min_cc_size),
+                                  float( obj['parameters']['delta'] ),
+                                  results_file ))
 
-    return results_files, networks
+            # Choosing results json file with the lowest p-value, then the lowest k, then the lowest delta
+            results_files.append( sorted( delta_list )[0][2] )
+
+    return results_files
 
 def load_results(results_files, min_cc_size):
     results = []
@@ -82,10 +84,11 @@ def run(args):
     if len(args.results_files) != len(args.networks):
         raise ValueError("You must pass in one network name for each result file.")
 
-    num_networks = len(set(args.networks))
+    networks = args.networks
+    num_networks = len(set(networks))
 
     # Choose results to use
-    results_files, networks = choose_results( args.results_files, args.networks, args.min_cc_size, args.delta_choice )
+    results_files = choose_results( args.results_files, args.min_cc_size, args.delta_choice, args.p_value_threshold )
 
     # Load results
     print "* Loading results..."
