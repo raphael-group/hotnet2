@@ -127,7 +127,7 @@ def mut_heat(genes, num_samples, snvs, cnas, min_freq):
 
         # Minimum frequency is for SNVs *only*, so we just use CNAs if the SNVs
         # are below min_freq
-        if snv_mut_samples < min_freq:
+        if len(snv_mut_samples) < min_freq:
             gene2heat[gene] = len(cna_mut_samples) / float(num_samples)
         else:
             gene2heat[gene] = len(snv_mut_samples | cna_mut_samples) / float(num_samples)
