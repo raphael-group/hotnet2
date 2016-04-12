@@ -36,7 +36,7 @@ def run_helper(args, infmat_name, get_deltas_fn, extra_delta_args):
     heat, addtl_genes = hnheat.filter_heat(heat, None, False, 'There are ## genes with heat score 0')
 
     if args.deltas:
-        deltas = map(float, args.deltas)
+        deltas = args.deltas
     else:
         deltas = get_deltas_fn(full_index2gene, heat, args.delta_permutations, args.num_cores, infmat, addtl_genes, *extra_delta_args)
 

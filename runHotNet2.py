@@ -30,7 +30,7 @@ def get_parser():
                         help='Path to influence matrices for permuted networks. Include ' +\
                               ITERATION_REPLACEMENT_TOKEN + ' in the path to be replaced with the\
                               iteration number')
-    parser.add_argument('-d', '--deltas', nargs='*', default=[],
+    parser.add_argument('-d', '--deltas', nargs='*', type=float, default=[],
                         help='Delta value(s).')
     parser.add_argument('-dp', '--delta_permutations', type=int, default=100,
                         help='Number of permutations to be used for delta parameter selection.')
