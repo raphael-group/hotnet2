@@ -122,10 +122,8 @@ def mut_heat(genes, num_samples, snvs, cnas, min_freq):
     
     gene2heat = dict()
     for gene, mutations in genes2mutations.iteritems():
-        snv_heat = num_snvs(mutations)
-        snv_heat = snv_heat if snv_heat >= min_freq else 0
-        cna_heat = num_cnas(mutations)
-        gene2heat[gene] = (snv_heat + cna_heat) / float(num_samples)
+        mutated_samples = len(set( m.sample for m in mutations ))
+        gene2heat[gene] = mutated_samples / float(num_samples)
     
     return gene2heat
 
