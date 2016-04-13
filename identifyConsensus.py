@@ -1,119 +1,121 @@
 #!/usr/bin/env python
 
 # Load required modules
-import sys, json, argparse, networkx as nx, os
+import os, sys, argparse, json, networkx as nx
+from itertools import combinations
 from collections import defaultdict
 
 # Argument parser
 def get_parser():
     description = 'Constructs consensus subnetworks from HotNet(2) results.'
+
     parser = argparse.ArgumentParser(description=description, fromfile_prefix_chars='@')
-    parser.add_argument('-r', '--results_files',
-                        nargs="*", help='Paths to HotNet(2) results files (/directories if -d flag is set).', required=True)
-    parser.add_argument('-n', '--networks', nargs="*", required=True,
-                        help='List the network that corresponds to each results file (/directory if -d flag is set).')
-    parser.add_argument('-d', '--delta_choice', action='store_true',
-                        help='Automated delta selection. If flag is set, -r will expect a single directory per HotNet2 run.')
-    parser.add_argument('-t', '--p_value_threshold', type=float, default=0.01,
-                        help='Threshold for p-values; default is 0.01.')
-    parser.add_argument('-o', '--output_file',required=True,
-                        help='Output file. Text output by default. Use a .json extension to get JSON output.')
-    parser.add_argument('-ms', '--min_cc_size', help='Min CC size.', type=int, default=2)
+    parser.add_argument('-d', '--directories', nargs='*', default=[],
+        help='Paths to HotNet(2) results directories; the consensus procedure chooses from these directories.')
+    parser.add_argument('-f', '--files', nargs='*', default=[],
+        help='Paths to HotNet(2) results files.')
+    parser.add_argument('-n', '--networks', nargs='*', required=True,
+        help='Networks for HotNet(2) results directories or files.')
+    parser.add_argument('-p', '--p_value_threshold', type=float, default=0.01,
+        help='Threshold for p-values; default is 0.01.')
+    parser.add_argument('-m', '--min_cc_size', type=int, default=2,
+        help='Minimum connected component size; default is 2.')
+    parser.add_argument('-o', '--output_file', required=True,
+        help='Output file; provide .json extension for JSON output.')
+    parser.add_argument('-v', '--verbose', action='store_true',
+        help='Verbose')
 
     return parser
 
-# Choose results files to use for consensus (1 per network-score combination)
-def choose_results( network_dirs, min_cc_size, p_value_threshold ):
-    networks_results = defaultdict( lambda: set(), dict() )
-    results_files = []
-    for network_dir in network_dirs:
-        results_dirs = [ os.path.join(network_dir, dir)
-                         for dir in os.listdir(network_dir)
-                         if os.path.isdir(os.path.join(network_dir, dir)) & ( dir.split('_')[0] == 'delta' ) ]
-        for results_dir in results_dirs:
-            networks_results[network_dir].add( results_dir + "/results.json" )
-    for network_dir in network_dirs:
-        delta_list = []
-        # Loading results json files and adding entries if k (size) > min_cc_size into a list of
-        # tuples: ( # p-values > threshold, delta, results json file )
-        for results_file in networks_results[network_dir]:
-            with open( results_file ) as f: obj = json.load( f )
-            delta_list.append(( sum( 1 for k, stats in obj['statistics'].iteritems() if stats['pval'] >= p_value_threshold and int(k) >= min_cc_size),
-                              float( obj['parameters']['delta'] ),
-                              results_file ))
+# Choose the results files when given directories of results files.
+def choose_result_files(directories, min_cc_size, p_value_threshold):
+    result_files = []
+    # Consider each run.
+    for directory in directories:
+        result_statistics = []
+        # Consider each \delta value for each run.
+        for subdirectory in os.listdir(directory):
+            if os.path.isdir(os.path.join(directory, subdirectory)) and subdirectory.startswith('delta'):
+                results_file = os.path.join(directory, subdirectory, 'results.json')
+                # For each \delt value, load the results for each \delta value and record the
+                # number of component sizes k with p-values below a given threshold when k \geq
+                # min_cc_size.
+                with open(results_file, 'r') as f:
+                    data = json.load(f)
+                count = 0
+                for k in data['statistics']:
+                    if data['statistics'][k]['pval']>p_value_threshold and int(k)>=min_cc_size:
+                        count += 1
+                delta = data['parameters']['delta']
+                result_statistics.append((count, delta, results_file))
+        # Find the smallest \delta value with the largest number of component sizes k with p-values
+        # below a threshold. For convenience, we find the smallest number of \delta values greater
+        # greater than or equal to the threshold, and we sort from smallest to largest.
+        result_files.append(sorted(result_statistics)[0][-1])
+    return result_files
 
-        # Note that we want the subnetworks with the largest number of p-values below a threshold,
-        # and, of those subnetworks, we want the subnetworks with the smallest \delta value, so we
-        # sort by the smallest number of p-values above the threshold and then the smallest \delta
-        # value.
-        results_files.append( sorted( delta_list )[0][2] )
-
-    return results_files
-
-def load_results(results_files, min_cc_size):
+# Load results.
+def load_results(results_files, min_size):
     results = []
-    for filename in results_files:
-        # Load the components from each results file
-        print '* Loading {}...'.format(filename)
-        with open(filename) as f: obj = json.load(f)
-        components = [cc for cc in obj['components'] if len(cc) >= min_cc_size]
-        results.append( components )
-
+    for results_file in results_files:
+        with open(results_file, 'r') as f:
+            data = json.load(f)
+        components = [ cc for cc in data['components'] if len(cc)>=min_size ]
+        results.append(components)
     return results
 
-# Construct consensus graph
-def consensus_edges(results, networks, all_genes):
-    # Create membership dictionary
-    gene2neighbors = dict((g, defaultdict(set)) for g in all_genes)
-    for ccs, network in zip(results, networks):
+# Construct consensus graph.
+def consensus_edges(components, networks):
+    edges_to_networks = defaultdict(set)
+    for ccs, network in zip(components, networks):
         for cc in ccs:
-            for i, u in enumerate(cc):
-                for j, v in enumerate(cc):
-                    if i != j:
-                        gene2neighbors[u][v].add( network )
-
-    # Create an edge list from the membership dictionary
-    from itertools import combinations
-    edges = [(g1, g2, dict(networks=len(gene2neighbors[g1][g2])))
-             for g1, g2 in combinations(all_genes, 2)
-             if len(gene2neighbors[g1][g2]) > 0 ]
-
-    return edges
+            for u, v in combinations(cc, 2):
+                edges_to_networks[(u, v)].add(network)
+    return dict( (edge, len(edge_networks)) for edge, edge_networks in edges_to_networks.iteritems() )
 
 def run(args):
-    # Assert that a network was given for each results file
-    if len(args.results_files) != len(args.networks):
-        raise ValueError("You must pass in one network name for each result file.")
+    # Check arguments.
+    if not args.directories and not args.files:
+        raise ValueError('Neither the directories or files argument is specified; specify one argument.')
+    if args.directories and args.files:
+        raise ValueError('Both the directories and files arguments are specified; specify only one argument.')
+    if args.directories and len(args.directories)!=len(args.networks):
+        raise ValueError('The directories and networks arguments have different numbers of entries; provide equal numbers of entries.')
+    if args.files and len(args.files)!=len(args.networks):
+        raise ValueError('The files and networks arguments have different numbers of entries; provide equal numbers of entries.')
 
-    networks = args.networks
-    num_networks = len(set(networks))
+    # Count networks.
+    num_networks = len(set(args.networks))
+    if args.verbose:
+        print '* Combining {} networks from {} HotNet(2) runs...'.format(num_networks, len(args.networks))
 
-    # Choose results to use
-    if args.delta_choice:
-        results_files = choose_results( args.results_files, args.min_cc_size, args.p_value_threshold )
+    # Choose results files if given directories of results files.
+    if args.directories:
+        if args.verbose:
+            print '* Automatically choosing results from each run...'
+        result_files = choose_result_files(args.directories, args.min_cc_size, args.p_value_threshold)
     else:
-        results_files = args.results_files
+        if args.verbose:
+            print '* Using provided results...'
+        result_files = args.files
 
-    # Load results
-    print "* Loading results..."
-    results = load_results(results_files, args.min_cc_size)
+    # Load results.
+    results = load_results(result_files, args.min_cc_size)
 
-    # Create a set that lists all genes found in the HotNet2 results
-    all_genes = set( g for ccs in results for cc in ccs for g in cc )
-    print "\t- %s genes included across all results" % len(all_genes)
-
-    # Create the full consensus graph
-    edges = consensus_edges( results, networks, all_genes )
+    # Create the full consensus graph.
+    if args.verbose:
+        print '* Constructing HotNet(2) consensus network...'
+    edges = consensus_edges(results, args.networks)
     G = nx.Graph()
-    G.add_edges_from( edges )
+    G.add_weighted_edges_from( (u, v, w) for (u, v), w in edges.iteritems() )
 
-    # Extract the connected components when restricted to edges in all networks
+    # Extract the connected components when restricted to edges in all networks.
     H = nx.Graph()
-    H.add_edges_from( (u, v, d) for u, v, d in edges if d['networks'] >= num_networks )
+    H.add_edges_from( (u, v) for (u, v), w in edges.iteritems() if w >= num_networks )
     consensus = [ set(cc) for cc in nx.connected_components( H ) ]
     consensus_genes = set( g for cc in consensus for g in cc )
 
-    # Expand each consensus by adding back any edges not in all networks
+    # Expand each consensus by adding back any edges not in all networks.
     expanded_consensus = []
     linkers = set()
     for cc in consensus:
@@ -121,10 +123,10 @@ def run(args):
         neighbors = set( v for u in cc for v in G.neighbors(u) if v not in consensus_genes )
         expansion = set()
         for u in neighbors:
-            cc_networks = max( G[u][v]['networks'] for v in set(G.neighbors(u)) & cc )
-            consensus_neighbors = set( v for v in G.neighbors(u) if v in other_consensus_genes and G[u][v]['networks'] >= cc_networks )
+            cc_networks = max( G[u][v]['weight'] for v in set(G.neighbors(u)) & cc )
+            consensus_neighbors = set( v for v in G.neighbors(u) if v in other_consensus_genes and G[u][v]['weight'] >= cc_networks )
             if len(consensus_neighbors) > 0:
-                if any([ G[u][v]['networks'] > 1 for v in consensus_neighbors ]):
+                if any([ G[u][v]['weight'] > 1 for v in consensus_neighbors ]):
                     linkers.add( u )
             else:
                 expansion.add( u )
@@ -133,17 +135,21 @@ def run(args):
     consensus_genes = set( g for cc in expanded_consensus for g in cc['consensus'] + cc['expansion'] )
     linkers -= consensus_genes
 
-    print "* No. consensus genes:", len(consensus_genes)
+    # Summarize the results.
+    if args.verbose:
+        total_genes = set(v for ccs in results for cc in ccs for v in cc)
+        print '* Returning {} consensus genes from {} original genes...'.format(len(consensus_genes), len(total_genes))
 
-    # Output to file (JSON or text depending on the file extension)
-    with open(args.output_file, "w") as out:
-        if args.output_file.lower().endswith(".json"):
+    # Output to file (either JSON or text depending on the file extension).
+    with open(args.output_file, 'w') as f:
+        if args.output_file.lower().endswith('.json'):
             # Convert the consensus to lists
             consensus = [ dict(core=list(c['consensus']), expansion=list(c['expansion'])) for c in expanded_consensus ]
-            json.dump(dict(linkers=list(linkers), consensus=consensus), out, sort_keys=True, indent=4)
+            json.dump(dict(linkers=list(linkers), consensus=consensus), f, sort_keys=True, indent=4)
         else:
-            output  = [ "# Linkers: {}".format(", ".join(sorted(linkers))), "#Consensus" ]
-            output += ["{}\t[{}] {}".format(i, ", ".join(sorted(c['consensus'])), ", ".join(sorted(c['expansion']))) for i, c in enumerate(expanded_consensus) ]
-            out.write( "\n".join(output) )
+            output  = [ '# Linkers: {}'.format(', '.join(sorted(linkers))), '# Consensus:' ]
+            output += [ '{}\t[{}] {}'.format(i, ', '.join(sorted(c['consensus'])), ', '.join(sorted(c['expansion']))) for i, c in enumerate(expanded_consensus) ]
+            f.write( '\n'.join(output) )
 
-if __name__ == "__main__": run(get_parser().parse_args(sys.argv[1:]))
+if __name__ == '__main__':
+    run(get_parser().parse_args( sys.argv[1:]) )
