@@ -28,7 +28,7 @@ def get_parser():
     return parser
 
 # Choose the results files when given directories of results files.
-def choose_result_files(directories, min_cc_size, p_value_threshold):
+def choose_result_files(directories, min_cc_size, p_value_threshold, verbose=False):
     result_files = []
     # Consider each run.
     for directory in directories:
@@ -51,7 +51,10 @@ def choose_result_files(directories, min_cc_size, p_value_threshold):
         # Find the smallest \delta value with the largest number of component sizes k with p-values
         # below a threshold. For convenience, we find the smallest number of \delta values greater
         # greater than or equal to the threshold, and we sort from smallest to largest.
-        result_files.append(sorted(result_statistics)[0][-1])
+        selected_result_statistics = sorted(result_statistics)[0]
+        if verbose:
+            print '\t- Selected delta = {} for {}...'.format(selected_result_statistics[1], directory)
+        result_files.append(selected_result_statistics[2])
     return result_files
 
 # Load results.
@@ -93,7 +96,7 @@ def run(args):
     if args.directories:
         if args.verbose:
             print '* Automatically choosing results from each run...'
-        result_files = choose_result_files(args.directories, args.min_cc_size, args.p_value_threshold)
+        result_files = choose_result_files(args.directories, args.min_cc_size, args.p_value_threshold, args.verbose)
     else:
         if args.verbose:
             print '* Using provided results...'
