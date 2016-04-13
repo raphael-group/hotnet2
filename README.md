@@ -40,7 +40,7 @@ Setup
 ------------------------
 
 ### Compilation
-For best performance, install a Fortran or C complier and run one of the following commands 
+For best performance, install a Fortran or C complier and run one of the following commands
 (or some appropriate variation of them) prior to running HotNet for the first time:
 
 With a Fortran compiler:
@@ -85,7 +85,7 @@ iRefIndex 9, and Multinet interaction networks for download:
 * [Multinet](http://compbio-research.cs.brown.edu/software/hotnet2/permuted_networks/multinet.tar) (~1.4Gb)
 
 You can use these permuted networks instead of generating your own. However, you will
-still need to generate the influence matrices for each of the permuted networks. See 
+still need to generate the influence matrices for each of the permuted networks. See
 the "Advanced Use" section below.
 
 Simple runs
@@ -258,7 +258,7 @@ The steps of the algorithm and the code provided for each step are described bel
         -------------------------------------------------------------------------------------------------------------
         |-o/--output_dir          | REQUIRED           |Output directory.                                           |
         -------------------------------------------------------------------------------------------------------------
-        
+
     If desired, the scripts `bin/createPPRMat.py` and `bin/permuteNetwork.py` can be used to
     perform the individual steps of creating influence matrices and permuting edge lists,
     respectively.
@@ -288,7 +288,7 @@ The steps of the algorithm and the code provided for each step are described bel
         |-t/--time                | REQUIRED           |Diffusion time.                                             |
         -------------------------------------------------------------------------------------------------------------
 
-    
+
 2. ###Heat score generation###
 
     This step creates a JSON file containing heat scores on each gene required in subsequent steps.
@@ -454,21 +454,21 @@ The steps of the algorithm and the code provided for each step are described bel
     The random data can be either:
 
     * Permuted networks (recommended for HotNet2),
-    
-    * Permuted heat scores (recommended for classic HotNet with arbitrary score types),  
+
+    * Permuted heat scores (recommended for classic HotNet with arbitrary score types),
 
       or
 
     * Permuted mutation data (recommended for classic HotNet when mutation data is used to generate scores)
-    
+
     The Python script `bin/findThreshold.py` can be used to run the delta selection procedure. The
     required and optional parameters to the script are described below.
-    
+
     For the permuted networks test, precomputed network permutations are required as input. In this
     case, the first parameter to `findThreshold.py` should be `network`, e.g.:
-    
+
             python bin/findThreshold.py network <additional_parameters>
-            
+
         =============================================================================================================
         | PARAMETER NAME          | REQUIRED/DEFAULT   | DESCRIPTION                                                |
         =============================================================================================================
@@ -751,15 +751,22 @@ The steps of the algorithm and the code provided for each step are described bel
         ========================================================================================================
         | PARAMETER NAME         | REQUIRED/DEFAULT | DESCRIPTION                                              |
         ========================================================================================================
-        |-r/--results_files      | REQUIRED         |Paths to results.json files output by HotNet2. Multiple   |
-        |                        |                  |file paths may be passed.                                 |
+        |-d/--directories        | None             |Paths to directories with results.json files output by    |
+        |                        |                  |HotNet2. The consensus will choose one results.json file  |
+        |                        |                  |per directory. Only one of directories and files may be   |
+        |                        |                  |set.                                                      |
         --------------------------------------------------------------------------------------------------------
-        |-n/--networks           | REQUIRED         |List of network names, one per result file.               |
+        |-f/--files              | None             |Paths to (multiple) results.json files output by HotNet2. |
+        |                        |                  |Only one of directories and files may be set.             |
         --------------------------------------------------------------------------------------------------------
-        |-o/--output_file        | REQUIRED         |Output directory.                                         |
+        |-n/--networks           | REQUIRED         |List of network names, one per directory or result file.  |
         --------------------------------------------------------------------------------------------------------
-        |-ms/--min_cc_size       | REQUIRED         |Restrict consensus to subnetworks of at least this size.  |
-        |                        |                  |Default: 2.                                               |
+        |-p/--p_value_threshold  | 0.01             |Threshold for p-values when selecting results files from  |
+        |                        |                  |directories.                                              |
+        --------------------------------------------------------------------------------------------------------
+        |-m/--min_cc_size        | 2                |Restrict consensus to subnetworks of at least this size.  |
+        --------------------------------------------------------------------------------------------------------
+        |-o/--output_file        | REQUIRED         |Output file. A json extension creates a JSON file.        |
         --------------------------------------------------------------------------------------------------------
 
     The output file is a table where each line is a consensus subnetwork of the form `"[Core]\tExtended"`.
@@ -808,7 +815,7 @@ If you use HotNet2 in your work, please cite (\* denotes equal contribution):
 M.D.M. Leiserson\*, F. Vandin\*, H.T. Wu, J.R. Dobson, J.V. Eldridge, J.L. Thomas, A. Papoutsaki,
 Y. Kim, B. Niu, M. McLellan, M.S. Lawrence, A.G. Perez, D. Tamborero, Y. Cheng, G.A. Ryslik,
 N. Lopez-Bigas, G. Getz, L. Ding, and B.J. Raphael.  (2014) Pan-Cancer Network Analysis Identifies
-Combinations of Rare Somatic Mutations across Pathways and Protein Complexes. Nature Genetics **47**, 106–114 (2015). 
+Combinations of Rare Somatic Mutations across Pathways and Protein Complexes. Nature Genetics **47**, 106–114 (2015).
 
 If you use HotNet in your work, please cite:
 
