@@ -122,10 +122,15 @@ def mut_heat(genes, num_samples, snvs, cnas, min_freq):
     
     gene2heat = dict()
     for gene, mutations in genes2mutations.iteritems():
-        snv_heat = num_snvs(mutations)
-        snv_heat = snv_heat if snv_heat >= min_freq else 0
-        cna_heat = num_cnas(mutations)
-        gene2heat[gene] = (snv_heat + cna_heat) / float(num_samples)
+        snv_mut_samples = set( m.sample for m in mutations if m.mut_type == SNV and m.valid )
+        cna_mut_samples = set( m.sample for m in mutations if (m.mut_type == AMP or m.mut_type == DEL) and m.valid )
+
+        # Minimum frequency is for SNVs *only*, so we just use CNAs if the SNVs
+        # are below min_freq
+        if len(snv_mut_samples) < min_freq:
+            gene2heat[gene] = len(cna_mut_samples) / float(num_samples)
+        else:
+            gene2heat[gene] = len(snv_mut_samples | cna_mut_samples) / float(num_samples)
     
     return gene2heat
 
