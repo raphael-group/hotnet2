@@ -26,10 +26,12 @@ def get_parser():
                               second column of each line.')
     parser.add_argument('-ccs', '--min_cc_size', type=int, default=2,
                         help='Minimum size connected components that should be returned.')
-    parser.add_argument('-pnp', '--permuted_networks_path', required=True,
+    parser.add_argument('-pnp', '--permuted_networks_path', required=False, default='',
                         help='Path to influence matrices for permuted networks. Include ' +\
                               ITERATION_REPLACEMENT_TOKEN + ' in the path to be replaced with the\
                               iteration number')
+    parser.add_argument('-d', '--deltas', nargs='*', type=float, default=[],
+                        help='Delta value(s).')
     parser.add_argument('-dp', '--delta_permutations', type=int, default=100,
                         help='Number of permutations to be used for delta parameter selection.')
     parser.add_argument('-sp', '--significance_permutations', type=int, default=100,
@@ -65,5 +67,5 @@ def run(args):
     extra_delta_args = [args.permuted_networks_path, INFMAT_NAME, MAX_CC_SIZES]
     hnrun.run_helper(args, INFMAT_NAME, hnrun.get_deltas_hotnet2, extra_delta_args)
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))
