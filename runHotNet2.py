@@ -11,9 +11,10 @@ def get_parser():
                    parameter selection."
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
 
-    parser.add_argument('-nf', '--network_files', required=True, nargs='*',
+    parser.add_argument('-r', '--runname', help='Name of run / disease.')
+    parser.add_argument('-mf', '--network_file', required=True,
                         help='Path to HDF5 (.h5) file containing influence matrix and edge list.')
-    parser.add_argument('-hf', '--heat_files', required=True, nargs='*',
+    parser.add_argument('-hf', '--heat_file', required=True,
                         help='Path to heat file containing gene names and scores. This can either\
                               be a JSON file created by generateHeat.py, in which case the file\
                               name must end in .json, or a tab-separated file containing a gene\

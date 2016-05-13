@@ -2,8 +2,8 @@
 
 import sys, os, json, h5py, numpy as np, scipy.io, networkx as nx
 from collections import defaultdict
-from constants import *
-from hotnet2 import component_sizes
+import json, h5py, sys, numpy as np, scipy.io, networkx as nx
+from constants import SNV, AMP, DEL, INACTIVE_SNV, Mutation, Fusion
 
 ################################################################################
 # Data loading functions
@@ -376,11 +376,12 @@ def load_network(file_path, infmat_name):
     to figure out how to load the file.
     """
     H = load_hdf5(file_path)
+    print H.keys()
     PPR = np.asarray(H[infmat_name])
     indexToGene = dict( zip(range(np.shape(PPR)[0]), H['nodes']) )
     G = nx.Graph()
     G.add_edges_from(H['edges'])
-    return PPR, indexToGene, G, H['network_name'], H['permuted_networks_path']
+    return PPR, indexToGene, G, H['network_name']
 
 def load_hdf5(file_path, keys=None):
     """

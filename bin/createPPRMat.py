@@ -16,10 +16,6 @@ def get_parser():
                         help='Location of edgelist file.')
     parser.add_argument('-i', '--gene_index_file', required=True,
                         help='Location of gene-index file.')
-    parser.add_argument('-pnp', '--permuted_networks_path', required=False, default='',
-                        help='Path to influence matrices for permuted networks. Include ' +\
-                              ITERATION_REPLACEMENT_TOKEN + ' in the path to be replaced with the\
-                              iteration number')
     parser.add_argument('-n', '--network_name', required=True,
                         help='Name of network.')
     parser.add_argument('-o', '--output_file', required=True,
@@ -67,22 +63,20 @@ def run(args):
     print "\t- Largest CC Nodes:", len( G.nodes() )
 
     ## Create the PPR matrix either using Scipy or MATLAB
+
     # Create "walk" matrix (normalized adjacency matrix)
     print "* Creating PPR  matrix..."
     W = nx.to_numpy_matrix( G , nodelist=nodes, dtype=np.float64 )
     W = np.asarray(W)
     W = W / W.sum(axis=0) # normalization step
 
-    ## Create PPR matrix using Python
+    ## Create PPR matrix
     from scipy.linalg import inv
     PPR = args.beta*inv(sp.eye(n)-(1.-args.beta)*W)
     if args.exclude_network:
         hnio.save_hdf5(args.output_file, dict(PPR=PPR))
     else:
-        output = dict(edges=G.edges(), PPR=PPR, nodes=nodes,
-                      network_name=args.network_name,
-                      permuted_networks_path=args.permuted_networks_path)
-        hnio.save_hdf5(args.output_file, output)
+        hnio.save_hdf5(args.output_file, dict(network_name=args.network_name, PPR=PPR, nodes=nodes, edges=G.edges()))
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))
