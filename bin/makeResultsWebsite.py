@@ -32,6 +32,59 @@ def get_parser():
                         help='Output directory in which the website should be generated.')
     return parser
 
+def load_mutation_heat(heat_file):
+    # Load the heat file
+    with open(heat_file, 'r') as IN:
+        heat_file = json.load(IN)
+        heat_parameters = heat_file['parameters']
+
+    # Return blank mutation data if none was provided
+    if not ('heat_fn' in heat_parameters and heat_parameters['heat_fn'] == 'load_mutation_heat'):
+        return [], [], dict()
+
+    # Load the mutation data
+    samples = hnio.load_samples(heat_parameters['sample_file']) if heat_parameters['sample_file'] else None
+    genes = hnio.load_genes(heat_parameters['gene_file']) if heat_parameters['gene_file'] else None
+    snvs = hnio.load_snvs(heat_parameters['snv_file'], genes, samples) if heat_parameters['snv_file'] else []
+    cnas = hnio.load_cnas(heat_parameters['cna_file'], genes, samples) if heat_parameters['cna_file'] else []
+
+    if heat_parameters.get('sample_type_file'):
+        with open(heat_parameters['sample_type_file']) as f:
+            output['sampleToType'] = dict(l.rstrip().split() for l in f if not l.startswith("#") )
+    else:
+        if not samples:
+            samples = set( m.sample for m in snvs ) | set( m.sample for m in cnas )
+        sampleToType = dict( (s, "Cancer") for s in samples )
+
+    return snvs, cnas, sampleToType
+
+def generate_viz_json(results_files, edges, network_name, gene2heat, snvs, cnas, sampleToType, d_score, d_name):
+    output = dict(deltas=[], subnetworks=dict(), stats=dict(), gene2heat=gene2heat)
+    predictions = set()
+    samples = sampleToType.keys()
+    for results_file in results_files:
+        with open(results_file, 'r') as IN:
+            results = json.load(IN)
+            ccs = results['components']
+            predictions |= set( g for cc in ccs for g in cc )
+
+        delta = format(results['parameters']['delta'], 'g')
+        output['stats'][delta] = results['statistics']
+        output['subnetworks'][delta] = []
+        for cc in ccs:
+            output['subnetworks'][delta].append(viz.get_component_json(cc, gene2heat, edges, network_name, d_score, d_name))
+
+        if snvs or cnas:
+            for i, cc in enumerate(ccs):
+                output['subnetworks'][delta][i]['coverage'] = viz.get_coverage(cc, snvs, cnas, samples)
+
+    # Load the mutation data
+    if snvs or cnas:
+        output['geneToMutations'] = viz.get_mutations_json(predictions, snvs, cnas, d_name)
+        output['sampleToType'] = sampleToType
+
+    return output
+
 def run(args):
     subnetworks_file = '%s/viz_files/%s' % (str(hotnet2.__file__).rsplit('/', 1)[0], VIZ_SUBNETWORKS)
 
