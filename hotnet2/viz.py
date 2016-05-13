@@ -45,7 +45,8 @@ def get_component_json(cc, gene2heat, edges, networkName, d_score, d_name):
 
     return {'nodes': nodes, 'edges': cc_edges}
 
-def get_mutations_json(genes, snvs, cnas, d_name):
+def get_mutations_json(ccs, snvs, cnas, d_name):
+    genes = set( g for cc in ccs for g in cc )
     M = defaultdict(lambda: defaultdict(list))
     for mut in snvs + cnas:
         if mut.gene in genes:

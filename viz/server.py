@@ -45,32 +45,27 @@ def run( args ):
 	# Load the results and create a summary for each file
 	results = []
 	summary = []
-	for root in next(os.walk(args.input_directory))[1]:
+	for root in next(os.walk('.'))[1]:
 		# Every subdirectory should have a viz-data.json file, otherwise
 		# we skip it
 		try:
-			with open('{}/{}/viz-data.json'.format(args.input_directory, root), 'r') as IN:
+			with open(root + '/viz-data.json', 'r') as IN:
 				# Parse the data and extract the info we need
 				data = json.load(IN)
-				params = data['params']
-				is_consensus = params['consensus']
-				if is_consensus:
-					heat_name, network_name = '', ''
-				else:
-					heat_name, network_name = params['heat_name'], params['network_name']
-
+				# params = data['params']
+				params = dict(heat_name='Made up', network_name='Made up', auto_delta='4.64883e-05')
+				is_consensus = root == 'consensus'
+				name = 'Consensus' if is_consensus else '%s %s' % (params['heat_name'], params['network_name'])
 				num_subnetworks = len(data['subnetworks'][params['auto_delta']])
-				result = dict(heat_name=heat_name, network_name=network_name,
-							  auto_delta=params['auto_delta'],
-							  num_subnetworks=num_subnetworks, data=data,
+				result = dict(network_name = params['network_name'], heat_name=params['heat_name'],
+							  auto_delta=params['auto_delta'], num_subnetworks=num_subnetworks, data=data,
 							  is_consensus=is_consensus)
-
 				results.append( result )
 		except IOError:
 			continue
 
 	# Sort so the consensus is first
-	results.sort(key=lambda r: not r['is_consensus'])
+	results.sort(key=lambda r: r['is_consensus'])
 
 	# Set up the server
 	routes = [ (r'/bower_components/(.*)', tornado.web.StaticFileHandler, {'path': "bower_components"})]
@@ -81,7 +76,7 @@ def run( args ):
 		result['run_index'] = i
 		routes.append( (run_route, RunHandler, dict(result=result)) )
 	routes.append( (r"/", MainHandler, dict(results=results)) )
-
+	
 	# Start server
 	app = tornado.web.Application(routes)
 	app.listen(args.port)

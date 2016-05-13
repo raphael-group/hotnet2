@@ -104,7 +104,7 @@ def run(args):
             genes = hnio.load_genes(heat_parameters['gene_file']) if heat_parameters['gene_file'] else None
             snvs = hnio.load_snvs(heat_parameters['snv_file'], genes, samples) if heat_parameters['snv_file'] else []
             cnas = hnio.load_cnas(heat_parameters['cna_file'], genes, samples) if heat_parameters['cna_file'] else []
-            output['geneToMutations'] = hnviz.get_component_json(ccs, snvs, cnas, d_name)
+            output['geneToMutations'] = viz.get_mutations_json(ccs, snvs, cnas, d_name)
 
             # Get the samples and genes from the mutations directly if they weren't provided
             if not samples:
