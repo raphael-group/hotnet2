@@ -15,18 +15,24 @@ def get_parser():
                         help='Location of edgelist file.')
     parser.add_argument('-i', '--gene_index_file', required=True,
                         help='Location of gene-index file.')
-    parser.add_argument('-o', '--output_dir', required=True,
-	                help="Output dir.")
-    parser.add_argument('-p', '--prefix', required=True,
-	                help="Output prefix.")
+    parser.add_argument('-n', '--network_name', required=True,
+                        help='Name of network.')
+    parser.add_argument('-o', '--output_file', required=True,
+                    help="Output file.")
     parser.add_argument('-s', '--start_index', default=1, type=int,
-	                help="Index to output edge list, etc..")
+                    help="Index to output edge list, etc..")
     parser.add_argument('-b', '--beta', required=True, type=float,
-	                help="Restart probability beta.")
-    parser.add_argument('-f', '--format', default='hdf5', type=str,
-                    choices=['hdf5', 'npy', 'matlab'],
-                    help="Output file format.")
+                    help="Restart probability beta.")
+    parser.add_argument('--exclude_network', required=False, action='store_true',
+                    default=False,
+                    help="Exclude the gene index and edges in the output file.")
     return parser
+
+# Remove self-loops, multi-edges, and restrict to the largest component
+def largest_component(G):
+    selfLoops = [(u, v) for u, v in G.edges() if u == v]
+    G.remove_edges_from( selfLoops )
+    return G.subgraph( sorted(nx.connected_components( G ), key=lambda cc: len(cc), reverse=True)[0] )
 
 def run(args):
     # Load gene-index map
@@ -49,40 +55,11 @@ def run(args):
     # Remove self-loops and restrict to largest connected component
     print "* Removing self-loops, multi-edges, and restricting to",
     print "largest connected component..."
-    selfLoops = [(u, v) for u, v in G.edges() if u == v]
-    G.remove_edges_from( selfLoops )
-    G = G.subgraph( sorted(nx.connected_components( G ), key=lambda cc: len(cc),
-                           reverse=True)[0] )
+    G = largest_component(G)
     nodes = sorted(G.nodes())
     n = len(nodes)
     print "\t- Largest CC Edges:", len( G.edges() )
     print "\t- Largest CC Nodes:", len( G.nodes() )
-
-    # Set up output directory
-    print "* Saving updated graph to file..."
-    os.system( 'mkdir -p ' + args.output_dir )
-    output_dir = os.path.normpath(args.output_dir)
-    output_prefix = "{}/{}".format(output_dir, args.prefix)
-
-    if args.format == 'hdf5': ext = 'h5'
-    elif args.format == 'matlab': ext = 'mat'
-    else: ext = args.format
-
-    pprfile = "{}_ppr_{:g}.{}".format(output_prefix, args.beta, ext)
-
-    # Index mapping for genes
-    index_map = [ "{} {}".format(i+args.start_index, nodes[i]) for i in range(n) ]
-    with open("{}_index_genes".format(output_prefix), 'w') as outfile:
-        outfile.write( "\n".join(index_map) )
-
-    # Edge list
-    edges = [sorted([nodes.index(u) + args.start_index,
-                     nodes.index(v) + args.start_index])
-             for u, v in G.edges()]
-    edgelist = [ "{} {} 1".format(u, v) for u, v in edges ]
-
-    with open("{}_edge_list".format(output_prefix), 'w') as outfile:
-        outfile.write( "\n".join(edgelist) )
 
     ## Create the PPR matrix either using Scipy or MATLAB
     # Create "walk" matrix (normalized adjacency matrix)
@@ -94,12 +71,10 @@ def run(args):
     ## Create PPR matrix using Python
     from scipy.linalg import inv
     PPR = args.beta*inv(sp.eye(n)-(1.-args.beta)*W)
-    if args.format == 'hdf5':
-        hnio.save_hdf5(pprfile, dict(PPR=PPR))
-    elif args.format == 'npy':
-        np.save(pprfile, PPR)
-    elif args.format == 'matlab':
-        scipy.io.savemat(pprfile, dict(PPR=PPR))
+    if args.exclude_network:
+        hnio.save_hdf5(args.output_file, dict(PPR=PPR))
+    else:
+        hnio.save_hdf5(args.output_file, dict(network_name=args.network_name, PPR=PPR, nodes=nodes, edges=G.edges()))
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))

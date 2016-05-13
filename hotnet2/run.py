@@ -19,8 +19,7 @@ def run_helper(args, infmat_name, get_deltas_fn, extra_delta_args):
         print("WARNING: Output directory is not empty. Any conflicting files will be overwritten. "
               "(Ctrl-c to cancel).")
 
-    infmat = hnio.load_infmat(args.infmat_file, infmat_name)
-    full_index2gene = hnio.load_index(args.infmat_index_file)
+    infmat, full_index2gene, G, network_name = hnio.load_network(args.network_file, infmat_name)
 
     using_json_heat = os.path.splitext(args.heat_file.lower())[1] == '.json'
     if using_json_heat:
@@ -109,14 +108,17 @@ def run_helper(args, infmat_name, get_deltas_fn, extra_delta_args):
         shutil.copy(hierarchyFile, '{}/index.html'.format(hierarchy_out_dir))
 
     # write visualization output if edge file given
-    if args.edge_file:
-        from bin import makeResultsWebsite as MRW
-        viz_args = [ "-r" ] + results_files
-        viz_args += ["-ef", args.edge_file, "-o", args.output_directory + "/viz" ]
-        if args.network_name: viz_args += [ "-nn", args.network_name ]
-        if args.display_score_file: viz_args += [ "-dsf", args.display_score_file ]
-        if args.display_name_file: viz_args += [ "-dnf", args.display_name_file ]
-        MRW.run( MRW.get_parser().parse_args(viz_args) )
+    from bin import makeResultsWebsite as MRW
+    d_score = hnio.load_display_score_tsv(args.display_score_file) if args.display_score_file else None
+    d_name = hnio.load_display_name_tsv(args.display_name_file) if args.display_name_file else dict()
+    snvs, cnas, sampleToType = MRW.load_mutation_heat(args.heat_file)
+    output = MRW.generate_viz_json(results_files, G.edges(), network_name, heat, snvs, cnas, sampleToType, d_score, d_name, )
+    with open('{}/viz-data.json'.format(args.output_directory), 'w') as OUT:
+        output['params'] = dict(network_file=args.network_file, heat_file=args.heat_file,
+                                network_name=network_name, heat_name='TBD', auto_delta=format(deltas[0], 'g'),
+                                display_score_file=args.display_score_file,
+                                display_name_file=args.display_name_file)
+        json.dump( output, OUT )
 
 def get_deltas_hotnet2(full_index2gene, heat, num_perms, num_cores, _infmat, _addtl_genes,
                        permuted_networks_path, infmat_name, max_cc_sizes):

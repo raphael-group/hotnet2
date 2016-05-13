@@ -3,6 +3,7 @@
 # Load required modules
 import sys, networkx as nx, multiprocessing as mp
 import os.path
+from createPPRMat import largest_component
 sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 from hotnet2 import hnap
 
@@ -52,6 +53,7 @@ def run(args):
     G = nx.Graph()
     with open(args.edgelist_file) as infile:
         G.add_edges_from([ l.rstrip().split()[:2] for l in infile ])
+        G = largest_component(G)
     numEdges, numNodes = len(G.edges()), len(G.nodes())
 
     # Report info about the graph and number of swaps
