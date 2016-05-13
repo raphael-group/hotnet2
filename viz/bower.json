@@ -1,0 +1,12 @@
+{
+  "name": "hotnet2-viz",
+  "version": "0.0.1",
+  "dependencies": {
+    "jquery": "latest",
+    "d3": "latest",
+    "bootstrap": "3.x",
+    "DataTables": "latest",
+    "fontawesome": "latest",
+    "gd3": "https://github.com/raphael-group/gd3.git#master"
+  }
+}

@@ -74,11 +74,11 @@ def run(args):
 
         # make oncoprints if heat file was generated from mutation data
         if 'heat_fn' in heat_parameters and heat_parameters['heat_fn'] == 'load_mutation_heat':
-            output['mutation_matrices'][delta] = list()
             samples = hnio.load_samples(heat_parameters['sample_file']) if heat_parameters['sample_file'] else None
             genes = hnio.load_genes(heat_parameters['gene_file']) if heat_parameters['gene_file'] else None
             snvs = hnio.load_snvs(heat_parameters['snv_file'], genes, samples) if heat_parameters['snv_file'] else []
             cnas = hnio.load_cnas(heat_parameters['cna_file'], genes, samples) if heat_parameters['cna_file'] else []
+            output['geneToMutations'] = viz.get_mutations_json(ccs, snvs, cnas, d_name)
 
             # Get the samples and genes from the mutations directly if they weren't provided
             if not samples:
@@ -86,19 +86,19 @@ def run(args):
             if not genes:
                 genes = set( m.gene for m in snvs) | set( m.gene for m in cnas )
 
-            for cc in ccs:
-                output['mutation_matrices'][delta].append(viz.get_oncoprint_json(cc, snvs, cnas, d_name))
+            for i, cc in enumerate(ccs):
+                output['subnetworks'][delta][i]['coverage'] = viz.get_coverage(cc, snvs, cnas, samples)
 
             if heat_parameters.get('sample_type_file'):
                 with open(heat_parameters['sample_type_file']) as f:
-                    output['sampleToTypes'] = dict(l.rstrip().split() for l in f if not l.startswith("#") )
-                    output['typeToSamples'] = dict((t, []) for t in set(output['sampleToTypes'].values()))
-                    for s, ty in output['sampleToTypes'].iteritems():
+                    output['sampleToType'] = dict(l.rstrip().split() for l in f if not l.startswith("#") )
+                    output['typeToSamples'] = dict((t, []) for t in set(output['sampleToType'].values()))
+                    for s, ty in output['sampleToType'].iteritems():
                         output['typeToSamples'][ty].append( s )
             else:
                 if not samples:
                     samples = set( m.sample for m in snvs ) | set( m.sample for m in cnas )
-                output['sampleToTypes'] = dict( (s, "Cancer") for s in samples )
+                output['sampleToType'] = dict( (s, "Cancer") for s in samples )
                 output['typeToSamples'] = dict(Cancer=list(samples))
 
         output['stats'][delta] = results['statistics']
@@ -107,7 +107,7 @@ def run(args):
     # Print a warning if there were multiple heat files referenced by
     # the results files
     if multipleHeatFiles:
-        sys.stderr.write('Warning: results files used multiple heat files. Only the last heat file will be used to tabulate scores.\n')
+        sys.stderr.write('Warning: results files used multiple heat files. Only the last heat file will be used to tabulate scores and make mutation matrices.\n')
 
     # Output to file
     output['predictions'] = sorted(predictions) # list of nodes found in any run
