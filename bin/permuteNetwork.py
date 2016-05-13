@@ -3,6 +3,7 @@
 # Load required modules
 import sys, networkx as nx, multiprocessing as mp
 import os.path
+from createPPRMat import largest_component
 sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 from hotnet2 import hnap
 
@@ -45,13 +46,14 @@ def permute_network_wrapper((G, Q, numEdges, outputFile, i, n)):
     sys.stdout.write("\r{}/{}".format(store['maxSeen'], n))
     sys.stdout.flush()
     return swaps
-    
+
 def run(args):
     # Load graph
     print "* Loading edge list.."
     G = nx.Graph()
     with open(args.edgelist_file) as infile:
         G.add_edges_from([ l.rstrip().split()[:2] for l in infile ])
+        G = largest_component(G)
     numEdges, numNodes = len(G.edges()), len(G.nodes())
 
     # Report info about the graph and number of swaps
@@ -81,6 +83,6 @@ def run(args):
     # Report how many swaps were actually made
     avgSwaps = int(sum(swaps) / float(len(swaps)))
     print "* Avg. No. Swaps Made: {}".format(avgSwaps)
-            
+
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))

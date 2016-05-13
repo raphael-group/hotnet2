@@ -45,15 +45,14 @@ def run( args ):
 	# Load the results and create a summary for each file
 	results = []
 	summary = []
-	for root in next(os.walk('.'))[1]:
+	for root in next(os.walk(args.input_directory))[1]:
 		# Every subdirectory should have a viz-data.json file, otherwise
 		# we skip it
 		try:
-			with open(root + '/viz-data.json', 'r') as IN:
+			with open('{}/{}/viz-data.json'.format(args.input_directory, root), 'r') as IN:
 				# Parse the data and extract the info we need
 				data = json.load(IN)
-				# params = data['params']
-				params = dict(heat_name='Made up', network_name='Made up', auto_delta='4.64883e-05')
+				params = data['params']
 				is_consensus = root == 'consensus'
 				name = 'Consensus' if is_consensus else '%s %s' % (params['heat_name'], params['network_name'])
 				num_subnetworks = len(data['subnetworks'][params['auto_delta']])
@@ -76,7 +75,7 @@ def run( args ):
 		result['run_index'] = i
 		routes.append( (run_route, RunHandler, dict(result=result)) )
 	routes.append( (r"/", MainHandler, dict(results=results)) )
-	
+
 	# Start server
 	app = tornado.web.Application(routes)
 	app.listen(args.port)

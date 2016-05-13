@@ -1,5 +1,5 @@
 from collections import defaultdict
-import json, h5py, sys, numpy as np, scipy.io
+import json, h5py, sys, numpy as np, scipy.io, networkx as nx
 from constants import SNV, AMP, DEL, INACTIVE_SNV, Mutation, Fusion
 
 ################################################################################
@@ -11,7 +11,7 @@ def load_index(index_file):
     Arguments:
     index_file -- path to TSV file containing an index in the first column and the name of the gene
                   represented at that index in the second column
-    
+
     """
     with open(index_file) as f:
         arrs  = [l.split() for l in f]
@@ -367,21 +367,18 @@ def write_file(file_path, text):
         f.write(text)
 
 
-def load_infmat(file_path, infmat_name):
+def load_network(file_path, infmat_name):
     """
     Load an influence matrix from the file path, using the file path extension
     to figure out how to load the file.
     """
-    lower_file_path = file_path.lower()
-    if lower_file_path.endswith(".hdf5") or lower_file_path.endswith(".h5"):
-        return load_hdf5(file_path)[infmat_name]
-    elif lower_file_path.endswith(".npy"):
-        return np.load(file_path)
-    elif lower_file_path.endswith(".mat"):
-        return scipy.io.loadmat(file_path)[infmat_name]
-    else:
-        sys.stderr.write("Influence matrix format not recognized.\n")
-        sys.exit(1)
+    H = load_hdf5(file_path)
+    print H.keys()
+    PPR = np.asarray(H[infmat_name])
+    indexToGene = dict( zip(range(np.shape(PPR)[0]), H['nodes']) )
+    G = nx.Graph()
+    G.add_edges_from(H['edges'])
+    return PPR, indexToGene, G, H['network_name']
 
 def load_hdf5(file_path, keys=None):
     """
