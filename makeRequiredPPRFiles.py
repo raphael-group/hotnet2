@@ -51,15 +51,16 @@ def run(args):
     print "\nCreating PPR matrix for real network"
     print "--------------------------------------"
     pprfile = "{}/{}_ppr_{:g}.h5".format(args.output_dir, args.prefix, args.beta)
-    margs = '-e %s -i %s -o %s -s %s -b %s -n %s' % (args.edgelist_file, args.gene_index_file, pprfile,
-                                                     args.index_file_start_index, args.beta, args.network_name)
+    perm_dir = '%s/permuted' % args.output_dir
+    perm_path = '{}/##NUM##/{}_ppr_{:g}.h5'.format(perm_dir, args.prefix, args.beta)
+    margs = '-e %s -i %s -o %s -s %s -b %s -n %s -pnp %s' % (args.edgelist_file, args.gene_index_file, pprfile,
+                                                     args.index_file_start_index, args.beta, args.network_name, perm_path)
     ppr.run(ppr.get_parser().parse_args(margs.split()))
 
     # make permuted edge lists
     assert(args.num_permutations > 0)
     print "\nCreating edge lists for permuted networks"
     print "-------------------------------------------"
-    perm_dir = '%s/permuted' % args.output_dir
     if not os.path.exists(perm_dir): os.makedirs(perm_dir)
     pargs = '-q %s -s %s -e %s -p %s -o %s -n %s' % (args.Q, args.permutation_start_index, args.edgelist_file,
                                                      args.prefix, perm_dir, args.num_permutations)

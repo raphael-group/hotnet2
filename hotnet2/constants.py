@@ -26,3 +26,8 @@ Mutation.__new__.__defaults__ = (True,) # default valid field to True
 Fusion = namedtuple("Fusion", ["sample", "genes"])
 
 ITERATION_REPLACEMENT_TOKEN = '##NUM##'
+
+# HotNet2 params
+HN2_MAX_CC_SIZES = [5, 10, 15, 20]
+HN2_INFMAT_NAME = "PPR"
+HN2_STATS_SIZES = range(2, 11)

@@ -1,19 +1,19 @@
-import sys
-from hotnet2 import run as hnrun, hnap
-from hotnet2.constants import ITERATION_REPLACEMENT_TOKEN
+#!/usr/bin/env python
 
-MAX_CC_SIZES = [5, 10, 15, 20]
-INFMAT_NAME = "PPR"
+import sys, os, json
+from itertools import product
+from hotnet2 import run as hnrun, hnap, hnio, heat as hnheat, consensus_with_stats, viz as hnviz
+from hotnet2.constants import ITERATION_REPLACEMENT_TOKEN, HN2_INFMAT_NAME
+from bin import makeResultsWebsite as MRW, createDendrogram as CD
 
 def get_parser():
     description = "Helper script for simple runs of generalized HotNet2, including automated\
                    parameter selection."
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
 
-    parser.add_argument('-r', '--runname', help='Name of run / disease.')
-    parser.add_argument('-mf', '--network_file', required=True,
+    parser.add_argument('-nf', '--network_files', required=True, nargs='*',
                         help='Path to HDF5 (.h5) file containing influence matrix and edge list.')
-    parser.add_argument('-hf', '--heat_file', required=True,
+    parser.add_argument('-hf', '--heat_files', required=True, nargs='*',
                         help='Path to heat file containing gene names and scores. This can either\
                               be a JSON file created by generateHeat.py, in which case the file\
                               name must end in .json, or a tab-separated file containing a gene\
@@ -21,17 +21,13 @@ def get_parser():
                               second column of each line.')
     parser.add_argument('-ccs', '--min_cc_size', type=int, default=2,
                         help='Minimum size connected components that should be returned.')
-    parser.add_argument('-pnp', '--permuted_networks_path', required=False, default='',
-                        help='Path to influence matrices for permuted networks. Include ' +\
-                              ITERATION_REPLACEMENT_TOKEN + ' in the path to be replaced with the\
-                              iteration number')
     parser.add_argument('-d', '--deltas', nargs='*', type=float, default=[],
                         help='Delta value(s).')
     parser.add_argument('-dp', '--delta_permutations', type=int, default=100,
                         help='Number of permutations to be used for delta parameter selection.')
     parser.add_argument('-sp', '--significance_permutations', type=int, default=100,
                         help='Number of permutations to be used for statistical significance testing.')
-    parser.add_argument('-o', '--output_directory', default='hotnet_output',
+    parser.add_argument('-o', '--output_directory', required=True, default=None,
                         help='Output directory. Files results.json, components.txt, and\
                               significance.txt will be generated in subdirectories for each delta.')
     parser.add_argument('-c', '--num_cores', type=int, default=1,
@@ -47,12 +43,84 @@ def get_parser():
                         each line.')
     parser.add_argument('--output_hierarchy', default=False, required=False, action='store_true',
                         help='Output the hierarchical decomposition of the HotNet2 similarity matrix.')
+    parser.add_argument('--verbose', default=1, choices=range(5), type=int, required=False,
+                        help='Set verbosity of output (minimum: 0, maximum: 5).')
 
     return parser
 
 def run(args):
-    extra_delta_args = [args.permuted_networks_path, INFMAT_NAME, MAX_CC_SIZES]
-    hnrun.run_helper(args, INFMAT_NAME, hnrun.get_deltas_hotnet2, extra_delta_args)
+    # Load the network and heat files
+    networks, graph_map = [], dict()
+    for network_file in args.network_files:
+        infmat, indexToGene, G, nname, pnp = hnio.load_network(network_file, HN2_INFMAT_NAME)
+        graph_map[nname] = G
+        networks.append( (infmat, indexToGene, G, nname, pnp) )
+
+    heats, json_heat_map, heat_map, mutation_map = [], dict(), dict(), dict()
+    for heat_file in args.heat_files:
+        json_heat = os.path.splitext(heat_file.lower())[1] == '.json'
+        heat, hname, mutations = hnio.load_heat_file(heat_file, json_heat)
+        json_heat_map[hname] = json_heat
+        heat_map[hname] = heat
+        mutation_map[hname] = mutations
+        heats.append( (heat, hname) )
+
+    # Run HotNet2 on each pair of network and heat files
+    if args.verbose > 0:
+        print '* Running HotNet2 in consensus mode...'
+
+    single_runs, consensus, linkers, auto_deltas, consensus_stats = consensus_with_stats(args, networks, heats)
+
+    # Output the single runs
+    if args.verbose > 0:
+        print '* Outputting results to file...'
+
+    params = vars(args)
+    result_dirs = []
+    for (network_name, heat_name, run) in single_runs:
+        # Set up the output directory and record for later
+        output_dir = '%s/%s-%s' % (args.output_directory, network_name.lower(), heat_name.lower())
+        result_dirs.append(output_dir)
+        hnio.setup_output_dir(output_dir)
+
+        # Output to file
+        hnio.output_hotnet2_run(run, params, network_name, heat_map[heat_name], heat_name, json_heat_map[heat_name], output_dir)
+
+        # create the hierarchy if necessary
+        if args.output_hierarchy:
+            hierarchy_out_dir = '{}/hierarchy/'.format(output_dir)
+            if not os.path.isdir(hierarchy_out_dir): os.mkdir(hierarchy_out_dir)
+            CD.createDendrogram( sim, index2gene.values(), hierarchy_out_dir, params, verbose=False)
+
+    # Output the consensus
+    hnio.output_consensus(consensus, linkers, auto_deltas, consensus_stats, params, args.output_directory)
+
+    # Create the visualization(s). This has to be after the consensus procedure
+    # is run because we want to default to the auto-selected deltas.
+    if args.verbose > 0:
+        print '* Generating and outputting visualization data...'
+
+    d_score = hnio.load_display_score_tsv(args.display_score_file) if args.display_score_file else None
+    d_name = hnio.load_display_name_tsv(args.display_name_file) if args.display_name_file else dict()
+    for (network_name, heat_name, run), result_dir, auto_delta in zip(single_runs, result_dirs, auto_deltas):
+        snvs, cnas, sampleToType = mutation_map[heat_name]
+        G = graph_map[network_name]
+
+        output = hnviz.generate_viz_json(run, G.edges(), nname, heat, snvs, cnas, sampleToType, d_score, d_name)
+
+        with open('{}/viz-data.json'.format(result_dir), 'w') as OUT:
+            output['params'] = dict(consensus=False, network_name=network_name, heat_name=heat_name, auto_delta=format(auto_delta, 'g'))
+            json.dump( output, OUT )
+
+    # Add the consensus visualization
+    snvs, cnas, sampleToType = mutations
+    consensus_ccs = [ d['core'] + d['expansion'] for d in consensus ]
+    consensus_auto_delta = 0
+    results = [[consensus_ccs, consensus_stats, consensus_auto_delta]]
+    with open('{}/consensus/viz-data.json'.format(args.output_directory), 'w') as OUT:
+        output = hnviz.generate_viz_json(results, G.edges(), nname, heat, snvs, cnas, sampleToType, d_score, d_name)
+        output['params'] = dict(consensus=True, auto_delta=format(consensus_auto_delta, 'g'))
+        json.dump( output, OUT )
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))

@@ -6,7 +6,7 @@ import sys
 import os.path
 sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 import hotnet2
-from hotnet2 import hnap, hnio, viz
+from hotnet2 import hnap, hnio, viz as hnviz
 from hotnet2.constants import VIZ_INDEX, VIZ_SUBNETWORKS
 
 def get_parser():
@@ -58,33 +58,6 @@ def load_mutation_heat(heat_file):
 
     return snvs, cnas, sampleToType
 
-def generate_viz_json(results_files, edges, network_name, gene2heat, snvs, cnas, sampleToType, d_score, d_name):
-    output = dict(deltas=[], subnetworks=dict(), stats=dict(), gene2heat=gene2heat)
-    predictions = set()
-    samples = sampleToType.keys()
-    for results_file in results_files:
-        with open(results_file, 'r') as IN:
-            results = json.load(IN)
-            ccs = results['components']
-            predictions |= set( g for cc in ccs for g in cc )
-
-        delta = format(results['parameters']['delta'], 'g')
-        output['stats'][delta] = results['statistics']
-        output['subnetworks'][delta] = []
-        for cc in ccs:
-            output['subnetworks'][delta].append(viz.get_component_json(cc, gene2heat, edges, network_name, d_score, d_name))
-
-        if snvs or cnas:
-            for i, cc in enumerate(ccs):
-                output['subnetworks'][delta][i]['coverage'] = viz.get_coverage(cc, snvs, cnas, samples)
-
-    # Load the mutation data
-    if snvs or cnas:
-        output['geneToMutations'] = viz.get_mutations_json(predictions, snvs, cnas, d_name)
-        output['sampleToType'] = sampleToType
-
-    return output
-
 def run(args):
     subnetworks_file = '%s/viz_files/%s' % (str(hotnet2.__file__).rsplit('/', 1)[0], VIZ_SUBNETWORKS)
 
@@ -131,7 +104,7 @@ def run(args):
             genes = hnio.load_genes(heat_parameters['gene_file']) if heat_parameters['gene_file'] else None
             snvs = hnio.load_snvs(heat_parameters['snv_file'], genes, samples) if heat_parameters['snv_file'] else []
             cnas = hnio.load_cnas(heat_parameters['cna_file'], genes, samples) if heat_parameters['cna_file'] else []
-            output['geneToMutations'] = viz.get_mutations_json(ccs, snvs, cnas, d_name)
+            output['geneToMutations'] = hnviz.get_component_json(ccs, snvs, cnas, d_name)
 
             # Get the samples and genes from the mutations directly if they weren't provided
             if not samples:

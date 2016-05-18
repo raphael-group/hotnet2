@@ -1,6 +1,9 @@
+#!/usr/bin/env python
+
+import sys, os, json, h5py, numpy as np, scipy.io, networkx as nx
 from collections import defaultdict
-import json, h5py, sys, numpy as np, scipy.io, networkx as nx
-from constants import SNV, AMP, DEL, INACTIVE_SNV, Mutation, Fusion
+from constants import *
+from hotnet2 import component_sizes
 
 ################################################################################
 # Data loading functions
@@ -373,12 +376,11 @@ def load_network(file_path, infmat_name):
     to figure out how to load the file.
     """
     H = load_hdf5(file_path)
-    print H.keys()
     PPR = np.asarray(H[infmat_name])
     indexToGene = dict( zip(range(np.shape(PPR)[0]), H['nodes']) )
     G = nx.Graph()
     G.add_edges_from(H['edges'])
-    return PPR, indexToGene, G, H['network_name']
+    return PPR, indexToGene, G, H['network_name'], H['permuted_networks_path']
 
 def load_hdf5(file_path, keys=None):
     """
@@ -424,3 +426,95 @@ def save_hdf5(file_path, dictionary, compression=False):
         else:
             f[key] = dictionary[key]
     f.close()
+
+# Wrapper for loading a heat file, automatically detecting if it's JSON or TSV
+def load_heat_file(heat_file, json_heat):
+    mutations = [], [], dict() # default mutation data
+    if json_heat:
+        with open(heat_file, 'r') as IN:
+            obj         = json.load(IN)
+            heat_params = obj['parameters']
+            heat_name   = heat_params['name']
+            heat        = obj['heat']
+            heat_fn     = heat_params['heat_fn'] if 'heat_fn' in heat_params else None
+
+        # Return blank mutation data if none was provided
+        if heat_fn == 'load_mutation_heat':
+            # Load the mutation data
+            samples = load_samples(heat_params['sample_file']) if heat_params['sample_file'] else None
+            genes = load_genes(heat_params['gene_file']) if heat_params['gene_file'] else None
+            snvs = load_snvs(heat_params['snv_file'], genes, samples) if heat_params['snv_file'] else []
+            cnas = load_cnas(heat_params['cna_file'], genes, samples) if heat_params['cna_file'] else []
+
+            if heat_params.get('sample_type_file'):
+                with open(heat_parameters['sample_type_file']) as f:
+                    output['sampleToType'] = dict(l.rstrip().split() for l in f if not l.startswith("#") )
+            else:
+                if not samples:
+                    samples = set( m.sample for m in snvs ) | set( m.sample for m in cnas )
+                sampleToType = dict( (s, "Cancer") for s in samples )
+
+            mutations = snvs, cnas, sampleToType
+    else:
+        heat      = load_heat_tsv(heat_file)
+        heat_name = heat_file.split('/')[-1].split('.')[0]
+
+    return [heat, heat_name, mutations]
+
+###############################################################################
+# Main output functions
+###############################################################################
+
+# create output directory if doesn't exist; warn if it exists and is not empty
+def setup_output_dir(output_dir):
+    if not os.path.exists(output_dir): os.makedirs(output_dir)
+
+# Output a single run of HotNet2
+def output_hotnet2_run(result, params, network_name, heat, heat_name, using_json_heat, output_dir):
+    for ccs, sizes2stats, delta in result:
+        # create output directory
+        delta_out_dir = os.path.abspath(output_dir + "/delta_" + str(delta))
+        if not os.path.isdir(delta_out_dir): os.mkdir(delta_out_dir)
+
+        # Output a heat JSON file if JSON heat wasn't included
+        if not using_json_heat:
+            heat_dict = {"heat": heat, "parameters": {"heat_file": heat_file}}
+            heat_out = open(os.path.abspath(delta_out_dir) + "/" + HEAT_JSON, 'w')
+            json.dump(heat_dict, heat_out, indent=4)
+            heat_out.close()
+            heat_file = os.path.abspath(delta_out_dir) + "/" + HEAT_JSON
+
+        write_significance_as_tsv(delta_out_dir + "/" + SIGNIFICANCE_TSV, sizes2stats)
+
+        params['heat_name'] = heat_name
+        params['network_name'] = network_name
+        output_dict = {"parameters": params, "sizes": component_sizes(ccs),
+                       "components": ccs, "statistics": sizes2stats}
+        json_out = open(delta_out_dir + "/" + JSON_OUTPUT, 'w')
+        json.dump(output_dict, json_out, indent=4)
+        json_out.close()
+
+        write_components_as_tsv(os.path.abspath(delta_out_dir) + "/" + COMPONENTS_TSV, ccs)
+
+# Output a consensus HotNet2 run
+def output_consensus(consensus, linkers, auto_deltas, consensus_stats, params, output_dir):
+    output_dir = '{}/consensus/'.format(output_dir)
+    setup_output_dir(output_dir)
+
+    # Output to JSON
+    with open(output_dir + '/subnetworks.json', 'w') as OUT:
+        # Convert the consensus to lists
+        output = dict(params=params, deltas=auto_deltas, stats=consensus_stats,
+                      linkers=list(linkers), consensus=consensus)
+        json.dump(output, OUT, sort_keys=True, indent=4)
+
+    # Output to TSV
+    with open(output_dir + '/subnetworks.tsv', 'w') as OUT:
+        OUT.write('#Linkers: {}\n'.format(', '.join(sorted(linkers))))
+        OUT.write('#Core\tExpansion\n')
+        OUT.write('\n'.join([ '{}\t{}'.format(' '.join(sorted(d['core'])), ' '.join(sorted(d['expansion']))) for d in consensus ])  )
+
+    with open(output_dir + 'stats.tsv', 'w') as OUT:
+        rows = [ (k, d['observed'], d['expected'], d['pval']) for k, d in sorted(consensus_stats.items()) ]
+        OUT.write('#Size\tObserved\tExpected\tP-value\n')
+        OUT.write('\n'.join([ '\t'.join(map(str, r)) for r in rows ]) )

@@ -53,18 +53,24 @@ def run( args ):
 				# Parse the data and extract the info we need
 				data = json.load(IN)
 				params = data['params']
-				is_consensus = root == 'consensus'
-				name = 'Consensus' if is_consensus else '%s %s' % (params['heat_name'], params['network_name'])
+				is_consensus = params['consensus']
+				if is_consensus:
+					heat_name, network_name = '', ''
+				else:
+					heat_name, network_name = params['heat_name'], params['network_name']
+
 				num_subnetworks = len(data['subnetworks'][params['auto_delta']])
-				result = dict(network_name = params['network_name'], heat_name=params['heat_name'],
-							  auto_delta=params['auto_delta'], num_subnetworks=num_subnetworks, data=data,
+				result = dict(heat_name=heat_name, network_name=network_name,
+							  auto_delta=params['auto_delta'],
+							  num_subnetworks=num_subnetworks, data=data,
 							  is_consensus=is_consensus)
+
 				results.append( result )
 		except IOError:
 			continue
 
 	# Sort so the consensus is first
-	results.sort(key=lambda r: r['is_consensus'])
+	results.sort(key=lambda r: not r['is_consensus'])
 
 	# Set up the server
 	routes = [ (r'/bower_components/(.*)', tornado.web.StaticFileHandler, {'path': "bower_components"})]
