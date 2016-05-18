@@ -16,6 +16,10 @@ def get_parser():
                         help='Location of edgelist file.')
     parser.add_argument('-i', '--gene_index_file', required=True,
                         help='Location of gene-index file.')
+    parser.add_argument('-pnp', '--permuted_networks_path', required=False, default='',
+                        help='Path to influence matrices for permuted networks. Include ' +\
+                              ITERATION_REPLACEMENT_TOKEN + ' in the path to be replaced with the\
+                              iteration number')
     parser.add_argument('-n', '--network_name', required=True,
                         help='Name of network.')
     parser.add_argument('-o', '--output_file', required=True,
@@ -76,7 +80,10 @@ def run(args):
     if args.exclude_network:
         hnio.save_hdf5(args.output_file, dict(PPR=PPR))
     else:
-        hnio.save_hdf5(args.output_file, dict(network_name=args.network_name, PPR=PPR, nodes=nodes, edges=G.edges()))
+        output = dict(edges=G.edges(), PPR=PPR, nodes=nodes,
+                      network_name=args.network_name,
+                      permuted_networks_path=args.permuted_networks_path)
+        hnio.save_hdf5(args.output_file, output)
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))
