@@ -18,7 +18,7 @@ def delta_too_small(component_sizes, max_size ):
     if max_size > max(component_sizes): return True
     else: return False
 
-def find_best_delta_by_largest_cc(permuted_sim, permuted_index, sizes, directed, start_quant=0.99):
+def find_best_delta_by_largest_cc(permuted_sim, permuted_index, sizes, directed, start_quant=0.99, verbose=0):
     """Return a dict mapping each size in sizes to the smallest delta such that the size of the
     largest CC in the graph corresponding the the given similarity matrix is <= that size.
 
@@ -33,7 +33,8 @@ def find_best_delta_by_largest_cc(permuted_sim, permuted_index, sizes, directed,
 
     """
 
-    print "Finding smallest delta such that size of largest CC is <= l"
+    if verbose > 4:
+        print "Finding smallest delta such that size of largest CC is <= l"
     component_fn = strong_ccs if directed else nx.connected_components
     # Construct weighted digraphs for each network for each delta
     sorted_edges = np.unique(permuted_sim) # unique edge weights in sorted ascending
@@ -127,18 +128,18 @@ def get_edges(sim, start=.05):
     return edges
 
 def network_delta_wrapper((network_path, infmat_name, index2gene, heat, sizes, directed,
-                           selection_function)):
+                           selection_function, verbose)):
     permuted_mat = hnio.load_hdf5(network_path)[infmat_name]
-    sim, index2gene = hn.similarity_matrix(permuted_mat, index2gene, heat, directed)
+    sim, index2gene = hn.similarity_matrix(permuted_mat, index2gene, heat, directed, verbose)
     if selection_function is find_best_delta_by_largest_cc:
-        return selection_function(sim, index2gene, sizes, directed)
+        return selection_function(sim, index2gene, sizes, directed, verbose=verbose)
     elif selection_function is find_best_delta_by_num_ccs:
-        return selection_function(sim, sizes)
+        return selection_function(sim, sizes, verbose=verbose)
     else:
         raise ValueError("Unknown delta selection function: %s" % (selection_function))
 
 def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes, directed=True,
-                            num_cores=1, selection_fn=find_best_delta_by_largest_cc):
+                            num_cores=1, selection_fn=find_best_delta_by_largest_cc, verbose=0):
     """Return a dict mapping each size in sizes to a list of the best deltas for each permuted
     network for that size.
 
@@ -161,7 +162,7 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
         map_fn = map
 
     args = [(network_path, infmat_name, index2gene, heat, sizes, directed,
-             selection_fn) for network_path in network_paths]
+             selection_fn, verbose) for network_path in network_paths]
     delta_maps = map_fn(network_delta_wrapper, args)
 
     if num_cores != 1:

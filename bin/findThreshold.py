@@ -12,7 +12,7 @@ def get_parser():
                    passing '@<ConfigFileName>' as a command-line parameter, e.g.\
                    'python findThreshold.py @testConf.txt --runname TestRun'."
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
-    
+
     #create parent parser for arguments common to both permutation types
     parent_parser = hnap.HotNetArgParser(add_help=False, fromfile_prefix_chars='@')
     parent_parser.add_argument('-r', '--runname', help='Name of run / disease.')
@@ -40,7 +40,7 @@ def get_parser():
                         help='Run classic (instead of directed) HotNet.')
     parent_parser.add_argument('-o', '--output_file',
                                help='Output file.  If none given, output will be written to stdout.')
-    
+
     subparsers = parser.add_subparsers(title='Permutation techniques', dest="perm_type")
 
     #create subparser for options for permuting networks
@@ -49,7 +49,7 @@ def get_parser():
                                 help='Path to influence matrices for permuted networks.\
                                       Include ' + ITERATION_REPLACEMENT_TOKEN + ' in the\
                                       path to be replaced with the iteration number')
-    
+
     #create subparser for options for permuting heat scores
     heat_parser = subparsers.add_parser('heat', help='Permute heat scores', parents=[parent_parser])
     heat_parser.add_argument('-mf', '--infmat_file', required=True,
@@ -57,7 +57,7 @@ def get_parser():
     heat_parser.add_argument('-pgf', '--permutation_genes_file', default=None,
                              help='Path to file containing a list of additional genes that can have\
                                    permuted heat values assigned to them in permutation tests')
-    
+
     #create subparser for options for permuting mutation data
     mutation_parser = subparsers.add_parser('mutations', help='Permute mutation data',
                                             parents=[parent_parser])
@@ -77,17 +77,17 @@ def get_parser():
                                  help='File listing gene-specific BMRs. If none, the default BMR\
                                        will be used for all genes.')
     return parser
-    
+
 def run(args):
-    #if l not specified, set default based on test statistic 
+    #if l not specified, set default based on test statistic
     if not args.sizes:
         args.sizes = [5,10,15,20] if args.test_statistic == MAX_CC_SIZE else [3]
-    
+
     #disallow finding delta by # of CCs of size >= l for HotNet2, since this is not currently
     #implemented correctly (and is non-trivial to implement)
     if not args.classic and args.test_statistic != MAX_CC_SIZE:
         raise ValueError("For HotNet2, the largest CC size test statistic must be used.")
-    
+
     infmat_index = hnio.load_index(args.infmat_index_file)
     heat, heat_params = hnio.load_heat_json(args.heat_file)
 
@@ -105,38 +105,38 @@ def run(args):
                                          args.classic, args.num_permutations, args.num_cores)
     else:
         raise ValueError("Invalid mutation permutation type: %s" % args.perm_type)
-    
+
     output_file = open(args.output_file, 'w') if args.output_file else sys.stdout
     json.dump({"parameters": vars(args), "heat_parameters": heat_params,
                "deltas": deltas}, output_file, indent=4)
     if (args.output_file): output_file.close()
 
 def get_deltas_for_network(permuted_networks_path, heat, infmat_name, index2gene, test_statistic,
-                            sizes, classic, num_permutations, num_cores):
-    print "* Performing permuted network delta selection..."
-    
-    #construct list of paths to the first num_permutations     
+                            sizes, classic, num_permutations, num_cores, verbose=0):
+    if verbose > 3: print "* Performing permuted network delta selection..."
+
+    #construct list of paths to the first num_permutations
     permuted_network_paths = [permuted_networks_path.replace(ITERATION_REPLACEMENT_TOKEN, str(i))
                               for i in range(1, num_permutations+1)]
 
     delta_selection_fn = delta.find_best_delta_by_largest_cc if test_statistic == "max_cc_size" \
-                            else delta.find_best_delta_by_num_ccs 
+                            else delta.find_best_delta_by_num_ccs
 
     return delta.network_delta_selection(permuted_network_paths, infmat_name, index2gene, heat,
-                                         sizes, not classic, num_cores, delta_selection_fn)
+                                         sizes, not classic, num_cores, delta_selection_fn, verbose)
 
 def get_deltas_for_heat(infmat, index2gene, gene2heat, addtl_genes, num_permutations, test_statistic,
-                        sizes, classic, num_cores):
-    print "* Performing permuted heat delta selection..."
+                        sizes, classic, num_cores, verbose=0):
+    if verbose > 3: print "* Performing permuted heat delta selection..."
     heat_permutations = permutations.permute_heat(gene2heat, index2gene.values(), num_permutations,
                                                   addtl_genes, num_cores)
     return get_deltas_from_heat_permutations(infmat, index2gene, heat_permutations, test_statistic,
-                                             sizes, classic, num_cores)
+                                             sizes, classic, num_cores, verbose)
 
-def get_deltas_for_mutations(args, infmat, index2gene, heat_params):
+def get_deltas_for_mutations(args, infmat, index2gene, heat_params, verbose=0):
     print "* Performing permuted mutation data delta selection..."
     index2gene = hnio.load_index(args.infmat_index_file)
-    
+
     heat_permutations = permutations.generate_mutation_permutation_heat(
                             heat_params["heat_fn"], heat_params["sample_file"],
                             heat_params["gene_file"], index2gene.values(), heat_params["snv_file"],
@@ -144,16 +144,16 @@ def get_deltas_for_mutations(args, infmat, index2gene, heat_params):
                             args.gene_order_file, heat_params["cna_filter_threshold"],
                             heat_params["min_freq"], args.num_permutations, args.num_cores)
     return get_deltas_from_heat_permutations(infmat, index2gene, heat_permutations, args.test_statistic,
-                                             args.sizes, args.classic, args.num_cores)
+                                             args.sizes, args.classic, args.num_cores, verbose)
 
 def get_deltas_from_heat_permutations(infmat, gene_index, heat_permutations, test_statistic, sizes,
-                                      classic, num_cores):
+                                      classic, num_cores, verbose=0):
     delta_selection_fn = delta.find_best_delta_by_largest_cc if test_statistic == "max_cc_size" \
-                            else delta.find_best_delta_by_num_ccs 
-    
+                            else delta.find_best_delta_by_num_ccs
+
     deltas = delta.heat_delta_selection(infmat, gene_index, heat_permutations, sizes, not classic,
-                                        num_cores, delta_selection_fn)
+                                        num_cores, delta_selection_fn, verbose)
     return deltas
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))

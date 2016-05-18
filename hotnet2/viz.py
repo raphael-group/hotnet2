@@ -1,6 +1,29 @@
 import hnio
 from collections import defaultdict
 
+def generate_viz_json(results, edges, network_name, gene2heat, snvs, cnas, sampleToType, d_score, d_name):
+    output = dict(deltas=[], subnetworks=dict(), stats=dict(), gene2heat=gene2heat)
+    predictions = set()
+    samples = sampleToType.keys()
+    for ccs, stats, delta in results:
+        delta = format(delta, 'g')
+        output['stats'][delta] = stats
+        output['subnetworks'][delta] = []
+        for cc in ccs:
+            output['subnetworks'][delta].append(get_component_json(cc, gene2heat, edges, network_name, d_score, d_name))
+            predictions |= set(cc)
+
+        if snvs or cnas:
+            for i, cc in enumerate(ccs):
+                output['subnetworks'][delta][i]['coverage'] = get_coverage(cc, snvs, cnas, samples)
+
+    # Load the mutation data
+    if snvs or cnas:
+        output['geneToMutations'] = get_mutations_json(predictions, snvs, cnas, d_name)
+        output['sampleToType'] = sampleToType
+
+    return output
+
 def get_nodes(cc, gene2heat, d_score, d_name):
     scores = d_score if d_score else gene2heat
     return [{'name': d_name.get(gene, gene), 'value': scores[gene]} for gene in cc]
