@@ -4,6 +4,7 @@
 import os, sys, argparse, json, networkx as nx
 from itertools import combinations
 from collections import defaultdict
+from hotnet2.consensus import identify_consensus
 
 # Argument parser
 def get_parser():
@@ -27,54 +28,38 @@ def get_parser():
 
     return parser
 
-# Choose the results files when given directories of results files.
-def choose_result_files(directories, min_cc_size, p_value_threshold, verbose=False):
-    result_files = []
-    # Consider each run.
+# Find the HotNet2 results file in each directory, grouping each file
+# by directory
+def find_results_files(directories, verbose=0):
+    # Identify the results files
+    results_files = []
     for directory in directories:
-        result_statistics = []
         # Consider each \delta value for each run.
+        result_group = []
         for subdirectory in os.listdir(directory):
             if os.path.isdir(os.path.join(directory, subdirectory)) and subdirectory.startswith('delta'):
-                results_file = os.path.join(directory, subdirectory, 'results.json')
-                # For each \delt value, load the results for each \delta value and record the
-                # number of component sizes k with p-values below a given threshold when k \geq
-                # min_cc_size.
-                with open(results_file, 'r') as f:
-                    data = json.load(f)
-                count = 0
-                for k in data['statistics']:
-                    if data['statistics'][k]['pval']>p_value_threshold and int(k)>=min_cc_size:
-                        count += 1
-                delta = data['parameters']['delta']
-                result_statistics.append((count, delta, results_file))
-        # Find the smallest \delta value with the largest number of component sizes k with p-values
-        # below a threshold. For convenience, we find the smallest number of \delta values greater
-        # greater than or equal to the threshold, and we sort from smallest to largest.
-        selected_result_statistics = sorted(result_statistics)[0]
-        if verbose:
-            print '\t- Selected delta = {} for {}...'.format(selected_result_statistics[1], directory)
-        result_files.append(selected_result_statistics[2])
-    return result_files
+                result_group.append(os.path.join(directory, subdirectory, 'results.json'))
+        results_files.append(result_group)
 
-# Load results.
-def load_results(results_files, min_size):
-    results = []
-    for results_file in results_files:
-        with open(results_file, 'r') as f:
-            data = json.load(f)
-        components = [ cc for cc in data['components'] if len(cc)>=min_size ]
-        results.append(components)
-    return results
+    return results_files
 
-# Construct consensus graph.
-def consensus_edges(components, networks):
-    edges_to_networks = defaultdict(set)
-    for ccs, network in zip(components, networks):
-        for cc in ccs:
-            for u, v in combinations(cc, 2):
-                edges_to_networks[(u, v)].add(network)
-    return dict( (edge, len(edge_networks)) for edge, edge_networks in edges_to_networks.iteritems() )
+# Choose the results files when given directories of results files.
+def load_single_runs(results_groups, verbose=0):
+    # Load each run
+    single_runs = []
+    for result_group in results_groups:
+        # We are assuming all the results in the same directory will be
+        # for the same heat score and network
+        run_group = []
+        for result_file in results_files:
+            with open(results_file, 'r') as f:
+                data = json.load(f)
+                heat_name = data['parameters']['heat_name']
+                network_name = data['parameters']['network_name']
+                run_group.append( (data['subnetworks'], data['statistics'], data['statistics']['delta']) )
+        single_runs.append((network_name, heat_name, run_group))
+
+    return single_runs
 
 def run(args):
     # Check arguments.
@@ -82,61 +67,19 @@ def run(args):
         raise ValueError('Neither the directories or files argument is specified; specify one argument.')
     if args.directories and args.files:
         raise ValueError('Both the directories and files arguments are specified; specify only one argument.')
-    if args.directories and len(args.directories)!=len(args.networks):
-        raise ValueError('The directories and networks arguments have different numbers of entries; provide equal numbers of entries.')
-    if args.files and len(args.files)!=len(args.networks):
-        raise ValueError('The files and networks arguments have different numbers of entries; provide equal numbers of entries.')
-
-    # Count networks.
-    num_networks = len(set(args.networks))
-    if args.verbose:
-        print '* Combining {} networks from {} HotNet(2) runs...'.format(num_networks, len(args.networks))
 
     # Choose results files if given directories of results files.
     if args.directories:
-        if args.verbose:
-            print '* Automatically choosing results from each run...'
-        result_files = choose_result_files(args.directories, args.min_cc_size, args.p_value_threshold, args.verbose)
+        result_files = find_results_files(args.directories, args.verbose)
     else:
-        if args.verbose:
-            print '* Using provided results...'
-        result_files = args.files
+        result_files = [ [f] for f in args.files ]
 
     # Load results.
-    results = load_results(result_files, args.min_cc_size)
+    single_runs = load_single_runs(args.directories, args.verbose)
 
     # Create the full consensus graph.
-    if args.verbose:
-        print '* Constructing HotNet(2) consensus network...'
-    edges = consensus_edges(results, args.networks)
-    G = nx.Graph()
-    G.add_weighted_edges_from( (u, v, w) for (u, v), w in edges.iteritems() )
-
-    # Extract the connected components when restricted to edges in all networks.
-    H = nx.Graph()
-    H.add_edges_from( (u, v) for (u, v), w in edges.iteritems() if w >= num_networks )
-    consensus = [ set(cc) for cc in nx.connected_components( H ) ]
-    consensus_genes = set( g for cc in consensus for g in cc )
-
-    # Expand each consensus by adding back any edges not in all networks.
-    expanded_consensus = []
-    linkers = set()
-    for cc in consensus:
-        other_consensus_genes = consensus_genes - cc
-        neighbors = set( v for u in cc for v in G.neighbors(u) if v not in consensus_genes )
-        expansion = set()
-        for u in neighbors:
-            cc_networks = max( G[u][v]['weight'] for v in set(G.neighbors(u)) & cc )
-            consensus_neighbors = set( v for v in G.neighbors(u) if v in other_consensus_genes and G[u][v]['weight'] >= cc_networks )
-            if len(consensus_neighbors) > 0:
-                if any([ G[u][v]['weight'] > 1 for v in consensus_neighbors ]):
-                    linkers.add( u )
-            else:
-                expansion.add( u )
-        expanded_consensus.append( dict(consensus=list(cc), expansion=list(expansion)) )
-
-    consensus_genes = set( g for cc in expanded_consensus for g in cc['consensus'] + cc['expansion'] )
-    linkers -= consensus_genes
+    consensus, linkers = identify_consensus(single_runs)
+    consensus_genes = set( g for cc in consensus for g in cc['consensus'] + cc['expansion'] )
 
     # Summarize the results.
     if args.verbose:
@@ -147,11 +90,11 @@ def run(args):
     with open(args.output_file, 'w') as f:
         if args.output_file.lower().endswith('.json'):
             # Convert the consensus to lists
-            consensus = [ dict(core=list(c['consensus']), expansion=list(c['expansion'])) for c in expanded_consensus ]
+            consensus = [ dict(core=list(c['consensus']), expansion=list(c['expansion'])) for c in consensus ]
             json.dump(dict(linkers=list(linkers), consensus=consensus), f, sort_keys=True, indent=4)
         else:
             output  = [ '# Linkers: {}'.format(', '.join(sorted(linkers))), '# Consensus:' ]
-            output += [ '{}\t[{}] {}'.format(i, ', '.join(sorted(c['consensus'])), ', '.join(sorted(c['expansion']))) for i, c in enumerate(expanded_consensus) ]
+            output += [ '{}\t[{}] {}'.format(i, ', '.join(sorted(c['consensus'])), ', '.join(sorted(c['expansion']))) for i, c in enumerate(consensus) ]
             f.write( '\n'.join(output) )
 
 if __name__ == '__main__':

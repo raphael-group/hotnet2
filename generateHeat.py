@@ -10,6 +10,8 @@ def get_parser():
     parent_parser = hnap.HotNetArgParser(add_help=False, fromfile_prefix_chars='@')
     parent_parser.add_argument('-o', '--output_file',
                                help='Output file.  If none given, output will be written to stdout.')
+    parent_parser.add_argument('-n', '--name',
+                               help='Name/Label describing the heat scores.')
 
     subparsers = parser.add_subparsers(title='Heat score type')
 
@@ -106,7 +108,7 @@ def get_parser():
                                  help='File listing genes whose heat scores should be preserved.\
                                        If present, all other heat scores will be discarded.')
     music_parser.set_defaults(heat_fn=load_music_heat)
-    
+
     return parser
 
 def valid_cna_filter_thresh(string):
@@ -167,5 +169,5 @@ def run(args):
     json.dump(output_dict, output_file, indent=4)
     if (args.output_file): output_file.close()
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))

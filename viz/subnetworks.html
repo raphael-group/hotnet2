@@ -19,8 +19,8 @@
 <body>
   <div class="container">
 	<h1>
-		<small class="pull-right">
-			<a href="/">Back to index</a>
+		<small class="pull-right" style="font-size:50%">
+			<a href="/">Back</a>
 		</small>
 		HotNet2 subnetworks:
 		{% if is_consensus %}
@@ -225,6 +225,7 @@
 				subnetwork.nodes.forEach(function(n){
 					aberrationsData.M[n.name] = geneToMutations[n.name];
 				});
+                console.log(aberrationsData)
 
 				// Draw the SVG
 				aberrationsView.selectAll('*').remove();
