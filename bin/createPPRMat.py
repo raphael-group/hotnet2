@@ -61,7 +61,7 @@ def run(args):
     # Set up output directory
     print "* Saving updated graph to file..."
     os.system( 'mkdir -p ' + args.output_dir )
-    output_dir = os.path.normpath(os.getcwd() + "/" + args.output_dir)
+    output_dir = os.path.normpath(args.output_dir)
     output_prefix = "{}/{}".format(output_dir, args.prefix)
 
     if args.format == 'hdf5': ext = 'h5'
