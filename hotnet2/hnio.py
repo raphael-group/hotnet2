@@ -470,7 +470,7 @@ def setup_output_dir(output_dir):
     if not os.path.exists(output_dir): os.makedirs(output_dir)
 
 # Output a single run of HotNet2
-def output_hotnet2_run(result, params, network_name, heat, heat_name, using_json_heat, output_dir):
+def output_hotnet2_run(result, params, network_name, heat, heat_name, heat_file, using_json_heat, output_dir):
     for ccs, sizes2stats, delta in result:
         # create output directory
         delta_out_dir = os.path.abspath(output_dir + "/delta_" + str(delta))

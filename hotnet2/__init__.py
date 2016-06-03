@@ -11,3 +11,4 @@ import union_find
 import viz
 import hierarchy
 from consensus import *
+from network import *
