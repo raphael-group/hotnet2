@@ -45,7 +45,7 @@ def permute_network_wrapper((G, Q, numEdges, outputFile, i, n)):
     sys.stdout.write("\r{}/{}".format(store['maxSeen'], n))
     sys.stdout.flush()
     return swaps
-    
+
 def run(args):
     # Load graph
     print "* Loading edge list.."
@@ -81,6 +81,6 @@ def run(args):
     # Report how many swaps were actually made
     avgSwaps = int(sum(swaps) / float(len(swaps)))
     print "* Avg. No. Swaps Made: {}".format(avgSwaps)
-            
+
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))
