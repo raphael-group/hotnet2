@@ -6,9 +6,19 @@ hotnet2_test=/tmp/hotnet2_consensus_test
 data=$hotnet2_test/data
 results=$hotnet2_test/results
 
-# Setup parameters.
+# Set parameters.
 beta=0.4
-num_network_permutations=100
+
+num_vertices=250
+min_num_edges=750
+num_vertices_network_1=225
+num_vertices_network_2=235
+num_vertices_network_3=245
+num_vertices_weights_1=230
+num_vertices_weights_2=240
+seed=0
+
+num_network_permutations=20
 num_heat_permutations=200
 num_cores=8
 
@@ -29,12 +39,12 @@ done
 # Create networks and vertex weights.
 echo Creating networks and vertex weights...
 python $hotnet2/test/createSimulatedData.py \
-    -n 250 \
-    -m 750 \
+    -n $num_vertices \
+    -m $min_num_edges \
     -i 5 5 5 5 5 10 10 10 10 10 \
-    -s 0 \
-    -nsn 225 235 245 \
-    -nsw 230 240 \
+    -s $seed \
+    -nsn $num_vertices_network_1 $num_vertices_network_2 $num_vertices_network_3 \
+    -nsw $num_vertices_weights_1 $num_vertices_weights_2 \
     -ivf $data/networks/1/index_vertex.txt $data/networks/2/index_vertex.txt $data/networks/3/index_vertex.txt \
     -elf $data/networks/1/edge_list.txt    $data/networks/2/edge_list.txt    $data/networks/3/edge_list.txt \
     -vwf $data/weights/1/vertex_weight.txt $data/weights/2/vertex_weight.txt
@@ -103,10 +113,10 @@ python $hotnet2/identifyConsensus.py \
        $results/network_2_weight_1 $results/network_2_weight_2 \
        $results/network_3_weight_1 $results/network_3_weight_2 \
     -n network_1 network_1 network_2 network_2 network_3 network_3 \
-    -o $results/consensus_results.txt
+    -o computedConsensusResults.txt
 
 # Compare results with previously computed results; currently, compare manually.
-diff $results/consensus_results.txt exampleConsensusResults.txt
+diff computedConsensusResults.txt referenceConsensusResults.txt
 
 # Remove data and results.
-rm -rf $hotnet2_consensus_test
+rm -rf $hotnet2_test

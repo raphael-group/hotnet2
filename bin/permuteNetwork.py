@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # Load required modules
-import sys, networkx as nx, multiprocessing as mp
+import sys, networkx as nx, multiprocessing as mp, random
 import os.path
 sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 from hotnet2 import hnap
@@ -40,12 +40,13 @@ def permute_network( G, Q, numEdges, outputFile ):
 
 store = dict(maxSeen=-1)
 def permute_network_wrapper((G, Q, numEdges, outputFile, i, n)):
+    random.seed(i)
     swaps = permute_network( G, Q, numEdges, outputFile )
     store['maxSeen'] = max(store['maxSeen'], i)
     sys.stdout.write("\r{}/{}".format(store['maxSeen'], n))
     sys.stdout.flush()
     return swaps
-    
+
 def run(args):
     # Load graph
     print "* Loading edge list.."
@@ -81,6 +82,6 @@ def run(args):
     # Report how many swaps were actually made
     avgSwaps = int(sum(swaps) / float(len(swaps)))
     print "* Avg. No. Swaps Made: {}".format(avgSwaps)
-            
+
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))

@@ -1,0 +1,6 @@
+# Linkers: 
+# Consensus:
+0	[ay, cg, cm, ct, eg, fl, fw, go, hh, hs, ii, iw, jm, kk, kp, kr, v] gy
+1	[cl, dl, dy, ek, et, fx, fy, gi] dx
+2	[av, ee, is, kn] gh, iz
+3	[ar, bp, by, cq, cw, dv, ep, gn, hz, io, jx, kl, s] cv, hq, hy
