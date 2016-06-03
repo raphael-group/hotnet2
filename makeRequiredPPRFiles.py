@@ -61,7 +61,7 @@ def run(args):
     perm_path = '{}/{}_ppr_{:g}_##NUM##.h5'.format(perm_dir, args.prefix, args.beta)
     params = dict(network_name=args.network_name, permuted_networks_path=perm_path)
     save_hotnet2_diffusion_to_file( args.gene_index_file, args.edgelist_file, args.beta, pprfile, exclude_network=False, params=params)
-    sys.exit()
+
     # make permuted edge lists
     assert(args.num_permutations > 0)
     print "\nCreating edge lists for permuted networks"
@@ -87,7 +87,7 @@ def run(args):
     else:
         map_fn = map
 
-    all_counts = map_fn(save_hotnet2_diffusion_to_file_wrapper, diffusion_args)
+    _ = map_fn(save_hotnet2_diffusion_to_file_wrapper, diffusion_args)
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))

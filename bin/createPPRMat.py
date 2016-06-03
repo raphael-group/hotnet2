@@ -3,7 +3,7 @@
 # Load required modules
 import sys, os, numpy as np, networkx as nx, scipy as sp, scipy.io
 sys.path.append(os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + '/../'))
-from hotnet2 import * 
+from hotnet2 import *
 
 # Parse arguments
 def get_parser():
@@ -30,6 +30,12 @@ def get_parser():
     parser.add_argument('--verbose', required=False, default=0, type=int, choices=range(5),
                     help="Control verbosity of output.")
     return parser
+
+# Remove self-loops, multi-edges, and restrict to the largest component
+def largest_component(G):
+    selfLoops = [(u, v) for u, v in G.edges() if u == v]
+    G.remove_edges_from( selfLoops )
+    return G.subgraph( sorted(nx.connected_components( G ), key=lambda cc: len(cc), reverse=True)[0] )
 
 def run(args):
     params = dict(network_name=args.network_name, beta=beta, permuted_networks_path=args.permuted_networks_path)
