@@ -25,6 +25,8 @@ def get_parser():
                         help='Delta value(s).')
     parser.add_argument('-dp', '--delta_permutations', type=int, default=100,
                         help='Number of permutations to be used for delta parameter selection.')
+    parser.add_argument('-cp', '--consensus_permutations', type=int, default=0,
+                        help='Number of permutations to be used for consensus statistical significance testing.')
     parser.add_argument('-sp', '--significance_permutations', type=int, default=100,
                         help='Number of permutations to be used for statistical significance testing.')
     parser.add_argument('-o', '--output_directory', required=True, default=None,
@@ -56,12 +58,13 @@ def run(args):
         graph_map[nname] = G
         networks.append( (infmat, indexToGene, G, nname, pnp) )
 
-    heats, json_heat_map, heat_map, mutation_map = [], dict(), dict(), dict()
+    heats, json_heat_map, heat_map, mutation_map, heat_file_map = [], dict(), dict(), dict(), dict()
     for heat_file in args.heat_files:
         json_heat = os.path.splitext(heat_file.lower())[1] == '.json'
         heat, hname, mutations = hnio.load_heat_file(heat_file, json_heat)
         json_heat_map[hname] = json_heat
         heat_map[hname] = heat
+        heat_file_map[hname] = heat_file
         mutation_map[hname] = mutations
         heats.append( (heat, hname) )
 
@@ -84,7 +87,7 @@ def run(args):
         hnio.setup_output_dir(output_dir)
 
         # Output to file
-        hnio.output_hotnet2_run(run, params, network_name, heat_map[heat_name], heat_name, json_heat_map[heat_name], output_dir)
+        hnio.output_hotnet2_run(run, params, network_name, heat_map[heat_name], heat_name, heat_file_map[heat_name], json_heat_map[heat_name], output_dir)
 
         # create the hierarchy if necessary
         if args.output_hierarchy:

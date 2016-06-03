@@ -1,14 +1,12 @@
 #!/usr/bin/python
 
 # Load required modules
-import sys, networkx as nx, multiprocessing as mp
-import os.path
-from createPPRMat import largest_component
-sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
-from hotnet2 import hnap
+import sys, os, networkx as nx, multiprocessing as mp
+sys.path.append(os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + '/../'))
 
 # Parse arguments
 def get_parser():
+    from hotnet2 import hnap
     description = 'Creates permuted versions of the given network, where each '\
                   'node retains its degree.'
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
@@ -49,6 +47,7 @@ def permute_network_wrapper((G, Q, numEdges, outputFile, i, n)):
 
 def run(args):
     # Load graph
+    from hotnet2 import largest_component
     print "* Loading edge list.."
     G = nx.Graph()
     with open(args.edgelist_file) as infile:

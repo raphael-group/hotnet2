@@ -1,11 +1,12 @@
 #!/usr/bin/python
-import os
-import sys
-from hotnet2 import hnap
+
+# Load required modules
+import os, sys, multiprocessing as mp
 sys.path.append('influence_matrices')
-from bin import createPPRMat as ppr
+from hotnet2 import hnap, save_hotnet2_diffusion_to_file
 from bin import permuteNetwork as permute
 
+# Argument parser
 def get_parser():
     description = 'Create the personalized pagerank matrix and 100 permuted PPR matrices for the\
                    given network and restart probability beta.'
@@ -37,8 +38,13 @@ def get_parser():
 
     parser.add_argument('-o', '--output_dir', required=True,
                         help='Output directory.')
+    parser.add_argument('-c', '--cores', default=1, type=int,
+                        help='Use given number of cores. Pass -1 to use all available.')
 
     return parser
+
+def save_hotnet2_diffusion_to_file_wrapper(args):
+    return save_hotnet2_diffusion_to_file(*args)
 
 def run(args):
     # create output directory if doesn't exist; warn if it exists and is not empty
@@ -52,33 +58,36 @@ def run(args):
     print "--------------------------------------"
     pprfile = "{}/{}_ppr_{:g}.h5".format(args.output_dir, args.prefix, args.beta)
     perm_dir = '%s/permuted' % args.output_dir
-    perm_path = '{}/##NUM##/{}_ppr_{:g}.h5'.format(perm_dir, args.prefix, args.beta)
-    margs = '-e %s -i %s -o %s -s %s -b %s -n %s -pnp %s' % (args.edgelist_file, args.gene_index_file, pprfile,
-                                                     args.index_file_start_index, args.beta, args.network_name, perm_path)
-    ppr.run(ppr.get_parser().parse_args(margs.split()))
-
+    perm_path = '{}/{}_ppr_{:g}_##NUM##.h5'.format(perm_dir, args.prefix, args.beta)
+    params = dict(network_name=args.network_name, permuted_networks_path=perm_path)
+    save_hotnet2_diffusion_to_file( args.gene_index_file, args.edgelist_file, args.beta, pprfile, exclude_network=False, params=params)
+    sys.exit()
     # make permuted edge lists
     assert(args.num_permutations > 0)
     print "\nCreating edge lists for permuted networks"
     print "-------------------------------------------"
     if not os.path.exists(perm_dir): os.makedirs(perm_dir)
-    pargs = '-q %s -s %s -e %s -p %s -o %s -n %s' % (args.Q, args.permutation_start_index, args.edgelist_file,
-                                                     args.prefix, perm_dir, args.num_permutations)
+    pargs = '-q %s -s %s -e %s -p %s -o %s -n %s -c %s' % (args.Q, args.permutation_start_index, args.edgelist_file,
+                                                     args.prefix, perm_dir, args.num_permutations, args.cores)
     permute.run(permute.get_parser().parse_args(pargs.split()))
 
     # make permuted PPRs
     print "\nCreating PPR matrices for permuted networks"
     print "---------------------------------------------"
+    diffusion_args = []
+    params = dict(network_name=args.network_name, beta=args.beta)
     for i in range(args.permutation_start_index, args.permutation_start_index + args.num_permutations):
-        print "Working on permutation %s..." % i
-        edgelist_file = '%s/%s_edgelist_%s' % (perm_dir, args.prefix, i)
-        output_dir = '%s/%s' % (perm_dir, i)
-        pprfile = "{}/{}_ppr_{:g}.h5".format(output_dir, args.prefix, args.beta)
-        if not os.path.exists(output_dir): os.makedirs(output_dir)
-        pargs = '-e %s -i %s -o %s -s %s -b %s -n %s --exclude_network' % (edgelist_file, args.gene_index_file, pprfile,
-		                                                             args.index_file_start_index, args.beta, args.network_name)
-        ppr.run(ppr.get_parser().parse_args(pargs.split()))
-        os.remove(edgelist_file)
+        edge_file = '%s/%s_edgelist_%s' % (perm_dir, args.prefix, i)
+        output_file = "{}/{}_ppr_{:g}_{}.h5".format(perm_dir, args.prefix, args.beta, i)
+        diffusion_args.append( (args.gene_index_file, edge_file, args.beta, output_file, True, params, 0) )
+
+    if args.cores != 1:
+        pool = mp.Pool(None if args.cores == -1 else args.cores)
+        map_fn = pool.imap
+    else:
+        map_fn = map
+
+    all_counts = map_fn(save_hotnet2_diffusion_to_file_wrapper, diffusion_args)
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))

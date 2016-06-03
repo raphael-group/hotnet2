@@ -101,6 +101,7 @@ def run(args):
     # Assign high weights to implanted vertices and low weights to other vertices.
     random.seed(args.seed)
     sorted_weights = np.sort(weights)[::-1]
+    sorted_weights[:len(implanted_vertices)] *= 10.0
     random.shuffle(implanted_vertices)
     random.shuffle(nonimplanted_vertices)
     sorted_vertices = implanted_vertices + nonimplanted_vertices

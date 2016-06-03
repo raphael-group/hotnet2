@@ -17,12 +17,12 @@ def consensus_with_stats(args, networks, heats, verbose=0):
     single_runs, consensus, linkers, auto_deltas = consensus_run( args, networks, heats, verbose )
 
     # Generate permuted heats
-    np = args.significance_permutations
+    np = args.consensus_permutations
     permuted_single_runs = defaultdict(list)
     for (infmat, indexToGene, G, nname, pnp), (heat, hname) in product(networks, heats):
         # 1) Filter the heat scores
         # 1a) Remove enes not in the network
-        heat = filter_heat_to_network_genes(heat, set(indexToGene.values()))
+        heat = filter_heat_to_network_genes(heat, set(indexToGene.values()), verbose)
 
         # 1b) Genes with score 0 cannot be in output components, but are eligible for heat in permutations
         heat, addtl_genes = filter_heat(heat, None, False, 'There are ## genes with heat score 0')
@@ -43,8 +43,13 @@ def consensus_with_stats(args, networks, heats, verbose=0):
     consensus_stats = dict()
     for k, count in count_consensus(consensus).iteritems():
         empirical = [ permuted_count[k] for permuted_count in permuted_counts ]
-        consensus_stats[k] = dict(observed=count, expected=numpy.mean(empirical),
-                                  pval=sum(1. for p in empirical if p >= count )/np)
+        if np == 0:
+            pval     = 1.
+            expected = 0.
+        else:
+            expected = numpy.mean(empirical)
+            pval     = sum(1. for p in empirical if p >= count )/np
+        consensus_stats[k] = dict(observed=count, expected=expected, pval=pval)
 
     return single_runs, consensus, linkers, auto_deltas, consensus_stats
 
@@ -57,7 +62,7 @@ def consensus_run(args, networks, heats, verbose):
 
         # 1) Filter the heat scores
         # 1a) Remove enes not in the network
-        heat = filter_heat_to_network_genes(heat, set(indexToGene.values()))
+        heat = filter_heat_to_network_genes(heat, set(indexToGene.values()), verbose)
 
         # 1b) Genes with score 0 cannot be in output components, but are eligible for heat in permutations
         heat, addtl_genes = filter_heat(heat, None, False, 'There are ## genes with heat score 0')
