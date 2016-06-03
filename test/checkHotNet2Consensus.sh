@@ -18,7 +18,7 @@ num_vertices_weights_1=230
 num_vertices_weights_2=240
 seed=0
 
-num_network_permutations=20
+num_network_permutations=50
 num_heat_permutations=200
 num_cores=8
 

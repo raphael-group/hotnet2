@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # Load required modules
-import sys, networkx as nx, multiprocessing as mp, random
+import sys, networkx as nx, multiprocessing as mp
 import os.path
 sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 from hotnet2 import hnap
@@ -40,7 +40,6 @@ def permute_network( G, Q, numEdges, outputFile ):
 
 store = dict(maxSeen=-1)
 def permute_network_wrapper((G, Q, numEdges, outputFile, i, n)):
-    random.seed(i)
     swaps = permute_network( G, Q, numEdges, outputFile )
     store['maxSeen'] = max(store['maxSeen'], i)
     sys.stdout.write("\r{}/{}".format(store['maxSeen'], n))
