@@ -94,7 +94,6 @@ def run(args):
     implanted_vertices = sorted(implanted_vertices)
     nonimplanted_vertices = sorted(nonimplanted_vertices)
 
-
     # Create random weights.
     np.random.seed(args.seed)
     weights = np.random.exponential(scale=1.0, size=n)
