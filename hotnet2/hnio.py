@@ -232,8 +232,8 @@ def include_fusion(sample_wlst, gene_wlst, sample, gene1, gene2):
     if gene1 not in gene_wlst and gene2 not in gene_wlst: return False
     elif (gene1 in gene_wlst and not gene2 in gene_wlst) or \
          (gene2 in gene_wlst and not gene1 in gene_wlst):
-        raise ValueError('Genes %s and %s are in a fusion, but one is disallowed by the gene\
-                          whitelist' % (gene1, gene2))
+        raise ValueError('Genes %s and %s are in a fusion, but one is disallowed by the gene'\
+                          'whitelist' % (gene1, gene2))
     return True
 
 def load_sample_types(type_file):
@@ -488,6 +488,7 @@ def output_hotnet2_run(result, params, network_name, heat, heat_name, heat_file,
 
         params['heat_name'] = heat_name
         params['network_name'] = network_name
+        params['delta'] = delta
         output_dict = {"parameters": params, "sizes": component_sizes(ccs),
                        "components": ccs, "statistics": sizes2stats}
         json_out = open(delta_out_dir + "/" + JSON_OUTPUT, 'w')

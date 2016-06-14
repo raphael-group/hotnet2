@@ -10,7 +10,7 @@ import stats
 import permutations as p
 
 def run_helper(args, infmat, full_index2gene, G, nname, pnp, heat, hname, addtl_genes, get_deltas_fn, infmat_name="PPR", max_cc_sizes=[5, 10, 15, 20], verbose=0):
-    """Helper shared by simpleRun and simpleRunClassic.
+    """Helper shared by runHotNet2 and runClassicHotNet.
     """
     # Perform delta selection (if necessary)
     if args.deltas:

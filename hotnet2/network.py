@@ -32,9 +32,9 @@ def save_hotnet2_diffusion_to_file( index_file, edge_file, beta, output_file,
     PPR = hotnet2_diffusion(G, nodes, beta, verbose)
 
     if exclude_network:
-        hnio.save_hdf5(output_file, dict(PPR=PPR))
+        hnio.save_hdf5(output_file, dict(PPR=PPR, beta=beta))
     else:
-        output = dict(edges=G.edges(), PPR=PPR, nodes=nodes)
+        output = dict(edges=G.edges(), PPR=PPR, nodes=nodes, beta=beta)
         output.update(params.items())
         hnio.save_hdf5(output_file, output)
 
