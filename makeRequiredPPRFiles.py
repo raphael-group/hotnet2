@@ -8,17 +8,17 @@ from bin import permuteNetwork as permute
 
 # Argument parser
 def get_parser():
-    description = 'Create the personalized pagerank matrix and 100 permuted PPR matrices for the\
-                   given network and restart probability beta.'
+    description = 'Create the personalized pagerank matrix and 100 permuted PPR matrices for the'\
+                   'given network and restart probability beta.'
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
     parser.add_argument('-e', '--edgelist_file', required=True,
-                        help='Path to TSV file listing edges of the interaction network, where\
-                              each row contains the indices of two genes that are connected in the\
-                              network.')
+                        help='Path to TSV file listing edges of the interaction network, where'\
+                              'each row contains the indices of two genes that are connected in the'\
+                              'network.')
     parser.add_argument('-i', '--gene_index_file', required=True,
-                        help='Path to tab-separated file containing an index in the first column\
-                              and the name of the gene represented at that index in the second\
-                              column of each line.')
+                        help='Path to tab-separated file containing an index in the first column'\
+                              'and the name of the gene represented at that index in the second'\
+                              'column of each line.')
     parser.add_argument('-nn', '--network_name', required=True,
                         help='Name of network.')
     parser.add_argument('-p', '--prefix', required=True,

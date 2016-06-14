@@ -7,18 +7,18 @@ from hotnet2.constants import ITERATION_REPLACEMENT_TOKEN, HN2_INFMAT_NAME
 from bin import makeResultsWebsite as MRW, createDendrogram as CD
 
 def get_parser():
-    description = "Helper script for simple runs of generalized HotNet2, including automated\
-                   parameter selection."
+    description = "Helper script for simple runs of generalized HotNet2, including automated"\
+                   "parameter selection."
     parser = hnap.HotNetArgParser(description=description, fromfile_prefix_chars='@')
 
     parser.add_argument('-nf', '--network_files', required=True, nargs='*',
                         help='Path to HDF5 (.h5) file containing influence matrix and edge list.')
     parser.add_argument('-hf', '--heat_files', required=True, nargs='*',
-                        help='Path to heat file containing gene names and scores. This can either\
-                              be a JSON file created by generateHeat.py, in which case the file\
-                              name must end in .json, or a tab-separated file containing a gene\
-                              name in the first column and the heat score for that gene in the\
-                              second column of each line.')
+                        help='Path to heat file containing gene names and scores. This can either'\
+                              'be a JSON file created by generateHeat.py, in which case the file'\
+                              'name must end in .json, or a tab-separated file containing a gene'\
+                              'name in the first column and the heat score for that gene in the'\
+                              'second column of each line.')
     parser.add_argument('-ccs', '--min_cc_size', type=int, default=2,
                         help='Minimum size connected components that should be returned.')
     parser.add_argument('-d', '--deltas', nargs='*', type=float, default=[],
@@ -30,19 +30,19 @@ def get_parser():
     parser.add_argument('-sp', '--significance_permutations', type=int, default=100,
                         help='Number of permutations to be used for statistical significance testing.')
     parser.add_argument('-o', '--output_directory', required=True, default=None,
-                        help='Output directory. Files results.json, components.txt, and\
-                              significance.txt will be generated in subdirectories for each delta.')
+                        help='Output directory. Files results.json, components.txt, and'\
+                              'significance.txt will be generated in subdirectories for each delta.')
     parser.add_argument('-c', '--num_cores', type=int, default=1,
-                        help='Number of cores to use for running permutation tests in parallel. If\
-                              -1, all available cores will be used.')
+                        help='Number of cores to use for running permutation tests in parallel. If'\
+                              '-1, all available cores will be used.')
     parser.add_argument('-dsf', '--display_score_file',
-                        help='Path to a tab-separated file containing a gene name in the first\
-                        column and the display score for that gene in the second column of\
-                        each line.')
+                        help='Path to a tab-separated file containing a gene name in the first'\
+                        'column and the display score for that gene in the second column of'\
+                        'each line.')
     parser.add_argument('-dnf', '--display_name_file',
-                        help='Path to a tab-separated file containing a gene name in the first\
-                        column and the display name for that gene in the second column of\
-                        each line.')
+                        help='Path to a tab-separated file containing a gene name in the first'\
+                        'column and the display name for that gene in the second column of'\
+                        'each line.')
     parser.add_argument('--output_hierarchy', default=False, required=False, action='store_true',
                         help='Output the hierarchical decomposition of the HotNet2 similarity matrix.')
     parser.add_argument('--verbose', default=1, choices=range(5), type=int, required=False,

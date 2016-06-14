@@ -68,13 +68,13 @@ def consensus_run(args, networks, heats, verbose):
         heat, addtl_genes = filter_heat(heat, None, False, 'There are ## genes with heat score 0')
 
         if args.verbose > 1:
-            print "\t\t- Loaded '%s' heat scores for %s genes" % (heat_name, len(heat))
+            print "\t\t- Loaded '%s' heat scores for %s genes" % (hname, len(heat))
 
         result = run_helper(args, infmat, indexToGene, G, nname, pnp, heat, hname, addtl_genes, get_deltas_hotnet2, HN2_INFMAT_NAME, HN2_MAX_CC_SIZES, args.verbose)
         single_runs.append( (nname, hname, result) )
 
     # Perform the consensus
-    consensus, linkers, auto_deltas = identify_consensus( single_runs, verbose )
+    consensus, linkers, auto_deltas = identify_consensus( single_runs, verbose=verbose )
 
     return single_runs, consensus, linkers, auto_deltas
 
@@ -83,7 +83,7 @@ def identify_consensus(single_runs, pval_threshold=0.01, min_cc_size=2, verbose=
 
     # Choose single runs and count the number of networks
     components, networks, auto_deltas = choose_deltas(single_runs, pval_threshold, min_cc_size, verbose)
-    num_networks = len(networks)
+    num_networks = len(set(networks))
 
     # Create the consensus graph
     edges = consensus_edges(components, networks)
@@ -120,19 +120,16 @@ def identify_consensus(single_runs, pval_threshold=0.01, min_cc_size=2, verbose=
 
 # Choose the results files when given directories of results files.
 def choose_deltas(single_runs, pval_threshold, min_cc_size, verbose=0):
-    components, networks, auto_deltas = [], set(), []
+    components, networks, auto_deltas = [], [], []
     # Consider each run.
     for network, heat, run in single_runs:
+        result_statistics = []
         for ccs, stats, delta in run:
-            result_statistics = []
             # Consider each \delta value for each run.
             # For each \delt value, load the results for each \delta value and record the
             # number of component sizes k with p-values below a given threshold when k \geq
             # min_cc_size.
-            count = 0
-            for k in stats:
-                if stats[k]['pval'] > pval_threshold and int(k) >= min_cc_size:
-                    count += 1
+            count = sum( 1 for k in stats if int(k) >= min_cc_size and stats[k]['pval'] > pval_threshold )
             result_statistics.append((count, delta, ccs))
 
         # Find the smallest \delta value with the largest number of component sizes k with p-values
@@ -144,7 +141,7 @@ def choose_deltas(single_runs, pval_threshold, min_cc_size, verbose=0):
 
         components.append(selected_result_statistics[2])
         auto_deltas.append(selected_result_statistics[1])
-        networks.add(network)
+        networks.append(network)
 
     return components, networks, auto_deltas
 
