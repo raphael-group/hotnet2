@@ -380,7 +380,7 @@ def load_network(file_path, infmat_name):
     indexToGene = dict( zip(range(np.shape(PPR)[0]), H['nodes']) )
     G = nx.Graph()
     G.add_edges_from(H['edges'])
-    return PPR, indexToGene, G, H['network_name'], H['permuted_networks_path']
+    return PPR, indexToGene, G, H['network_name']
 
 def load_hdf5(file_path, keys=None):
     """

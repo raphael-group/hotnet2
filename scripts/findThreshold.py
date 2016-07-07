@@ -1,7 +1,9 @@
-# -*- coding: iso-8859-1 -*-
-import json
-import sys
-import os.path
+#!/usr/bin/env python
+
+# Load required modules
+import sys, os, json
+
+# Load HotNet2
 sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
 from hotnet2 import delta, hnap, hnio, permutations
 from hotnet2.constants import MAX_CC_SIZE, NUM_CCS, ITERATION_REPLACEMENT_TOKEN

@@ -1,12 +1,13 @@
-# -*- coding: iso-8859-1 -*-
+#!/usr/bin/env python
+
+# Load required modules
+import multiprocessing as mp, numpy as np, scipy as sp, networkx as nx
 from collections import namedtuple, defaultdict
-import multiprocessing as mp
-import numpy as np
-import scipy as sp
-import networkx as nx
-import hotnet2 as hn
-import hnio
+
+# Load local modules
+import hotnet2 as hn, hnio
 from union_find import UnionFind
+from constants import *
 
 strong_ccs = nx.strongly_connected_components
 
@@ -221,3 +222,52 @@ def heat_delta_selection(infmat, index2gene, heat_permutations, sizes, directed=
         for s in sizes: sizes2deltas[s].append(size2delta[s])
 
     return sizes2deltas
+
+
+################################################################################
+# HOTNET AND HOTNET2 DELTA SELECTION WRAPPERS
+################################################################################
+
+def get_deltas_for_network(permuted_networks_path, heat, infmat_name, index2gene, test_statistic,
+                            sizes, classic, num_permutations, num_cores, verbose=0):
+    if verbose > 3: print "* Performing permuted network delta selection..."
+
+    #construct list of paths to the first num_permutations
+    permuted_network_paths = [permuted_networks_path.replace(ITERATION_REPLACEMENT_TOKEN, str(i))
+                              for i in range(1, num_permutations+1)]
+
+    delta_selection_fn = find_best_delta_by_largest_cc if test_statistic == "max_cc_size" \
+                            else find_best_delta_by_num_ccs
+
+    return network_delta_selection(permuted_network_paths, infmat_name, index2gene, heat,
+                                         sizes, not classic, num_cores, delta_selection_fn, verbose)
+
+def get_deltas_for_heat(infmat, index2gene, gene2heat, addtl_genes, num_permutations, test_statistic,
+                        sizes, classic, num_cores, verbose=0):
+    if verbose > 3: print "* Performing permuted heat delta selection..."
+    heat_permutations = permutations.permute_heat(gene2heat, index2gene.values(), num_permutations,
+                                                  addtl_genes, num_cores)
+    return get_deltas_from_heat_permutations(infmat, index2gene, heat_permutations, test_statistic,
+                                             sizes, classic, num_cores, verbose)
+
+def get_deltas_for_mutations(args, infmat, index2gene, heat_params, verbose=0):
+    print "* Performing permuted mutation data delta selection..."
+    index2gene = hnio.load_index(args.infmat_index_file)
+
+    heat_permutations = permutations.generate_mutation_permutation_heat(
+                            heat_params["heat_fn"], heat_params["sample_file"],
+                            heat_params["gene_file"], index2gene.values(), heat_params["snv_file"],
+                            args.gene_length_file, args.bmr, args.bmr_file, heat_params["cna_file"],
+                            args.gene_order_file, heat_params["cna_filter_threshold"],
+                            heat_params["min_freq"], args.num_permutations, args.num_cores)
+    return get_deltas_from_heat_permutations(infmat, index2gene, heat_permutations, args.test_statistic,
+                                             args.sizes, args.classic, args.num_cores, verbose)
+
+def get_deltas_from_heat_permutations(infmat, gene_index, heat_permutations, test_statistic, sizes,
+                                      classic, num_cores, verbose=0):
+    delta_selection_fn = find_best_delta_by_largest_cc if test_statistic == "max_cc_size" \
+                            else find_best_delta_by_num_ccs
+
+    deltas = delta.heat_delta_selection(infmat, gene_index, heat_permutations, sizes, not classic,
+                                        num_cores, delta_selection_fn, verbose)
+    return deltas

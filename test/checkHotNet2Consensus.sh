@@ -19,8 +19,8 @@ num_vertices_weights_2=240
 seed=0
 
 num_network_permutations=20
-num_heat_permutations=0
-num_cores=4
+num_heat_permutations=1000
+num_cores=20
 
 mkdir -p $data
 mkdir -p $results
@@ -52,11 +52,11 @@ python $hotnet2/test/createSimulatedData.py \
 # Create influence matrices.
 for i in 1 2 3
 do
-    python $hotnet2/makeRequiredPPRFiles.py \
+    python $hotnet2/makeNetworkFiles.py \
         -nn network_$i \
         -e $data/networks/$i/edge_list.txt \
         -i $data/networks/$i/index_vertex.txt \
-        -o $data/networks/$i/original \
+        -o $data/networks/$i \
         -np $num_network_permutations \
         -p network_$i \
         -b $beta \
@@ -64,19 +64,22 @@ do
 done
 
 # Run HotNet2 consensus
-python $hotnet2/runHotNet2.py \
-    -nf $data/networks/1/original/network_1_ppr_$beta.h5 \
-        $data/networks/2/original/network_2_ppr_$beta.h5 \
-        $data/networks/3/original/network_3_ppr_$beta.h5 \
+python $hotnet2/HotNet2.py \
+    -nf $data/networks/1/network_1_ppr_$beta.h5 \
+        $data/networks/2/network_2_ppr_$beta.h5 \
+        $data/networks/3/network_3_ppr_$beta.h5 \
+    -pnp $data/networks/1/permuted/network_1_ppr_${beta}_##NUM##.h5 \
+        $data/networks/2/permuted/network_2_ppr_${beta}_##NUM##.h5 \
+        $data/networks/3/permuted/network_3_ppr_${beta}_##NUM##.h5 \
     -hf $data/weights/1/vertex_weight_1.txt \
         $data/weights/2/vertex_weight_2.txt \
-    -dp $num_network_permutations \
-    -sp $num_heat_permutations \
+    -np $num_network_permutations \
+    -hp $num_heat_permutations \
     -o $results/ \
     -c $num_cores --verbose 1
 
 # Compare results with previously computed results; currently, compare manually.
-# diff $results/consensus/subnetworks.tsv referenceConsensusResults.txt
+diff $results/consensus/subnetworks.tsv referenceConsensusResults.txt
 
 # Remove data and results.
 # rm -rf $hotnet2_test
