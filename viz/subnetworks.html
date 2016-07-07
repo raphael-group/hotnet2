@@ -121,8 +121,11 @@
 			predictions = data.predictions,
 			subnetworks = data.subnetworks,
 			geneToMutations = data.geneToMutations,
-			sampleToType = data.sampleToType,
+			sampleToType = data.sampleToType;
+
+		if (sampleToType){
 			samples = Object.keys(sampleToType).map(function(d){ return {_id: d, name: d}; });
+		}
 
 		// Set up the deltas and subnetwork sizes
 		var deltas = Object.keys(stats).sort(function(a, b){ return d3.ascending(a*1., b*1.); }),
@@ -156,9 +159,15 @@
 				k 	  = kSelect.node().value;
 
 			window.location.hash = delta;
-			pval.text(stats[delta][k].pval);
-			observed.text(stats[delta][k].observed);
-			expected.text(stats[delta][k].expected);
+			if (k in stats[delta]){
+				pval.text(stats[delta][k].pval);
+				observed.text(stats[delta][k].observed);
+				expected.text(stats[delta][k].expected);
+			} else{
+				pval.text("N/A");
+				observed.text("N/A");
+				expected.text("N/A");
+			}
 
 			// Set up the results table
 			d3.select("#results-table-wrapper").selectAll('*').remove();
@@ -225,7 +234,7 @@
 				subnetwork.nodes.forEach(function(n){
 					aberrationsData.M[n.name] = geneToMutations[n.name];
 				});
-                console.log(aberrationsData)
+				console.log(aberrationsData)
 
 				// Draw the SVG
 				aberrationsView.selectAll('*').remove();
