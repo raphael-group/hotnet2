@@ -1,5 +1,9 @@
 from collections import namedtuple
 
+# Names
+HOTNET2 = "hotnet2"
+HOTNET = "hotnet"
+
 # mutation types
 SNV = "snv"
 AMP = "amp"

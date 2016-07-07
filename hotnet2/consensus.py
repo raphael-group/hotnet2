@@ -34,7 +34,7 @@ def consensus_with_stats(args, networks, heats, verbose=0):
     # Run consensus to compute observed statistics
     network_heat_pairs = permuted_single_runs.keys()
     permuted_counts = []
-    for i in range(args.significance_permutations):
+    for i in range(args.heat_permutations):
         runs = [ (n, h, permuted_single_runs[(n, h)][i]) for n, h in network_heat_pairs ]
         permuted_consensus, _, _ = identify_consensus( runs, verbose=verbose )
         permuted_counts.append(count_consensus(permuted_consensus))

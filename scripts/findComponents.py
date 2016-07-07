@@ -1,10 +1,10 @@
-# -*- coding: iso-8859-1 -*-
-import json
-import os
-import sys
-import os.path
-sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
-import numpy as np
+#!/usr/bin/env python
+
+# Load required modules
+import json, os, sys, numpy as np
+
+# Load HotNet2
+sys.path.append(os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + '/../'))
 from hotnet2 import hnap, hnio, hotnet2 as hn, permutations as p, stats
 from hotnet2.constants import ITERATION_REPLACEMENT_TOKEN, JSON_OUTPUT, COMPONENTS_TSV, SIGNIFICANCE_TSV
 

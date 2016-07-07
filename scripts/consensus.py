@@ -4,6 +4,9 @@
 import os, sys, argparse, json, networkx as nx
 from itertools import combinations
 from collections import defaultdict
+
+# Load HotNet2
+sys.path.append(os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + '/../'))
 from hotnet2.consensus import identify_consensus
 
 # Argument parser
@@ -51,12 +54,12 @@ def load_single_runs(results_groups, verbose=0):
         # We are assuming all the results in the same directory will be
         # for the same heat score and network
         run_group = []
-        for result_file in results_files:
+        for results_file in result_group:
             with open(results_file, 'r') as f:
                 data = json.load(f)
                 heat_name = data['parameters']['heat_name']
                 network_name = data['parameters']['network_name']
-                run_group.append( (data['subnetworks'], data['statistics'], data['statistics']['delta']) )
+                run_group.append( (data['components'], data['statistics'], data['parameters']['delta']) )
         single_runs.append((network_name, heat_name, run_group))
 
     return single_runs
@@ -75,11 +78,11 @@ def run(args):
         result_files = [ [f] for f in args.files ]
 
     # Load results.
-    single_runs = load_single_runs(args.directories, args.verbose)
+    single_runs = load_single_runs(result_files, args.verbose)
 
     # Create the full consensus graph.
-    consensus, linkers = identify_consensus(single_runs)
-    consensus_genes = set( g for cc in consensus for g in cc['consensus'] + cc['expansion'] )
+    consensus, linkers, auto_deltas = identify_consensus(single_runs)
+    consensus_genes = set( g for cc in consensus for g in cc['core'] + cc['expansion'] )
 
     # Summarize the results.
     if args.verbose:
@@ -90,11 +93,12 @@ def run(args):
     with open(args.output_file, 'w') as f:
         if args.output_file.lower().endswith('.json'):
             # Convert the consensus to lists
-            consensus = [ dict(core=list(c['consensus']), expansion=list(c['expansion'])) for c in consensus ]
-            json.dump(dict(linkers=list(linkers), consensus=consensus), f, sort_keys=True, indent=4)
+            consensus = [ dict(core=list(c['core']), expansion=list(c['expansion'])) for c in consensus ]
+            output    = dict(linkers=list(linkers), consensus=consensus, deltas=auto_deltas)
+            json.dump(output, f, sort_keys=True, indent=4)
         else:
-            output  = [ '# Linkers: {}'.format(', '.join(sorted(linkers))), '# Consensus:' ]
-            output += [ '{}\t[{}] {}'.format(i, ', '.join(sorted(c['consensus'])), ', '.join(sorted(c['expansion']))) for i, c in enumerate(consensus) ]
+            output  = [ '# Linkers: {}'.format(', '.join(sorted(linkers))), '# Core\tExpansion' ]
+            output += [ '{}\t{}'.format(', '.join(sorted(c['core'])), ', '.join(sorted(c['expansion']))) for c in consensus ]
             f.write( '\n'.join(output) )
 
 if __name__ == '__main__':

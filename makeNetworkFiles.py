@@ -2,9 +2,11 @@
 
 # Load required modules
 import os, sys, multiprocessing as mp
-sys.path.append('influence_matrices')
-from hotnet2 import hnap, save_hotnet2_diffusion_to_file
-from bin import permuteNetwork as permute
+
+# Load HotNet2 and script for permuting networks
+sys.path.append(os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + '/scripts/'))
+from hotnet2 import *
+import permuteNetwork as permute
 
 # Argument parser
 def get_parser():
@@ -43,8 +45,8 @@ def get_parser():
 
     return parser
 
-def save_hotnet2_diffusion_to_file_wrapper(args):
-    return save_hotnet2_diffusion_to_file(*args)
+def save_diffusion_to_file_wrapper(args):
+    return save_diffusion_to_file(*args)
 
 def run(args):
     # create output directory if doesn't exist; warn if it exists and is not empty
@@ -59,8 +61,8 @@ def run(args):
     pprfile = "{}/{}_ppr_{:g}.h5".format(args.output_dir, args.prefix, args.beta)
     perm_dir = '%s/permuted' % args.output_dir
     perm_path = '{}/{}_ppr_{:g}_##NUM##.h5'.format(perm_dir, args.prefix, args.beta)
-    params = dict(network_name=args.network_name, permuted_networks_path=perm_path)
-    save_hotnet2_diffusion_to_file( args.gene_index_file, args.edgelist_file, args.beta, pprfile, exclude_network=False, params=params)
+    params = dict(network_name=args.network_name)
+    save_diffusion_to_file( HOTNET2, args.beta, args.gene_index_file, args.edgelist_file, pprfile, params=params)
 
     # make permuted edge lists
     assert(args.num_permutations > 0)
@@ -79,7 +81,7 @@ def run(args):
     for i in range(args.permutation_start_index, args.permutation_start_index + args.num_permutations):
         edge_file = '%s/%s_edgelist_%s' % (perm_dir, args.prefix, i)
         output_file = "{}/{}_ppr_{:g}_{}.h5".format(perm_dir, args.prefix, args.beta, i)
-        diffusion_args.append( (args.gene_index_file, edge_file, args.beta, output_file, True, params, 0) )
+        diffusion_args.append( (HOTNET2, args.beta, args.gene_index_file, edge_file, output_file, params, 0) )
 
     if args.cores != 1:
         pool = mp.Pool(None if args.cores == -1 else args.cores)
@@ -87,7 +89,7 @@ def run(args):
     else:
         map_fn = map
 
-    _ = map_fn(save_hotnet2_diffusion_to_file_wrapper, diffusion_args)
+    _ = map_fn(save_diffusion_to_file_wrapper, diffusion_args)
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))

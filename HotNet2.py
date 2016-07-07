@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 
+# Load required modules
 import sys, os, json
 from itertools import product
+
+# Load HotNet2 modules
 from hotnet2 import run as hnrun, hnap, hnio, heat as hnheat, consensus_with_stats, viz as hnviz
 from hotnet2.constants import ITERATION_REPLACEMENT_TOKEN, HN2_INFMAT_NAME
-from bin import makeResultsWebsite as MRW, createDendrogram as CD
+
+sys.path.append(os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + '/scripts/'))
+import createDendrogram as CD
 
 def get_parser():
     description = "Helper script for simple runs of generalized HotNet2, including automated"\
@@ -13,6 +18,10 @@ def get_parser():
 
     parser.add_argument('-nf', '--network_files', required=True, nargs='*',
                         help='Path to HDF5 (.h5) file containing influence matrix and edge list.')
+    parser.add_argument('-pnp', '--permuted_network_paths', required=True, default='',
+                        help='Path to influence matrices for permuted networks, one path '\
+                              'per network file. Include ' + ITERATION_REPLACEMENT_TOKEN + ' '\
+                              'in the path to be replaced with the iteration number', nargs='*')
     parser.add_argument('-hf', '--heat_files', required=True, nargs='*',
                         help='Path to heat file containing gene names and scores. This can either'\
                               'be a JSON file created by generateHeat.py, in which case the file'\
@@ -23,11 +32,11 @@ def get_parser():
                         help='Minimum size connected components that should be returned.')
     parser.add_argument('-d', '--deltas', nargs='*', type=float, default=[],
                         help='Delta value(s).')
-    parser.add_argument('-dp', '--delta_permutations', type=int, default=100,
+    parser.add_argument('-np', '--network_permutations', type=int, default=100,
                         help='Number of permutations to be used for delta parameter selection.')
     parser.add_argument('-cp', '--consensus_permutations', type=int, default=0,
                         help='Number of permutations to be used for consensus statistical significance testing.')
-    parser.add_argument('-sp', '--significance_permutations', type=int, default=100,
+    parser.add_argument('-hp', '--heat_permutations', type=int, default=100,
                         help='Number of permutations to be used for statistical significance testing.')
     parser.add_argument('-o', '--output_directory', required=True, default=None,
                         help='Output directory. Files results.json, components.txt, and'\
@@ -52,9 +61,10 @@ def get_parser():
 
 def run(args):
     # Load the network and heat files
+    assert( len(args.network_files) == len(args.permuted_network_paths) )
     networks, graph_map = [], dict()
-    for network_file in args.network_files:
-        infmat, indexToGene, G, nname, pnp = hnio.load_network(network_file, HN2_INFMAT_NAME)
+    for network_file, pnp in zip(args.network_files, args.permuted_network_paths):
+        infmat, indexToGene, G, nname = hnio.load_network(network_file, HN2_INFMAT_NAME)
         graph_map[nname] = G
         networks.append( (infmat, indexToGene, G, nname, pnp) )
 

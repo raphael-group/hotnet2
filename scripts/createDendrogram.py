@@ -2,7 +2,7 @@
 
 # Load the required modules
 import sys, os, json, pickle, os.path, scipy.io
-sys.path.append(os.path.split(os.path.split(sys.argv[0])[0])[0])
+sys.path.append(os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + '/../'))
 from hotnet2 import hotnet2 as hn
 from hotnet2 import hnap, hnio, heat as hnheat
 from hotnet2.hierarchy import HD, convertToLinkage, convertToNewick
