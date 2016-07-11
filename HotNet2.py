@@ -119,7 +119,7 @@ def run(args):
         snvs, cnas, sampleToType = mutation_map[heat_name]
         G = graph_map[network_name]
 
-        output = hnviz.generate_viz_json(run, G.edges(), nname, heat, snvs, cnas, sampleToType, d_score, d_name)
+        output = hnviz.generate_viz_json(run, G.edges(), nname, heat_map[heat_name], snvs, cnas, sampleToType, d_score, d_name)
 
         with open('{}/viz-data.json'.format(result_dir), 'w') as OUT:
             output['params'] = dict(consensus=False, network_name=network_name, heat_name=heat_name, auto_delta=format(auto_delta, 'g'))
