@@ -26,7 +26,7 @@ def generate_viz_json(results, edges, network_name, gene2heat, snvs, cnas, sampl
 
 def get_nodes(cc, gene2heat, d_score, d_name):
     scores = d_score if d_score else gene2heat
-    return [{'name': d_name.get(gene, gene), 'value': scores[gene]} for gene in cc]
+    return [{'name': d_name.get(gene, gene), 'value': scores.get(gene, float('nan'))} for gene in cc]
 
 def get_edges(cc, edges, networkName, d_name):
     edgeData = list()

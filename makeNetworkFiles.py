@@ -91,5 +91,9 @@ def run(args):
 
     _ = map_fn(save_diffusion_to_file_wrapper, diffusion_args)
 
+    if args.cores != 1:
+        pool.close()
+        pool.join()
+
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))
