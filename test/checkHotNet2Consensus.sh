@@ -60,7 +60,7 @@ do
         -np $num_network_permutations \
         -p network_$i \
         -b $beta \
-        -c 1
+        -c $num_cores
 done
 
 # Run HotNet2 consensus
@@ -76,10 +76,10 @@ python $hotnet2/HotNet2.py \
     -np $num_network_permutations \
     -hp $num_heat_permutations \
     -o $results/ \
-    -c $num_cores --verbose 1
+    -c $num_cores \
+    --verbose 1
 
-# Compare results with previously computed results; currently, compare manually.
-diff $results/consensus/subnetworks.tsv referenceConsensusResults.txt
-
-# Remove data and results.
-# rm -rf $hotnet2_test
+# Compare results with previously computed results.
+python $hotnet2/test/compare_consensus_results.py \
+    -p $results/consensus/subnetworks.tsv \
+    -r referenceConsensusResults.txt
