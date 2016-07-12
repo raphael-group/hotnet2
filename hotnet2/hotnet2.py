@@ -2,21 +2,13 @@
 from collections import defaultdict
 import networkx as nx, numpy as np, scipy as sp
 
-# Try Fortran first, C second, Cython third, and NumPy fourth.
-
 try:
-    import fortran_routines
-    choice_creation_similarity_matrix = 1
+    import c_routines
+    fast_similarity_matrix = True
 except ImportError:
-    try:
-        import c_routines
-        choice_creation_similarity_matrix = 2
-    except ImportError:
-        print("WARNING: Could not import either Fortran or C modules; "
-              "falling back to NumPy for similarity matrix creation.")
-        choice_creation_similarity_matrix = 3
-
-strong_ccs = nx.strongly_connected_components
+    print("WARNING: Could not import either C module; "
+          "falling back to NumPy for similarity matrix creation.")
+    fast_similarity_matrix = False
 
 ################################################################################
 # Influence and similarity matrix functions
@@ -44,41 +36,28 @@ def similarity_matrix(infmat, index2gene, gene2heat, directed=True, verbose=0):
     if verbose > 4:
         print "\t- Genes in similarity matrix:", len(genelist)
 
-    h = np.array([gene2heat[g] for g in genelist],dtype=np.float)
+    infmat = np.asarray(infmat, dtype=np.float64)
+    h = np.array([gene2heat[g] for g in genelist], dtype=np.float64)
+    indices = np.array([gene2index[g]-start_index for g in genelist], dtype=np.int)
+    m = np.shape(infmat)[0]
+    n = np.shape(h)[0]
 
-    if choice_creation_similarity_matrix == 1:
-
-        if infmat.dtype != np.float:
-            infmat = np.array(infmat,dtype=np.float)
-        indices = np.array([gene2index[g]-start_index+1 for g in genelist],dtype=np.int)  # Fortran is 1-indexed
+    if fast_similarity_matrix:
         if directed:
-            sim = fortran_routines.compute_sim(infmat, h, indices, np.shape(infmat)[0], np.shape(h)[0])
+            sim = c_routines.compute_sim(infmat, h, indices, m, n)
         else:
-            sim = fortran_routines.compute_sim_classic(infmat, h, indices, np.shape(infmat)[0], np.shape(h)[0])
-
-    elif choice_creation_similarity_matrix == 2:
-
-        if infmat.dtype != np.float:
-            infmat = np.array(infmat,dtype=np.float)
-        indices = np.array([gene2index[g]-start_index for g in genelist],dtype=np.int)
-        if directed:
-            sim = c_routines.compute_sim(infmat, h, indices, np.shape(infmat)[0], np.shape(h)[0])
-        else:
-            sim = c_routines.compute_sim_classic(infmat, h, indices, np.shape(infmat)[0], np.shape(h)[0])
-
+            sim = c_routines.compute_sim_classic(infmat, h, indices, m, n)
     else:
-
-        indices = [gene2index[g]-start_index for g in genelist]
         M = infmat[np.ix_(indices, indices)]
         if directed:
             sim = M * h
         else:
             M = np.minimum(M, M.transpose())  # Ensure that the influence matrix is symmetric
             sim = np.empty_like(M)
-            for i in range(M.shape[0]):
-                for j in range(i,M.shape[1]):
-                    sim[i][j] = max(h[i], h[j]) * M[i][j]
-                    sim[j][i] = sim[i][j]
+            for i in range(n):
+                for j in range(i, n):
+                    sim[i, j] = max(h[i], h[j]) * M[i, j]
+                    sim[j, i] = sim[i, j]
 
     return sim, index2gene
 
@@ -115,7 +94,7 @@ def connected_components(G, min_size=1):
     min_size -- minimum size for connected components included in the returned component list
 
     """
-    ccs = strong_ccs(G) if isinstance(G, nx.DiGraph) else nx.connected_components(G)
+    ccs = nx.strongly_connected_components(G) if isinstance(G, nx.DiGraph) else nx.connected_components(G)
     ccs = [cc for cc in ccs if len(cc) >= min_size]
     return ccs
 
