@@ -62,7 +62,7 @@ def run(args):
     # Permute graph the prescribed number of times
     print "* Creating permuted networks..."
     def outputFileName(i):
-        return "{}/{}_edgelist_{}".format(args.output_dir, args.output_prefix, i+1)
+        return "{}/{}_edgelist_{}".format(args.output_dir, args.output_prefix, args.start_index+i)
 
     n = args.num_permutations
     if args.cores > 1:
