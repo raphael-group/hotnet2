@@ -85,7 +85,7 @@ def filter_cnas(cnas, filter_thresh):
             invalidate_opposite_cnas(filtered_cnas, gene_cnas, DEL)
         else:
             for cna in gene_cnas:
-                filtered_cnas.add(get_invalidated_mutation(cna))
+                filtered_cnas.append(get_invalidated_mutation(cna))
 
     return filtered_cnas
 
