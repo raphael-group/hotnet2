@@ -65,7 +65,7 @@ def run(args):
         return "{}/{}_edgelist_{}".format(args.output_dir, args.output_prefix, i+1)
 
     n = args.num_permutations
-    if args.cores > 1:
+    if args.cores != 1:
         cores = mp.cpu_count() if args.cores == -1 else min(args.cores, mp.cpu_count)
         jobArgs = [ (G, Q, numEdges, outputFileName(i), i+1, n) for i in range(n) ]
         pool    = mp.Pool(cores)
@@ -73,7 +73,7 @@ def run(args):
         pool.close()
         pool.join()
     else:
-        swaps = [ permute_network_wrapper((G, Q, numEdges, outputFileName(i), i+1, n))
+        swaps = [ permute_network_wrapper((G, Q, numEdges, outputFileName(i), i+args.start_index, n))
                   for i in range(n) ]
 
     print
