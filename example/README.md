@@ -1,5 +1,7 @@
 # HotNet2 Examples
 
+**These examples are currently deprecated.**
+
 We provide example config files for creating influence matrices, running `simpleRun.py`, as well as
 generating heat scores, delta selection, and running Hotnet2 with/without significance testing.
 Below we demonstrate how to run HotNet2 using these examples. Please consult the config files in
@@ -17,14 +19,14 @@ HotNet2 in these examples. To do so, run:
 
 If you want to run the consensus procedure, you can create a second influence matrix and a directory of
 permuted influence matrices, you can run:
-    
+
     python makeRequiredPPRFiles.py @example/configs/influence_matrix2.config
 
 ## A Simple Run
 To run the simpleRun example, execute:
 
     python runHotNet2.py @example/configs/simple.config
-    
+
 This will run delta selection, HotNet2, and statistical significance testing using the heat file
 `example/example.heat` and store the output in `example/output/simple`. Because delta is selected
 using a permutation test, the output may vary slightly from run to run. You can see visualizations
@@ -34,20 +36,20 @@ of the subnetworks in `example/output/simple/viz`, e.g.
 
 As above, if you want to run the consensus procedure, you can also run the simpleRun example with the
 second influence matrix:
-    
+
     python runHotNet2.py @example/configs/simple2.config
 
 ## Advanced usage examples
 To run an example using mutation data, first create the directory `example/output/mutation`. Then:
 
 1. Generate the heat file from the mutation data.
-       
+
         python generateHeat.py @example/configs/heat.config
 
 2. Perform delta selection.
 
         python bin/findThreshold.py @example/configs/delta.config
-        
+
    (Note that `findThreshold.py` will output a file that contains a distribution of deltas. In
    practice, you would use this distribution to choose the delta for running HotNet2 (e.g. by
    taking the median), and then update the `delta` parameter of
@@ -56,7 +58,7 @@ To run an example using mutation data, first create the directory `example/outpu
 3. Run HotNet2 (without significance testing).
 
         python bin/findComponents.py @example/configs/run.config
-        
+
 4. Run HotNet2 (with significance testing).
 
         python bin/findComponents.py @example/configs/significance.config
