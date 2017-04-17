@@ -1,5 +1,7 @@
 # HotNet2 Examples
 
+**These examples are currently deprecated.**
+
 We provide example config files for creating influence matrices, running `simpleRun.py`, as well as
 generating heat scores, delta selection, and running Hotnet2 with/without significance testing.
 Below we demonstrate how to run HotNet2 using these examples. Please consult the config files in
@@ -46,6 +48,8 @@ To run an example using mutation data, consider the following steps:
 
 2. Generate the heat file from the mutation data.
 
+1. Generate the heat file from the mutation data.
+
         python generateHeat.py @example/configs/heat.config
 
 3. Perform delta selection.
@@ -61,7 +65,7 @@ To run an example using mutation data, consider the following steps:
 
         python bin/findComponents.py @example/configs/run.config
 
-5. Run HotNet2 (with significance testing).
+4. Run HotNet2 (with significance testing).
 
         python bin/findComponents.py @example/configs/significance.config
 
