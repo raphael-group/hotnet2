@@ -3,11 +3,8 @@
 # Load required modules
 import sys, os, numpy as np, networkx as nx, scipy as sp, scipy.io
 sys.path.append(os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + '/../'))
-<<<<<<< HEAD
 from hotnet2 import *
-=======
-from hotnet2 import *
->>>>>>> 944ea8c9435b224cf4d1a2b12225330b5f167b2c
+
 
 # Parse arguments
 def get_parser():
