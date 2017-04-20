@@ -40,18 +40,22 @@ The C and Fortran extensions are not required, but will significantly speed up H
 
 #### Recent update ####
 
-We recently updated HotNet2 to simplify usage. This update requires some updates to your scripts and data. Consult [`the previous README`](https://github.com/raphael-group/hotnet2/master/paper/OLD-README.md) for comparison.
+We recently updated HotNet2 to simplify usage. This update requires some updates to your scripts and data. Consult the [previous README](https://github.com/raphael-group/hotnet2/master/paper/OLD-README.md) for comparison.
 
 #### Data preprocessing ####
 
 * **Heat scores**. Use `makeHeatFile.py` to create a JSON file of gene heat scores (weights). These scores can be generated from mutation data or from several other formats. `HotNet2.py` requires a path to at least one heat file as input.
 * **Interaction network**. Use `makeNetworkFiles.py` to generate the network files required for running HotNet2. These include the influence matrix of your input network, and permuted networks and their corresponding influence matrices. Each of these files are in HDF5 (`.h5`) format. `HotNet2.py` requires at least one network file and path to the permuted network files as input.
 
+See [`paper/paper_commands.sh`](https://github.com/raphael-group/hotnet2/master/paper/paper_commands.sh) for examples of using the `makeHeatFile.py` and `makeNetworkFiles.py` scripts.
+
 #### HotNet2 ####
 
 After generating a heat file and the network files using the scripts above, use the `HotNet2.py` script to run HotNet2. The minimum arguments required for `HotNet2.py` are as follows:
 
     python HotNet2.py -nf <network_file> -pnp <permuted_networks_path> -hf <heat_file> -o <output_directory>
+
+See [`paper/paper_commands.sh`](https://github.com/raphael-group/hotnet2/master/paper/paper_commands.sh) for an example of using the `HotNet2.py` scripts with outputs of the `makeHeatFile.py` and `makeNetworkFiles.py` scripts.
 
 The output of `HotNet2.py` consists of a directory containing the following:
 * `{network_name}-{heat_name}/`: For each (network, heat score) pair, `HotNet2.py` outputs a directory of results. The directory contains subdirectories starting with "delta" for each delta parameter tested, each of which contain the subnetworks and statistical signifciance associated with that delta parameter.

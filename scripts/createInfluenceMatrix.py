@@ -5,7 +5,6 @@ import sys, os, numpy as np, networkx as nx, scipy as sp, scipy.io
 sys.path.append(os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + '/../'))
 from hotnet2 import *
 
-
 # Parse arguments
 def get_parser():
     # Common arguments
@@ -23,7 +22,7 @@ def get_parser():
     parser.add_argument('-v', '--verbose', required=False, default=0, type=int, choices=range(5),
                     help="Control verbosity of output.")
 
-    # Subparsers for the different
+    # Subparsers for the different diffusion types
     subparser = parser.add_subparsers(dest='diffusion_type', help='Diffusion method')
 
     hn2_parser = subparser.add_parser(HOTNET2)

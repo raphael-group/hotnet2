@@ -2,8 +2,9 @@
 
 # These commands run HotNet2 on the processed network and mutation data used for our Nature Genetics paper.
 
+# Set location of HotNet2, number of cores, number of network permutations, and number of heat permutations.
 hotnet2=..
-num_cores=8
+num_cores=-1
 num_network_permutations=100
 num_heat_permutations=1000
 
