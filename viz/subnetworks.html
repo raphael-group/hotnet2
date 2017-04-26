@@ -1,0 +1,261 @@
+
+<!DOCTYPE html>
+<head>
+<title>HotNet2 Subnetworks</title>
+<meta charset="utf-8">
+<link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="bower_components/fontawesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="bower_components/DataTables/media/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="bower_components/DataTables/media/css/dataTables.bootstrap.min.css">
+<style>
+</style>
+<script src="bower_components/d3/d3.min.js"></script>
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="bower_components/DataTables/media/js/jquery.dataTables.min.js"></script>
+<script src="bower_components/DataTables/media/js/dataTables.bootstrap.min.js"></script>
+<script src="bower_components/gd3/gd3.js"></script>
+</head>
+<body>
+  <div class="container">
+	<h1>
+		<small class="pull-right" style="font-size:50%">
+			<a href="/">Back</a>
+		</small>
+		HotNet2 subnetworks:
+		{% if is_consensus %}
+			Consensus
+		{% else %}
+			{{ network_name }} {{ heat_name }}
+		{% end %}
+	</h1>
+	<div class="row">
+	  <div class="col-lg-12">
+		<div class="panel panel-default">
+		  <div class="panel-heading">
+			<h3 class="panel-title" data-toggle="collapse" data-target="#parameters" aria-expanded="true" aria-controls="parameters" style="cursor:pointer">
+			  Parameters
+			  <span class="pull-right">[+]</span>
+			</h3>
+		  </div>
+		  <div class="collapse in" id="parameters">
+			<div class="panel-body">
+			  <form class="form-inline">
+				<div class="form-group col-lg-4 text-left">
+				  <label>
+					<abbr title="Select one of the deltas automatically chosen by HotNet2. HotNet2 reports a collection of subnetworks and their significance for each automatically chosen delta.">Minimum edge weight &delta;</abbr>
+				  </label>
+				  <select class='form-control' id="deltas"></select>
+				</div>
+				<div class="form-group col-lg-4 text-center">
+				  <label>
+					<abbr title="Hide subnetworks of size less than k.">Minimum subnetwork size <i>k</i></abbr>
+				  </label>
+				  <select class='form-control' id="k"></select>
+				</div>
+				<div class="form-group col-lg-4 text-right">
+				  <button class="btn btn-primary" id="refresh">
+					Refresh
+				  </button>
+				</div>
+			  </form>
+			</div>
+		  </div>
+		</div>
+	  </div>
+	</div>
+	<div class="row">
+	  <div class="col-lg-12">
+		<div class="panel panel-default">
+		  <div class="panel-heading">
+			<div class="pull-right">
+			  Observed: <span id="observed"></span>
+			  Expected: <span id="expected"></span>
+			  P=<span id="pval"></span>
+			</div>
+			<h3 class="panel-title">
+			  Results
+			</h3>
+		  </div>
+		  <div class="panel-body">
+			<div class="row" id="results-table">
+			  <div class="col-lg-12">
+				<h3>Results table</h3>
+				<div id="results-table-wrapper"></div>
+			  </div>
+			</div>
+			<hr/>
+			<div class="row">
+			  <div class="col-lg-12">
+				<h3>Visualizations <small>Click a subnetwork in the table above to view it in more detail.</small></h3>
+			  </div>
+			</div>
+			<div class="row visualization" style="display:none">
+			  <div class="col-lg-4" id="network-view">
+				<h5>Network view</h5>
+				<div id="network-view-wrapper"></div>
+			  </div>
+			  <div class="col-lg-8" id="aberrations-view">
+				<h5>Aberrations view</h5>
+				<div id="aberrations-view-wrapper"></div>
+			  </div>
+			</div>
+		  </div>
+		</div>
+	  </div>
+	</div>
+  </div>
+  <script>
+  var networkView = d3.select('div#network-view-wrapper'),
+	  aberrationsView = d3.select('div#aberrations-view-wrapper'),
+	  pval = d3.select("span#pval"),
+	  expected = d3.select("span#expected"),
+	  observed = d3.select("span#observed");
+
+  $(document).ready(function(){
+	// Load the data
+	d3.json('data/{{ run_index }}.json', function(data){
+		// Parse into shorter variable handles
+		var stats	   = data.stats,
+			geneToHeat  = data.geneToHeat,
+			predictions = data.predictions,
+			subnetworks = data.subnetworks,
+			geneToMutations = data.geneToMutations,
+			sampleToType = data.sampleToType;
+
+		if (sampleToType){
+			samples = Object.keys(sampleToType).map(function(d){ return {_id: d, name: d}; });
+		}
+
+		// Set up the deltas and subnetwork sizes
+		var deltas = Object.keys(stats).sort(function(a, b){ return d3.ascending(a*1., b*1.); }),
+			sizes  = Object.keys(stats[Object.keys(stats)[0]]).sort(function(a, b){ return d3.ascending(a*1., b*1.); }),
+			initialDelta = window.location.hash.split('#')[1];
+
+		var deltaSelect = d3.select('select#deltas');
+		deltaSelect.selectAll('.delta-option')
+			.data(deltas).enter()
+			.append('option')
+			.attr('value', function(d){ return d; })
+			.property("selected", function(d){ return d == initialDelta; })
+			.text(function(d){ return d; });
+
+		var kSelect = d3.select('select#k');
+		kSelect.selectAll('.k-option')
+		  .data(sizes).enter()
+		  .append('option')
+		  .attr('value', function(d){ return d; })
+		  .text(function(d){ return d; });
+
+		$('button#refresh').on('click', function(e){
+			e.preventDefault();
+			draw();
+		});
+
+		// Main drawing function
+		function draw(){
+			// Get the current delta and minimum size
+			var delta = deltaSelect.node().value,
+				k 	  = kSelect.node().value;
+
+			window.location.hash = delta;
+			if (k in stats[delta]){
+				pval.text(stats[delta][k].pval);
+				observed.text(stats[delta][k].observed);
+				expected.text(stats[delta][k].expected);
+			} else{
+				pval.text("N/A");
+				observed.text("N/A");
+				expected.text("N/A");
+			}
+
+			// Set up the results table
+			d3.select("#results-table-wrapper").selectAll('*').remove();
+			var table = d3.select("#results-table-wrapper").append('table').attr('class', 'table');
+			table.append('thead').append('tr')
+				.selectAll('.header-row')
+				.data(['Subnetwork', 'Size', geneToMutations ? 'Coverage (%)' : 'Total Heat']).enter()
+				.append('th')
+				.text(function(d){ return d; });
+
+			var tbody = table.append('tbody');
+			var rows = tbody.selectAll('.subnetwork-row')
+				.data(subnetworks[delta].filter(function(d){ return d.nodes.length >= k; })).enter()
+				.append('tr')
+				.on('click', drawSubnetwork);
+
+			rows.append('td').text(function(d){
+				var nodes = d.nodes.sort(function(a, b){ return d3.descending(a.value, b.value); });
+				return nodes.map(function(n){ return n.name; }).join(', ');
+			});
+			rows.append('td').text(function(d){ return d.nodes.length; });
+			rows.append('td').text(function(d){
+				if (geneToMutations){
+					return d.coverage;
+				} else {
+					return d3.round(d.nodes.reduce(function(total, n){ return total + n.value; }, 0), 4);
+				}
+			});
+
+			var dataTbl = $('div#results-table-wrapper table').DataTable({
+				paging:			  true,
+				pageLength:	 10,
+				searching:		true,
+				order:		  [[2, 'desc']]
+			});
+
+			// Draw the visualizations on click
+			function drawSubnetwork(subnetwork){
+				// Unhide the visualizations
+				$('.visualization').show();
+
+				// Highlight the current row
+				if ( $(this).hasClass('selected') ) {
+					$(this).removeClass('selected');
+				}
+				else {
+					dataTbl.$('tr.selected').removeClass('selected');
+					$(this).addClass('selected');
+				}
+
+				// Create the view, removing any previous elements
+				var style = {
+					nodeColor : ['rgb(38, 125, 255)','rgb(237, 14, 28)'],
+					width: networkView.node().getBoundingClientRect().width -20
+				};
+				networkView.selectAll('*').remove();
+				networkView.datum(subnetwork)
+					.call( gd3.graph({ style: style }) );
+
+				// Add the mutation matrix (if necessary)
+				if (geneToMutations){
+				// Create the data
+				var aberrationsData = { M : {}, samples: samples, sampleToTypes: sampleToType };
+				subnetwork.nodes.forEach(function(n){
+					aberrationsData.M[n.name] = geneToMutations[n.name];
+				});
+				console.log(aberrationsData)
+
+				// Draw the SVG
+				aberrationsView.selectAll('*').remove();
+				var style = {
+					width: aberrationsView.node().getBoundingClientRect().width -20
+				};
+				aberrationsView.datum(aberrationsData)
+					.call(gd3.mutationMatrix({style:style}));
+
+				} else {
+					aberrationsView.selectAll('*').remove();
+					aberrationsView.append('span').text('No mutation data available for aberrations view.')
+				}
+
+			}
+		}
+
+		// Initialize
+		draw();
+
+	});
+  });
+  </script>
+</body>

@@ -1,4 +1,4 @@
-import constants
+from constants import *
 import delta
 import heat
 import hnap
@@ -10,3 +10,5 @@ import stats
 import union_find
 import viz
 import hierarchy
+from consensus import *
+from network import *

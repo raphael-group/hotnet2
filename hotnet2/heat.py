@@ -180,7 +180,7 @@ def music_heat(gene2music, threshold=1.0, max_heat=15):
     print "\t- Including", len(gene2heat), "genes at threshold", threshold
     return gene2heat
 
-def filter_heat_to_network_genes(gene2heat, network_genes):
+def filter_heat_to_network_genes(gene2heat, network_genes, verbose):
     """Return a dict mapping genes to heat scores such that only genes in the network are included.
 
     Arguments:
@@ -196,7 +196,7 @@ def filter_heat_to_network_genes(gene2heat, network_genes):
         else:
             num_removed += 1
 
-    if num_removed > 0:
+    if verbose > 1 and num_removed > 0:
         print "\t- Removing %s genes not in the network" % num_removed
 
     return filtered_heat

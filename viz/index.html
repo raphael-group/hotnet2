@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<head>
+<title>HotNet2 Subnetworks</title>
+<meta charset="utf-8">
+<link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="bower_components/fontawesome/css/font-awesome.min.css">
+<style>
+tr.result{ cursor:pointer; }
+tr.result:hover{background:#add8e6;}
+</style>
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Summary: HotNet2 runs</h1>
+    <div class="row">
+		<table class="table table-striped">
+			<tr><th>Run type</th><th>Network</th><th>Heat score</th><th>Auto &delta;</th><th>Number of subnetworks</th></tr>
+			{% for result in results %}
+				<tr class="result" data-run-index="{{ result['run_index'] }}" data-auto-delta="{{ result['auto_delta'] }}">
+					<td>{% if result['is_consensus'] %} Consensus {% else %} Single run {% end %} </td>
+					<td>{{ result['network_name'] }}</td>
+					<td>{{ result['heat_name'] }}</td>
+					<td>{{ result['auto_delta'] }}</td>
+					<td>{{ result['num_subnetworks'] }}</td>
+				</tr>
+			{% end %}
+		</table>
+	</div>
+</div>
+<script>
+// Show the runs on click
+$('tr').on('click', function(){
+	var run_index  = $(this).data('run-index'),
+		auto_delta = $(this).data('auto-delta');
+	window.location.assign('/' + run_index + '#' + auto_delta);
+});
+</script>
+</body>
