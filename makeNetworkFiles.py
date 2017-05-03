@@ -31,6 +31,10 @@ def get_parser():
                         help='Beta is the restart probability for the '\
                         'insulated heat diffusion process.')
 
+    parser.add_argument('-op', '--only_permutations', action='store_true',
+                        help='Only permutations, i.e., do not generate influence matrix for'\
+                             'observed data. Useful for generating permuted network files on'\
+                             'multiple machines.')
     parser.add_argument('-q', '--Q', default=115, type=float,
                         help='Edge swap constant. The script will attempt Q*|E| edge swaps')
     parser.add_argument('-ps', '--permutation_start_index', default=1, type=int,
@@ -53,35 +57,36 @@ def run(args):
               "(Ctrl-c to cancel).")
 
     # make real PPR
-    print "\nCreating PPR matrix for real network"
-    print "--------------------------------------"
-    pprfile = "{}/{}_ppr_{:g}.h5".format(args.output_dir, args.prefix, args.beta)
-    perm_dir = '%s/permuted' % args.output_dir
-    perm_path = '{}/{}_ppr_{:g}_##NUM##.h5'.format(perm_dir, args.prefix, args.beta)
-    params = dict(network_name=args.network_name)
-    save_diffusion_to_file( HOTNET2, args.beta, args.gene_index_file, args.edgelist_file, pprfile, params=params)
+    if not args.only_permutations:
+        print "\nCreating PPR matrix for real network"
+        print "--------------------------------------"
+        pprfile = "{}/{}_ppr_{:g}.h5".format(args.output_dir, args.prefix, args.beta)
+        params = dict(network_name=args.network_name)
+        save_diffusion_to_file( HOTNET2, args.beta, args.gene_index_file, args.edgelist_file, pprfile, params=params)
 
     # make permuted edge lists
-    assert(args.num_permutations > 0)
-    print "\nCreating edge lists for permuted networks"
-    print "-------------------------------------------"
-    if not os.path.exists(perm_dir): os.makedirs(perm_dir)
-    pargs = '-q %s -s %s -e %s -p %s -o %s -n %s -c %s' % (args.Q, args.permutation_start_index, args.edgelist_file,
-                                                     args.prefix, perm_dir, args.num_permutations, args.cores)
-    permute.run(permute.get_parser().parse_args(pargs.split()))
+    if args.num_permutations > 0:
+        print "\nCreating edge lists for permuted networks"
+        print "-------------------------------------------"
+        perm_dir = '%s/permuted' % args.output_dir
+        perm_path = '{}/{}_ppr_{:g}_##NUM##.h5'.format(perm_dir, args.prefix, args.beta)
+        if not os.path.exists(perm_dir): os.makedirs(perm_dir)
+        pargs = '-q %s -s %s -e %s -p %s -o %s -n %s -c %s' % (args.Q, args.permutation_start_index, args.edgelist_file,
+                                                         args.prefix, perm_dir, args.num_permutations, args.cores)
+        permute.run(permute.get_parser().parse_args(pargs.split()))
 
-    # make permuted PPRs
-    print "\nCreating PPR matrices for permuted networks"
-    print "---------------------------------------------"
-    diffusion_args = []
-    params = dict(network_name=args.network_name, beta=args.beta)
-    for i in range(args.permutation_start_index, args.permutation_start_index + args.num_permutations):
-        sys.stdout.write("\r{}/{}".format(i, args.permutation_start_index + args.num_permutations - 1))
-        sys.stdout.flush()
+        # make permuted PPRs
+        print "\nCreating PPR matrices for permuted networks"
+        print "---------------------------------------------"
+        diffusion_args = []
+        params = dict(network_name=args.network_name, beta=args.beta)
+        for i in range(args.permutation_start_index, args.permutation_start_index + args.num_permutations):
+            sys.stdout.write("\r{}/{}".format(i, args.permutation_start_index + args.num_permutations - 1))
+            sys.stdout.flush()
 
-        edge_file = '%s/%s_edgelist_%s' % (perm_dir, args.prefix, i)
-        output_file = "{}/{}_ppr_{:g}_{}.h5".format(perm_dir, args.prefix, args.beta, i)
-        save_diffusion_to_file( HOTNET2, args.beta, args.gene_index_file, edge_file, output_file, params=params, verbose=0 )
+            edge_file = '%s/%s_edgelist_%s' % (perm_dir, args.prefix, i)
+            output_file = "{}/{}_ppr_{:g}_{}.h5".format(perm_dir, args.prefix, args.beta, i)
+            save_diffusion_to_file( HOTNET2, args.beta, args.gene_index_file, edge_file, output_file, params=params, verbose=0 )
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))
