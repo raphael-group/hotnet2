@@ -64,19 +64,19 @@ def run(args):
     assert( len(args.network_files) == len(args.permuted_network_paths) )
     networks, graph_map = [], dict()
     for network_file, pnp in zip(args.network_files, args.permuted_network_paths):
-        infmat, indexToGene, G, nname = hnio.load_network(network_file, HN2_INFMAT_NAME)
-        graph_map[nname] = G
-        networks.append( (infmat, indexToGene, G, nname, pnp) )
+        infmat, indexToGene, G, network_name = hnio.load_network(network_file, HN2_INFMAT_NAME)
+        graph_map[network_name] = G
+        networks.append( (infmat, indexToGene, G, network_name, pnp) )
 
     heats, json_heat_map, heat_map, mutation_map, heat_file_map = [], dict(), dict(), dict(), dict()
     for heat_file in args.heat_files:
         json_heat = os.path.splitext(heat_file.lower())[1] == '.json'
-        heat, hname, mutations = hnio.load_heat_file(heat_file, json_heat)
-        json_heat_map[hname] = json_heat
-        heat_map[hname] = heat
-        heat_file_map[hname] = heat_file
-        mutation_map[hname] = mutations
-        heats.append( (heat, hname) )
+        heat, heat_name, mutations = hnio.load_heat_file(heat_file, json_heat)
+        json_heat_map[heat_name] = json_heat
+        heat_map[heat_name] = heat
+        heat_file_map[heat_name] = heat_file
+        mutation_map[heat_name] = mutations
+        heats.append( (heat, heat_name) )
 
     # Run HotNet2 on each pair of network and heat files
     if args.verbose > 0:
@@ -119,7 +119,7 @@ def run(args):
         snvs, cnas, sampleToType = mutation_map[heat_name]
         G = graph_map[network_name]
 
-        output = hnviz.generate_viz_json(run, G.edges(), nname, heat_map[heat_name], snvs, cnas, sampleToType, d_score, d_name)
+        output = hnviz.generate_viz_json(run, G.edges(), network_name, heat_map[heat_name], snvs, cnas, sampleToType, d_score, d_name)
 
         with open('{}/viz-data.json'.format(result_dir), 'w') as OUT:
             output['params'] = dict(consensus=False, network_name=network_name, heat_name=heat_name, auto_delta=format(auto_delta, 'g'))
@@ -131,7 +131,7 @@ def run(args):
     consensus_auto_delta = 0
     results = [[consensus_ccs, consensus_stats, consensus_auto_delta]]
     with open('{}/consensus/viz-data.json'.format(args.output_directory), 'w') as OUT:
-        output = hnviz.generate_viz_json(results, G.edges(), nname, heat, snvs, cnas, sampleToType, d_score, d_name)
+        output = hnviz.generate_viz_json(results, G.edges(), network_name, heat, snvs, cnas, sampleToType, d_score, d_name)
         output['params'] = dict(consensus=True, auto_delta=format(consensus_auto_delta, 'g'))
         json.dump( output, OUT )
 
