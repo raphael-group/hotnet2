@@ -42,7 +42,7 @@ def expm_eig(A):
 ################################################################################
 # HELPERS
 ################################################################################
-        
+
 # Run the entire HotNet2 diffusion process from start to finish
 def save_diffusion_to_file( diffusion_type, diffusion_param, index_file, edge_file,
                             output_file, params=dict(), verbose=0):
@@ -71,13 +71,13 @@ def save_diffusion_to_file( diffusion_type, diffusion_param, index_file, edge_fi
     output.update(params.items())
     if diffusion_type == HOTNET2:
         output['beta'] = diffusion_param
-        output['PPR']  = hotnet2_diffusion(G, nodes, output['beta'], verbose)
+        output['PPR']  = np.asarray(hotnet2_diffusion(G, nodes, output['beta'], verbose), dtype=np.float32)
     elif diffusion_type == HOTNET:
         output['time'] = diffusion_param
-        output['Li']   = hotnet_diffusion(G, nodes, output['time'], verbose)
+        output['Li']   = np.asarray(hotnet_diffusion(G, nodes, output['time'], verbose), dtype=np.float32)
     else:
         raise NotImplementedError('Diffusion of type "%s" not implemented' % diffusion_type)
-        
+
     hnio.save_hdf5(output_file, output)
 
 # Load a graph from file

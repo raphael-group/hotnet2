@@ -376,7 +376,7 @@ def load_network(file_path, infmat_name):
     to figure out how to load the file.
     """
     H = load_hdf5(file_path)
-    PPR = np.asarray(H[infmat_name])
+    PPR = np.asarray(H[infmat_name], dtype=np.float32)
     indexToGene = dict( zip(range(np.shape(PPR)[0]), H['nodes']) )
     G = nx.Graph()
     G.add_edges_from(H['edges'])

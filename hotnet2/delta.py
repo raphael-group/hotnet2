@@ -130,7 +130,7 @@ def get_edges(sim, start=.05):
 
 def network_delta_wrapper((network_path, infmat_name, index2gene, heat, sizes, directed,
                            selection_function, verbose)):
-    permuted_mat = hnio.load_hdf5(network_path)[infmat_name]
+    permuted_mat = np.asarray(hnio.load_hdf5(network_path)[infmat_name], np.float32)
     sim, index2gene = hn.similarity_matrix(permuted_mat, index2gene, heat, directed, verbose)
     if selection_function is find_best_delta_by_largest_cc:
         return selection_function(sim, index2gene, sizes, directed, verbose=verbose)
