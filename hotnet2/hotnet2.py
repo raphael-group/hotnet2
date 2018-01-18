@@ -6,8 +6,7 @@ try:
     import c_routines
     fast_similarity_matrix = True
 except ImportError:
-    print("WARNING: Could not import either C module; "
-          "falling back to NumPy for similarity matrix creation.")
+    print("WARNING: Could not import C module; falling back to NumPy for similarity matrix creation.")
     fast_similarity_matrix = False
 
 ################################################################################
