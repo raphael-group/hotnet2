@@ -21,7 +21,7 @@ def consensus_with_stats(args, networks, heats, verbose=0):
     permuted_single_runs = defaultdict(list)
     for (infmat, indexToGene, G, nname, pnp), (heat, hname) in product(networks, heats):
         # 1) Filter the heat scores
-        # 1a) Remove enes not in the network
+        # 1a) Remove genes not in the network
         heat = filter_heat_to_network_genes(heat, set(indexToGene.values()), verbose)
 
         # 1b) Genes with score 0 cannot be in output components, but are eligible for heat in permutations
@@ -34,7 +34,7 @@ def consensus_with_stats(args, networks, heats, verbose=0):
     # Run consensus to compute observed statistics
     network_heat_pairs = permuted_single_runs.keys()
     permuted_counts = []
-    for i in range(args.heat_permutations):
+    for i in range(np):
         runs = [ (n, h, permuted_single_runs[(n, h)][i]) for n, h in network_heat_pairs ]
         permuted_consensus, _, _ = identify_consensus( runs, verbose=verbose )
         permuted_counts.append(count_consensus(permuted_consensus))
