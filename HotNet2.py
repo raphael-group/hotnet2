@@ -54,7 +54,7 @@ def get_parser():
                         'each line.')
     parser.add_argument('--output_hierarchy', default=False, required=False, action='store_true',
                         help='Output the hierarchical decomposition of the HotNet2 similarity matrix.')
-    parser.add_argument('--verbose', default=1, choices=range(5), type=int, required=False,
+    parser.add_argument('--verbose', default=1, choices=list(range(5)), type=int, required=False,
                         help='Set verbosity of output (minimum: 0, maximum: 5).')
 
     return parser
@@ -80,13 +80,13 @@ def run(args):
 
     # Run HotNet2 on each pair of network and heat files
     if args.verbose > 0:
-        print '* Running HotNet2 in consensus mode...'
+        print('* Running HotNet2 in consensus mode...')
 
     single_runs, consensus, linkers, auto_deltas, consensus_stats = consensus_with_stats(args, networks, heats)
 
     # Output the single runs
     if args.verbose > 0:
-        print '* Outputting results to file...'
+        print('* Outputting results to file...')
 
     params = vars(args)
     result_dirs = []
@@ -102,8 +102,9 @@ def run(args):
         # create the hierarchy if necessary
         if args.output_hierarchy:
             hierarchy_out_dir = '{}/hierarchy/'.format(output_dir)
-            if not os.path.isdir(hierarchy_out_dir): os.mkdir(hierarchy_out_dir)
-            CD.createDendrogram( sim, index2gene.values(), hierarchy_out_dir, params, verbose=False)
+            if not os.path.isdir(hierarchy_out_dir): 
+                os.mkdir(hierarchy_out_dir)
+            CD.createDendrogram( sim, list(index2gene.values()), hierarchy_out_dir, params, verbose=False)
 
     # Output the consensus
     hnio.output_consensus(consensus, linkers, auto_deltas, consensus_stats, params, args.output_directory)
@@ -111,7 +112,7 @@ def run(args):
     # Create the visualization(s). This has to be after the consensus procedure
     # is run because we want to default to the auto-selected deltas.
     if args.verbose > 0:
-        print '* Generating and outputting visualization data...'
+        print('* Generating and outputting visualization data...')
 
     d_score = hnio.load_display_score_tsv(args.display_score_file) if args.display_score_file else None
     d_name = hnio.load_display_name_tsv(args.display_name_file) if args.display_name_file else dict()

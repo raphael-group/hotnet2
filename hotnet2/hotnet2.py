@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
+
 from collections import defaultdict
 import networkx as nx, numpy as np, scipy as sp
 
@@ -13,7 +15,8 @@ except ImportError:
 # Influence and similarity matrix functions
 
 def similarity_matrix(infmat, index2gene, gene2heat, directed=True, verbose=0):
-    """Create and return a similarity matrix and index to gene mapping for the given influence
+    """
+    Create and return a similarity matrix and index to gene mapping for the given influence
     matrix and heat. Only genes with heat that are in the network will be included in the returned
     similarity matrix and index to gene mapping.
 
@@ -27,13 +30,13 @@ def similarity_matrix(infmat, index2gene, gene2heat, directed=True, verbose=0):
 
     """
     start_index = min(index2gene.keys())
-    gene2index = dict((gene, index) for index, gene in index2gene.iteritems())
+    gene2index = dict((gene, index) for index, gene in list(index2gene.items()))
 
     # Identify genes in the given list that are also in the network
-    genelist = sorted(set(gene2heat.keys()).intersection(gene2index.keys()))
+    genelist = sorted(set(gene2heat.keys()).intersection(list(gene2index.keys())))
     index2gene = dict(enumerate(genelist))
     if verbose > 4:
-        print "\t- Genes in similarity matrix:", len(genelist)
+        print("\t- Genes in similarity matrix:", len(genelist))
 
     infmat = np.asarray(infmat, dtype=np.float64)
     h = np.array([gene2heat[g] for g in genelist], dtype=np.float64)
@@ -64,7 +67,8 @@ def similarity_matrix(infmat, index2gene, gene2heat, directed=True, verbose=0):
 # Weighted graph functions
 
 def weighted_graph(sim_mat, index2gene, delta, directed=True):
-    """Construct and return weighted graph in which nodes are labeled with gene names and edges
+    """
+    Construct and return weighted graph in which nodes are labeled with gene names and edges
     between nodes have weight equal to the similarity score of the two genes.
 
     Arguments:
@@ -77,14 +81,15 @@ def weighted_graph(sim_mat, index2gene, delta, directed=True):
                 instance is returned. If false, a networkx Graph instance is returned.
 
     """
-    e = zip( *sp.where(sim_mat >= delta))
+    e = list(zip( *sp.where(sim_mat >= delta)))
     edges = [(int(j), int(i), dict(weight=sim_mat[i,j])) for i, j in e]
     G = nx.DiGraph() if directed else nx.Graph()
     G.add_edges_from([(index2gene[i], index2gene[j], d) for i, j, d in edges])
     return G
 
 def connected_components(G, min_size=1):
-    """Find connected components in the given graph and return as a list of lists of gene names.
+    """
+    Find connected components in the given graph and return as a list of lists of gene names.
 
     If the graph contains no connected components of size at least min_size, an empty list is returned.
 
@@ -98,7 +103,8 @@ def connected_components(G, min_size=1):
     return ccs
 
 def component_sizes(ccs):
-    """Return dict mapping a CC size to the number of connected components of that size.
+    """
+    Return dict mapping a CC size to the number of connected components of that size.
 
     Only sizes for which there is at least one connected component of that size will have an entry
     in the returned dict. If the given component list is empty, an empty dict is returned.

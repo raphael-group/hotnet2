@@ -87,7 +87,7 @@ def run(args):
     # Summarize the results.
     if args.verbose:
         total_genes = set(v for ccs in results for cc in ccs for v in cc)
-        print '* Returning {} consensus genes from {} original genes...'.format(len(consensus_genes), len(total_genes))
+        print('* Returning {} consensus genes from {} original genes...'.format(len(consensus_genes), len(total_genes)))
 
     # Output to file (either JSON or text depending on the file extension).
     with open(args.output_file, 'w') as f:

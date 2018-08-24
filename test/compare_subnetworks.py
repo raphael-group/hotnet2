@@ -26,8 +26,8 @@ def load_directory(directory):
 subnets1, sig_counts1 = load_directory(args.directories[0])
 subnets2, sig_counts2 = load_directory(args.directories[1])
 
-print 'Deltas same?', all( d in subnets2 for d in subnets1 )
-print 'Subnetwork comparison'
+print('Deltas same?', all( d in subnets2 for d in subnets1 ))
+print('Subnetwork comparison')
 for d, ccs in subnets1.iteritems():
-	print '\t- Same?', subnets2[d] == ccs
-	print '\t- # k with P < 0.01', sig_counts1[d], sig_counts2[d]
+	print('\t- Same?', subnets2[d] == ccs)
+	print('\t- # k with P < 0.01', sig_counts1[d], sig_counts2[d])

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 def linkage(T):
     """
     This function converts a tree from our current format to a linkage matrix Z
@@ -93,7 +95,7 @@ def reorder(Z, V):
 
         # For the children of the inner node, reorder them if they are leaf nodes and append them if they are inner nodes.
 
-        for j in reversed(range(2)):
+        for j in reversed(list(range(2))):
             if Z[i][j]<n:
                 order[Z[i][j]] = n-m-1
                 transpose_order[n-m-1] = Z[i][j]
@@ -109,7 +111,7 @@ def reorder(Z, V):
     reordered_Z = [[y for y in z] for z in Z]
 
     for i in range(len(Z)):
-        for j in reversed(range(2)):
+        for j in reversed(list(range(2))):
             if Z[i][j]<n:
                 reordered_Z[i][j] = order[Z[i][j]]
 

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 import json
 import sys
@@ -119,7 +121,7 @@ def valid_cna_filter_thresh(string):
 
 def load_direct_heat(args):
     heat = hnio.load_heat_tsv(args.heat_file)
-    print "* Loading heat scores for %s genes" % len(heat)
+    print("* Loading heat scores for %s genes" % len(heat))
 
     #ensure that all heat scores are positive
     bad_genes = [gene for gene in heat if heat[gene] < 0]
@@ -167,7 +169,8 @@ def run(args):
 
     output_file = open(args.output_file, 'w') if args.output_file else sys.stdout
     json.dump(output_dict, output_file, indent=4)
-    if (args.output_file): output_file.close()
+    if (args.output_file): 
+      output_file.close()
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 ###############################################################################
 #
@@ -53,7 +53,7 @@ def HD(V,A,increasing=False):
                 break
         A = A[np.ix_(component,component)]
         V = slice_vertices(V,component)
-        print 'The graph has %d strongly connected components, but the hierarchical decomposition requires a strongly connected graph.  The decomposition tree considers a subgraph defined by a largest strongly connected component of the original graph %d of its %d vertices.' % (len(SCCs),largest_component_size,number_vertices)
+        print('The graph has %d strongly connected components, but the hierarchical decomposition requires a strongly connected graph.  The decomposition tree considers a subgraph defined by a largest strongly connected component of the original graph %d of its %d vertices.' % (len(SCCs),largest_component_size,number_vertices))
 
     if increasing:
         base = 0.0
@@ -320,7 +320,7 @@ def condense_graph(A,SCCs):
 
         vertices = np.array([vertex for component in SCCs for vertex in component],dtype=np.int)
         sizes = [len(component) for component in SCCs]
-        indices = np.array([sum(sizes[:i]) for i in xrange(len(SCCs)+1)],dtype=np.int)
+        indices = np.array([sum(sizes[:i]) for i in range(len(SCCs)+1)],dtype=np.int)
         return fortran_routines.condense_graph(A,vertices+1,indices+1)
 
     else:
@@ -328,8 +328,8 @@ def condense_graph(A,SCCs):
         n = len(SCCs)
         B = np.zeros((n,n),dtype=np.float)
 
-        for i in xrange(n):
-             for j in xrange(n):
+        for i in range(n):
+             for j in range(n):
                 if i!=j:
                     C = slice_array(A,SCCs[j],SCCs[i])
                     D = np.nonzero(C)
@@ -411,7 +411,7 @@ def strongly_connected_components(A):
     if available_routines==1:
 
         components = fortran_routines.strongly_connected_components(A)
-        return [np.where(components==i+1)[0].tolist() for i in xrange(np.max(components))]
+        return [np.where(components==i+1)[0].tolist() for i in range(np.max(components))]
 
     else:
 
@@ -429,7 +429,7 @@ def strongly_connected_components_from_matrix(A):
     scc_found={}
     scc_queue = []
     i=0
-    for source in xrange(n):
+    for source in range(n):
         if source not in scc_found:
             queue=[source]
             while queue:
@@ -438,7 +438,7 @@ def strongly_connected_components_from_matrix(A):
                     i=i+1
                     preorder[v]=i
                 done=True
-                v_nbrs=[w for w in xrange(n) if A[v,w]!=0]
+                v_nbrs=[w for w in range(n) if A[v,w]!=0]
                 for w in v_nbrs:
                     if w not in preorder:
                         queue.append(w)
@@ -488,7 +488,7 @@ if __name__ == "__main__":
 
         V = edges_to_vertices(E)
         n = len(V)
-        indices = {V[i]:i for i in xrange(n)}
+        indices = {V[i]:i for i in list(range(n))}
 
         A = np.zeros((n,n),dtype=np.float)
         for (source,target,weight) in E:
@@ -579,7 +579,7 @@ if __name__ == "__main__":
         if m!=n or n!=o:
             raise Exception('Number of vertices and adjacency matrix dimensions do not match.')
 
-        return [[V[i],V[j],A[i,j]] for i in xrange(n) for j in xrange(n) if A[i,j]!=0]
+        return [[V[i],V[j],A[i,j]] for i in range(n) for j in range(n) if A[i,j]!=0]
 
     # The next function formats various data types in an arguably easier-to-
     # read way.
@@ -631,7 +631,7 @@ if __name__ == "__main__":
         unique_elements = int((1-sparsity)*(1-nonuniqueness)*n**2)
         repeated_elements = int((1-sparsity)*nonuniqueness*n**2)
 
-        V = range(n)
+        V = list(range(n))
 
         # Should the graph be complete with unique edge weights?
 
@@ -669,8 +669,8 @@ if __name__ == "__main__":
             components = strongly_connected_components(A)
             m = len(components)
             if m>1:
-                for i in xrange(m):
-                    for j in xrange(m):
+                for i in range(m):
+                    for j in range(m):
                             if i!=j:
                                 p = np.random.randint(len(components[i]))
                                 q = np.random.randint(len(components[j]))
@@ -699,7 +699,7 @@ if __name__ == "__main__":
 
     def test_correctness(m,n,increasing,sparsity=0.0,nonuniqueness=0.0):
 
-        for i in xrange(n):
+        for i in range(n):
 
             progress("Progress: %d/%d" % (i+1,n))
             V,A = random_adjacency_matrix(m,seed=i,sparsity=sparsity,nonuniqueness=nonuniqueness)
@@ -709,10 +709,10 @@ if __name__ == "__main__":
 
             if S!=T:
                 progress("")
-                print i
-                print A
-                print S
-                print T
+                print(i)
+                print(A)
+                print(S)
+                print(T)
                 return False
 
         progress("")
@@ -731,7 +731,7 @@ if __name__ == "__main__":
         HD_times = np.zeros((trials,repetitions),dtype=np.float)
         clustering_times = np.zeros((trials,repetitions),dtype=np.float)
 
-        for trial in xrange(trials):
+        for trial in range(trials):
 
             n = int(10*2**trial)
             dimensions[trial] = n
@@ -740,7 +740,7 @@ if __name__ == "__main__":
             np.random.seed(seed=trial)
             V,A = random_adjacency_matrix(n)
 
-            for repetition in xrange(repetitions):
+            for repetition in range(repetitions):
 
                 progress("Progress: %d/%d of %d/%d" % (repetition+1,repetitions,trial+1,trials))
                 first_time = time.time()
@@ -806,32 +806,32 @@ if __name__ == "__main__":
     # the vertex clusters.  We reverse the edge order from increasing weights
     # to decreasing weights and repeat.
 
-    print '=== Test 1 ==='
+    print('=== Test 1 ===')
     V, A, E = tarjan_1983_example()
 
-    T = HD(V,A,increasing=True)
+    T = HD(V, A, increasing=True)
     weights, clusters = cluster(T)
 
-    print 'Weights added in increasing order:'
-    print ''
-    print 'Tree:'
-    print prettify(T)
-    print 'Condensing weights:'
-    print prettify(weights)
-    print 'Vertex clusters:'
-    print prettify(clusters)
+    print('Weights added in increasing order:')
+    print('')
+    print('Tree:')
+    print(prettify(T))
+    print('Condensing weights:')
+    print(prettify(weights))
+    print('Vertex clusters:')
+    print(prettify(clusters))
 
     T = HD(V,A,increasing=False)
     weights, clusters = cluster(T)
 
-    print 'Weights added in decreasing order:'
-    print ''
-    print 'Tree:'
-    print prettify(T)
-    print 'Condensing weights:'
-    print prettify(weights)
-    print 'Vertex clusters:'
-    print prettify(clusters)
+    print('Weights added in decreasing order:')
+    print('')
+    print('Tree:')
+    print(prettify(T))
+    print('Condensing weights:')
+    print(prettify(weights))
+    print('Vertex clusters:')
+    print(prettify(clusters))
 
     # Second, we compare tree from of our implementation of Tarjan's HD
     # algorithm with the tree from our implementation of the naive algorithm,
@@ -839,10 +839,10 @@ if __name__ == "__main__":
     # representation of the tree is unique, so the the trees are the same when
     # the dictionaries are the same and different when different.
 
-    print '=== Test 2 ==='
-    print HD(V,A,True)==HD_naive(E,True)
-    print HD(V,A,False)==HD_naive(E,False)
-    print ''
+    print('=== Test 2 ===')
+    print(HD(V,A,True)==HD_naive(E,True))
+    print(HD(V,A,False)==HD_naive(E,False))
+    print('')
 
     # Third, we repeat the previous test on a complete graph, a graph with
     # roughly 70% of its edges removed, and a graph with roughly 40% of its
@@ -853,22 +853,22 @@ if __name__ == "__main__":
     # trees are the same and `False` with additional information if they
     # differ; see `test_HD_correctness` for more details.
 
-    print '=== Test 3 ==='
-    print test_correctness(25,20,True)
-    print test_correctness(25,20,True,sparsity=0.7)
-    print test_correctness(25,20,True,nonuniqueness=0.4)
-    print test_correctness(25,20,False)
-    print test_correctness(25,20,False,sparsity=0.7)
-    print test_correctness(25,20,False,nonuniqueness=0.4)
-    print ''
+    print('=== Test 3 ===')
+    print(test_correctness(25,20,True))
+    print(test_correctness(25,20,True,sparsity=0.7))
+    print(test_correctness(25,20,True,nonuniqueness=0.4))
+    print(test_correctness(25,20,False))
+    print(test_correctness(25,20,False,sparsity=0.7))
+    print(test_correctness(25,20,False,nonuniqueness=0.4))
+    print('')
 
     # Fourth, we generate profiling data for our implementation of Tarjan's HD
     # algorithm for a complete random graph with 2000 vertices.  Search for
     # cProfile online for details.
 
-    print '=== Test 4 ==='
+    print('=== Test 4 ===')
     #    test_profile(2000,True,'tarjan_HD.cprof')
-    print ''
+    print('')
 
     # Fifth, we examine the performance of our implementation of Tarjan's HD
     # algorithm and the performance of our clustering routine on complete
@@ -878,22 +878,22 @@ if __name__ == "__main__":
     # number of vertices and the shortest runtimes for each trial, and we
     # perform the test for both increasing and decreasing edge weights.
 
-    print '=== Test 5 ==='
+    print('=== Test 5 ===')
     number_of_vertices, HD_runtimes, clustering_runtimes = test_performance(8,3,True)
 
-    print 'Number of vertices:'
-    print number_of_vertices
-    print 'Runtimes for increasing edge weights:'
-    print HD_runtimes
-    print 'Runtimes for vertex clustering:'
-    print clustering_runtimes
-    print ''
+    print('Number of vertices:')
+    print(number_of_vertices)
+    print('Runtimes for increasing edge weights:')
+    print(HD_runtimes)
+    print('Runtimes for vertex clustering:')
+    print(clustering_runtimes)
+    print('')
 
     number_of_vertices, HD_runtimes, clustering_runtimes = test_performance(8,3,False)
 
-    print 'Number of vertices:'
-    print number_of_vertices
-    print 'Runtimes for decreasing edge weights:'
-    print HD_runtimes
-    print 'Runtimes for vertex clustering:'
-    print clustering_runtimes
+    print('Number of vertices:')
+    print(number_of_vertices)
+    print('Runtimes for decreasing edge weights:')
+    print(HD_runtimes)
+    print('Runtimes for vertex clustering:')
+    print(clustering_runtimes)

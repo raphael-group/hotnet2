@@ -1,14 +1,18 @@
+#!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
+
 from collections import defaultdict
 import multiprocessing as mp
 import networkx as nx
-import hotnet2 as hn
-import hnio
+from . import hotnet2 as hn
+from . import hnio
+
 
 strong_ccs = nx.strongly_connected_components
 
 def num_components_min_size(G, sizes):
-    """Return a list of the number of connected components of size at least s for each s in sizes.
+    """
+    Return a list of the number of connected components of size at least s for each s in sizes.
 
     Arguments:
     G -- a networkx Graph or DiGraph
@@ -19,20 +23,23 @@ def num_components_min_size(G, sizes):
     cc_sizes = [len(cc) for cc in ccs]
     return [sum(1 for cc_size in cc_sizes if cc_size >= s) for s in sizes]
 
-def significance_wrapper((infmat, index2gene, heat_permutation, delta, sizes, directed)):
+def significance_wrapper(significance_wrapper_arg):
+    (infmat, index2gene, heat_permutation, delta, sizes, directed) = significance_wrapper_arg
     sim, index2gene = hn.similarity_matrix(infmat, index2gene, heat_permutation, directed)
     G = hn.weighted_graph(sim, index2gene, delta, directed)
     return num_components_min_size(G, sizes)
 
-def network_significance_wrapper((network_path, infmat_name, index2gene, heat, delta, sizes, directed)):
+def network_significance_wrapper(network_significance_wrapper_arg):
+    (network_path, infmat_name, index2gene, heat, delta, sizes, directed) = network_significance_wrapper_arg
     permuted_mat = np.asarray(hnio.load_hdf5(network_path)[infmat_name], dtype=np.float32)
     sim, index2gene = hn.similarity_matrix(permuted_mat, index2gene, heat, directed)
     G = hn.weighted_graph(sim, index2gene, delta, directed)
     return num_components_min_size(G, sizes)
 
 def calculate_permuted_cc_counts_network(network_paths, infmat_name, index2gene, heat, delta,
-                                         sizes=range(2,11), directed=True, num_cores=1):
-    """Return a dict mapping a CC size to a list of the number of CCs of that size or greater in
+                                         sizes=list(range(2,11)), directed=True, num_cores=1):
+    """
+    Return a dict mapping a CC size to a list of the number of CCs of that size or greater in
     each permutation.
     """
     if num_cores != 1:
@@ -56,9 +63,9 @@ def calculate_permuted_cc_counts_network(network_paths, infmat_name, index2gene,
 
     return size2counts
 
-def calculate_permuted_cc_counts(infmat, index2gene, heat_permutations, delta,
-                                 sizes=range(2,11), directed=True, num_cores=1):
-    """Return a dict mapping a CC size to a list of the number of CCs of that size or greater in
+def calculate_permuted_cc_counts(infmat, index2gene, heat_permutations, delta, sizes=list(range(2,11)), directed=True, num_cores=1):
+    """
+    Return a dict mapping a CC size to a list of the number of CCs of that size or greater in
     each permutation.
 
     Arguments:
@@ -90,12 +97,14 @@ def calculate_permuted_cc_counts(infmat, index2gene, heat_permutations, delta,
     # Parse the results into a map of k -> counts
     size2counts = defaultdict(list)
     for counts in all_counts:
-        for size, count in zip(sizes, counts): size2counts[size].append(count)
+        for size, count in zip(sizes, counts): 
+            size2counts[size].append(count)
 
     return size2counts
 
 def compute_statistics(size2counts_real, size2counts_permuted, num_permutations):
-    """Return a dict mapping a CC size to a tuple with the expected number of CCs of at least that
+    """
+    Return a dict mapping a CC size to a tuple with the expected number of CCs of at least that
     size based on permuted data, the observed number of CCs of at least that size in the real data,
     and the p-value for the observed number.
 
@@ -108,7 +117,7 @@ def compute_statistics(size2counts_real, size2counts_permuted, num_permutations)
     """
     num_permutations = float(num_permutations)
     size2stats = dict()
-    for size, counts in size2counts_permuted.items():
+    for size, counts in list(size2counts_permuted.items()):
         observed = size2counts_real[size]
         expected = sum(counts) / num_permutations
         pval = len([c for c in counts if c >= observed]) / num_permutations

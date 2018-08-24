@@ -2,8 +2,9 @@
 
 import sys, os, json, h5py, numpy as np, scipy.io, networkx as nx
 from collections import defaultdict
-from constants import *
-from hotnet2 import component_sizes
+from .constants import *
+from .hotnet2 import component_sizes 
+
 
 ################################################################################
 # Data loading functions
@@ -227,11 +228,13 @@ def load_fusions(fusion_file, gene_wlst=None, sample_wlst=None, ):
                 if include_fusion(sample_wlst, gene_wlst, *arr[:4])]
 
 def include_fusion(sample_wlst, gene_wlst, sample, gene1, gene2):
-    if sample_wlst and sample not in sample_wlst: return False
-    if not gene_wlst: return True
-    if gene1 not in gene_wlst and gene2 not in gene_wlst: return False
-    elif (gene1 in gene_wlst and not gene2 in gene_wlst) or \
-         (gene2 in gene_wlst and not gene1 in gene_wlst):
+    if sample_wlst and sample not in sample_wlst: 
+        return False
+    if not gene_wlst: 
+        return True
+    if gene1 not in gene_wlst and gene2 not in gene_wlst: 
+        return False
+    elif (gene1 in gene_wlst and not gene2 in gene_wlst) or (gene2 in gene_wlst and not gene1 in gene_wlst):
         raise ValueError('Genes %s and %s are in a fusion, but one is disallowed by the gene'\
                           'whitelist' % (gene1, gene2))
     return True
@@ -248,12 +251,15 @@ def load_sample_types(type_file):
         return dict((arr[0], arr[1]) for arr in arrs)
 
 def get_mut_type(cna):
-    if cna.endswith("(A)"): return AMP
-    elif cna.endswith("(D)"): return DEL
-    else: raise ValueError("Unknown CNA type in '%s'", cna)
+    if cna.endswith("(A)"): 
+        return AMP
+    elif cna.endswith("(D)"): 
+        return DEL
+    else: 
+        raise ValueError("Unknown CNA type in '%s'", cna)
 
 def load_oncodrive_data(fm_scores, cis_amp_scores, cis_del_scores):
-    print "* Loading oncodrive data..."
+    print("* Loading oncodrive data...")
     # Create defaultdicts to hold the fm and cis scores
     one = lambda: 1
     gene2fm = defaultdict(one)
@@ -264,23 +270,23 @@ def load_oncodrive_data(fm_scores, cis_amp_scores, cis_del_scores):
         arrs = [l.rstrip().split("\t") for l in f if not l.startswith("#")]
     gene2fm.update((arr[1], float(arr[2])) for arr in arrs
                    if arr[2] != "" and arr[2] != "-0" and arr[2] != "-")
-    print "\tFM genes:", len(gene2fm.keys())
+    print("\tFM genes:", len(list(gene2fm.keys())))
 
     # Load amplifications
     with open(cis_amp_scores) as f:
         arrs = [l.rstrip().split("\t") for l in f if not l.startswith("#")]
     gene2cis_amp.update((arr[0], float(arr[-1])) for arr in arrs)
-    print "\tCIS AMP genes:", len(gene2cis_amp.keys())
+    print("\tCIS AMP genes:", len(list(gene2cis_amp.keys())))
 
     # Load deletions
     with open(cis_del_scores) as f:
         arrs = [l.rstrip().split("\t") for l in f if not l.startswith("#")]
     gene2cis_del.update((arr[0], float(arr[-1])) for arr in arrs)
-    print "\tCIS DEL genes:", len(gene2cis_del.keys())
+    print(("\tCIS DEL genes:", len(list(gene2cis_del.keys()))))
 
     # Merge data
     genes = set(gene2cis_del.keys()) | set(gene2cis_amp.keys()) | set(gene2fm.keys())
-    print "\t- No. genes:", len(genes)
+    print(("\t- No. genes:", len(genes)))
     gene2heat = dict()
     for g in genes:
         gene2heat[g] = {"del": gene2cis_del[g], "amp": gene2cis_amp[g],
@@ -291,7 +297,7 @@ def load_oncodrive_data(fm_scores, cis_amp_scores, cis_del_scores):
 def load_mutsig_scores(scores_file):
     with open(scores_file) as f:
         arrs = [l.rstrip().split("\t") for l in f if not l.startswith("#")]
-        print "* Loading MutSig scores in", len(arrs), "genes..."
+        print("* Loading MutSig scores in", len(arrs), "genes...")
         return dict((arr[0], {"pval": float(arr[-2]), "qval": float(arr[-1])})
                     for arr in arrs)
 
@@ -299,7 +305,7 @@ def load_mutsig_scores(scores_file):
 FDR_CT, FDR_LRT, FDR_FCPT = 12, 11, 10
 music_score2name = {FDR_CT: "FDR_CT", FDR_LRT: "FDR_LRT", FDR_FCPT: "FDR_FCPT"}
 def load_music_scores(scores_file):
-    print "* Loading MuSiC scores using the median of the 3 q-values..."
+    print("* Loading MuSiC scores using the median of the 3 q-values...")
 
     with open(scores_file) as f:
         # Load file and tab-split lines
@@ -312,7 +318,7 @@ def load_music_scores(scores_file):
                           for arr in arrs)
 
         # Output parsing info
-        print "\t- Loaded %s genes." % len(gene2music)
+        print("\t- Loaded %s genes." % len(gene2music))
         return gene2music
 
 ################################################################################
@@ -343,7 +349,7 @@ def write_significance_as_tsv(output_file, sizes2stats):
     """
     with open(output_file, 'w') as out_f:
         out_f.write("Size\tExpected\tActual\tp-value\n")
-        for size, stats in sizes2stats.iteritems():
+        for size, stats in list(sizes2stats.items()):
             out_f.write("%s\t%s\t%s\t%s\n" % (size, stats["expected"], stats["observed"], stats["pval"]))
 
 def write_gene_list(output_file, genelist):
@@ -377,7 +383,7 @@ def load_network(file_path, infmat_name):
     """
     H = load_hdf5(file_path)
     PPR = np.asarray(H[infmat_name], dtype=np.float32)
-    indexToGene = dict( zip(range(np.shape(PPR)[0]), H['nodes']) )
+    indexToGene = dict( list(zip(list(range(np.shape(PPR)[0])), H['nodes'])) )
     G = nx.Graph()
     G.add_edges_from(H['edges'])
     return PPR, indexToGene, G, H['network_name']

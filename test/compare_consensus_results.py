@@ -40,16 +40,16 @@ def run(args):
     only_reference_results = set.difference(reference_results, predicted_results)
 
     # Output results.
-    print 'Summary of consensus results:'
-    print '- {} genes in predicted consensus results'.format(len(predicted_results))
-    print '- {} genes in reference consensus results'.format(len(reference_results))
-    print '- {} genes in both predicted and reference consensus results'.format(len(both_results))
-    print '- {} genes only in predicted consensus results'.format(len(only_predicted_results))
+    print('Summary of consensus results:')
+    print('- {} genes in predicted consensus results'.format(len(predicted_results)))
+    print('- {} genes in reference consensus results'.format(len(reference_results)))
+    print('- {} genes in both predicted and reference consensus results'.format(len(both_results)))
+    print('- {} genes only in predicted consensus results'.format(len(only_predicted_results)))
     if only_predicted_results:
-        print '\t' + ', '.join(sorted(only_predicted_results))
-    print '- {} genes only in reference consensus results'.format(len(only_reference_results))
+        print('\t' + ', '.join(sorted(only_predicted_results)))
+    print('- {} genes only in reference consensus results'.format(len(only_reference_results)))
     if only_reference_results:
-        print '\t' + ', '.join(sorted(only_reference_results))
+        print('\t' + ', '.join(sorted(only_reference_results)))
 
 if __name__ == '__main__':
     run(get_parser().parse_args(sys.argv[1:]))

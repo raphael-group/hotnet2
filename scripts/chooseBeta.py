@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Load modules.
 import numpy as np, scipy as sp, scipy.optimize

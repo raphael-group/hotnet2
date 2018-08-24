@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Load required modules
 import sys, os, numpy as np, networkx as nx, scipy as sp, scipy.io
@@ -19,7 +19,7 @@ def get_parser():
                         help='Name of network.')
     parser.add_argument('-o', '--output_file', required=True,
                     help="Output file.")
-    parser.add_argument('-v', '--verbose', required=False, default=0, type=int, choices=range(5),
+    parser.add_argument('-v', '--verbose', required=False, default=0, type=int, choices=list(range(5)),
                     help="Control verbosity of output.")
 
     # Subparsers for the different diffusion types

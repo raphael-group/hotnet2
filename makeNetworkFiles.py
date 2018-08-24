@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Load required modules
 import os, sys, multiprocessing as mp
@@ -51,23 +51,24 @@ def get_parser():
 
 def run(args):
     # create output directory if doesn't exist; warn if it exists and is not empty
-    if not os.path.exists(args.output_dir): os.makedirs(args.output_dir)
+    if not os.path.exists(args.output_dir): 
+        os.makedirs(args.output_dir)
     if len(os.listdir(args.output_dir)) > 0:
         print("WARNING: Output directory is not empty. Any conflicting files will be overwritten. "
               "(Ctrl-c to cancel).")
 
     # make real PPR
     if not args.only_permutations:
-        print "\nCreating PPR matrix for real network"
-        print "--------------------------------------"
+        print("\nCreating PPR matrix for real network")
+        print("--------------------------------------")
         pprfile = "{}/{}_ppr_{:g}.h5".format(args.output_dir, args.prefix, args.beta)
         params = dict(network_name=args.network_name)
         save_diffusion_to_file( HOTNET2, args.beta, args.gene_index_file, args.edgelist_file, pprfile, params=params)
 
     # make permuted edge lists
     if args.num_permutations > 0:
-        print "\nCreating edge lists for permuted networks"
-        print "-------------------------------------------"
+        print("\nCreating edge lists for permuted networks")
+        print("-------------------------------------------")
         perm_dir = '%s/permuted' % args.output_dir
         perm_path = '{}/{}_ppr_{:g}_##NUM##.h5'.format(perm_dir, args.prefix, args.beta)
         if not os.path.exists(perm_dir): os.makedirs(perm_dir)
@@ -76,8 +77,8 @@ def run(args):
         permute.run(permute.get_parser().parse_args(pargs.split()))
 
         # make permuted PPRs
-        print "\nCreating PPR matrices for permuted networks"
-        print "---------------------------------------------"
+        print("\nCreating PPR matrices for permuted networks")
+        print("---------------------------------------------")
         diffusion_args = []
         params = dict(network_name=args.network_name, beta=args.beta)
         for i in range(args.permutation_start_index, args.permutation_start_index + args.num_permutations):

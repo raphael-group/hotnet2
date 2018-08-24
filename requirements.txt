@@ -1,4 +1,4 @@
-scipy
-numpy
-networkx
-h5py
+numpy >= 1.12.1
+scipy >= 0.19.0
+networkx >= 1.11
+h5py >= 2.7.0

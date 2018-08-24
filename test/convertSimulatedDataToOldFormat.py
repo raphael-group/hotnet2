@@ -12,7 +12,9 @@ args = parser.parse_args( sys.argv[1:] )
 
 # Convert the network files
 network_dir = args.output_directory + '/networks'
-if not os.path.exists(network_dir): os.makedirs(network_dir)
+if not os.path.exists(network_dir): 
+	os.makedirs(network_dir)
+	
 for network_file in args.network_files:
 	# Load the file
 	f            = h5py.File(network_file, 'r')
@@ -36,7 +38,7 @@ for network_file in args.network_files:
 	f.close()
 	
 	# Output gene index
-	nodeToIndex = dict(zip(nodes, range(1, len(nodes)+1)))
+	nodeToIndex = dict(list(zip(nodes, list(range(1, len(nodes)+1)))))
 	with open('{}/{}_index_genes'.format(original_dir, network_name), 'w') as OUT:
 		OUT.write('\n'.join([ '{} {}'.format(nodeToIndex[n], n) for n in nodes ]))
 
@@ -46,7 +48,8 @@ for network_file in args.network_files:
 
 	# Copy permuted networks
 	permuted_dir = this_network_dir + '/permuted'
-	if os.path.exists(permuted_dir): shutil.rmtree(permuted_dir)
+	if os.path.exists(permuted_dir): 
+		shutil.rmtree(permuted_dir)
 	shutil.copytree(os.path.split(pnp_path)[0], permuted_dir)
 
 
@@ -58,5 +61,6 @@ for heat_file in args.heat_files:
 	file_name = os.path.split(src)[1]
 	num       = file_name.split('vertex_weight_')[1].split('.')[0]
 	dst_dir   =  '{}/{}'.format(heat_dir, num)
-	if not os.path.exists(dst_dir): os.makedirs(dst_dir)
+	if not os.path.exists(dst_dir): 
+		os.makedirs(dst_dir)
 	shutil.copyfile(src, dst_dir + '/vertex_weight.txt')

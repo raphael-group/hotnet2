@@ -1,0 +1,16 @@
+language: python
+python:
+    - 2.7
+    - 3.4
+    - 3.5
+    - 3.6
+install:
+    - sudo apt-get -y update
+    - sudo apt-get -y update
+    - sudo apt-get -y install r-base
+    - pip install codecov
+    - pip install -r requirements.txt
+script:
+    - nosetests
+after_success:
+    - codecov
