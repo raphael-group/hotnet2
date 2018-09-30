@@ -35,21 +35,25 @@ def get_parser():
 
 # Create the dendrogram and output in .json and .pickle formats
 def createDendrogram(sim, genespace, output_directory, params, verbose=False):
-	if verbose: print '* Creating dendrogram...'
+	if verbose: 
+		print('* Creating dendrogram...')
 
 	# Perform the clustering
-	if verbose: print '\t- Performing hierarchical clustering...'
+	if verbose: 
+		print('\t- Performing hierarchical clustering...')
 	T = HD(genespace, sim, False)
 
 	# Convert to SciPy linkage matrix (http://goo.gl/yd6z3V)
-	if verbose: print '\t- Converting into SciPy linkage matrix format...'
+	if verbose: 
+		print('\t- Converting into SciPy linkage matrix format...')
 	Z, labels = convertToLinkage(T)
 	hierarchyOutput = dict(Z=Z, labels=labels, params=params)
 
 	newickOutput = convertToNewick(T)
 
 	# Output the linkage matrix to JSON and Newick file
-	if verbose: print '\t- Outputting to JSON and Newick files...'
+	if verbose: 
+		print('\t- Outputting to JSON and Newick files...')
 	with open('{}/hn2-hierarchy.json'.format(output_directory), "w") as out:
 	    json.dump(hierarchyOutput, out)
 
@@ -59,7 +63,8 @@ def createDendrogram(sim, genespace, output_directory, params, verbose=False):
 # Run
 def run(args):
 	# Load the input data
-	if args.verbose: print '* Loading infmat and heat files...'
+	if args.verbose: 
+		print('* Loading infmat and heat files...')
 	infmat = hnio.load_infmat(args.infmat_file, args.infmat_name)
 	full_index2gene = hnio.load_index(args.infmat_index_file)
 
@@ -68,17 +73,19 @@ def run(args):
 	    heat = json.load(open(args.heat_file))['heat']
 	else:
 	    heat = hnio.load_heat_tsv(args.heat_file)
-	print "* Loaded heat scores for %s genes" % len(heat)
+	print("* Loaded heat scores for %s genes" % len(heat))
 
 	# filter out genes not in the network
 	heat = hnheat.filter_heat_to_network_genes(heat, set(full_index2gene.values()))
 
 	# genes with score 0 cannot be in output components, but are eligible for heat in permutations
 	heat, addtl_genes = hnheat.filter_heat(heat, None, False, 'There are ## genes with heat score 0')
-	if args.verbose: print '* Creating similarity matrix...'
+	if args.verbose: 
+		print('* Creating similarity matrix...')
 	sim, index2gene = hn.similarity_matrix(infmat, full_index2gene, heat, True)
 
 	# Create and output the dendrogram
 	createDendrogram( sim, index2gene.values(), args.output_directory, vars(args), args.verbose )
 
-if __name__ == "__main__": run( get_parser().parse_args(sys.argv[1:]))
+if __name__ == "__main__": 
+	run( get_parser().parse_args(sys.argv[1:]))

@@ -5,9 +5,9 @@ import multiprocessing as mp, numpy as np, scipy as sp, networkx as nx
 from collections import namedtuple, defaultdict
 
 # Load local modules
-import hotnet2 as hn, hnio
-from union_find import UnionFind
-from constants import *
+from . import hotnet2 as hn, hnio
+from .union_find import UnionFind
+from .constants import *
 
 strong_ccs = nx.strongly_connected_components
 
@@ -16,8 +16,10 @@ def get_component_sizes(arrs):
 
 def delta_too_small(component_sizes, max_size ):
     # print "\t\t\t", max(component_sizes)
-    if max_size > max(component_sizes): return True
-    else: return False
+    if max_size > max(component_sizes): 
+        return True
+    else: 
+        return False
 
 def find_best_delta_by_largest_cc(permuted_sim, permuted_index, sizes, directed, start_quant=0.99, verbose=0):
     """Return a dict mapping each size in sizes to the smallest delta such that the size of the
@@ -35,7 +37,7 @@ def find_best_delta_by_largest_cc(permuted_sim, permuted_index, sizes, directed,
     """
 
     if verbose > 4:
-        print "Finding smallest delta such that size of largest CC is <= l"
+        print("Finding smallest delta such that size of largest CC is <= l")
     component_fn = strong_ccs if directed else nx.connected_components
     # Construct weighted digraphs for each network for each delta
     sorted_edges = np.unique(permuted_sim) # unique edge weights in sorted ascending
@@ -87,7 +89,7 @@ def find_best_delta_by_num_ccs(permuted_sim, ks, start=0.05):
              searching for deltas that maximize the number of connected components
     """
 
-    print "Finding median delta that maximizes the # of CCs of size >= l"
+    print("Finding median delta that maximizes the # of CCs of size >= l")
     edges = get_edges(permuted_sim, start)
     k2delta = {}
 
@@ -100,7 +102,7 @@ def find_best_delta_by_num_ccs(permuted_sim, ks, start=0.05):
 def find_best_delta_by_num_ccs_for_given_k(permuted_sim, edges, k):
 
     if k < 2:
-            raise ValueError("k must be at least 2")
+        raise ValueError("k must be at least 2")
 
     max_num_ccs = 0 #initially, each node is its own CC of size 1, so none is of size >= k for k >= 2
     bestDeltas = [edges[0].weight]
@@ -128,8 +130,8 @@ def get_edges(sim, start=.05):
     edges = edges[:int(start*len(edges))]
     return edges
 
-def network_delta_wrapper((network_path, infmat_name, index2gene, heat, sizes, directed,
-                           selection_function, verbose)):
+def network_delta_wrapper(network_delta_wrapper_args):
+    (network_path, infmat_name, index2gene, heat, sizes, directed, selection_function, verbose) = network_delta_wrapper_args
     permuted_mat = np.asarray(hnio.load_hdf5(network_path)[infmat_name], np.float32)
     sim, index2gene = hn.similarity_matrix(permuted_mat, index2gene, heat, directed, verbose)
     if selection_function is find_best_delta_by_largest_cc:
@@ -164,6 +166,7 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
 
     args = [(network_path, infmat_name, index2gene, heat, sizes, directed,
              selection_fn, verbose) for network_path in network_paths]
+
     delta_maps = map_fn(network_delta_wrapper, args)
 
     if num_cores != 1:
@@ -177,7 +180,8 @@ def network_delta_selection(network_paths, infmat_name, index2gene, heat, sizes,
 
     return sizes2deltas
 
-def heat_delta_wrapper((infmat, index2gene, heat_permutation, directed, sizes, selection_function)):
+def heat_delta_wrapper(heat_delta_wrapper_args):
+    (infmat, index2gene, heat_permutation, directed, sizes, selection_function) = heat_delta_wrapper_args
     sim, index2gene = hn.similarity_matrix(infmat, index2gene, heat_permutation, directed)
     if selection_function is find_best_delta_by_largest_cc:
         return selection_function(sim, index2gene, sizes, directed)
@@ -230,7 +234,8 @@ def heat_delta_selection(infmat, index2gene, heat_permutations, sizes, directed=
 
 def get_deltas_for_network(permuted_networks_path, heat, infmat_name, index2gene, test_statistic,
                             sizes, classic, num_permutations, num_cores, verbose=0):
-    if verbose > 3: print "* Performing permuted network delta selection..."
+    if verbose > 3: 
+        print("* Performing permuted network delta selection...")
 
     #construct list of paths to the first num_permutations
     permuted_network_paths = [permuted_networks_path.replace(ITERATION_REPLACEMENT_TOKEN, str(i))
@@ -244,14 +249,15 @@ def get_deltas_for_network(permuted_networks_path, heat, infmat_name, index2gene
 
 def get_deltas_for_heat(infmat, index2gene, gene2heat, addtl_genes, num_permutations, test_statistic,
                         sizes, classic, num_cores, verbose=0):
-    if verbose > 3: print "* Performing permuted heat delta selection..."
+    if verbose > 3: 
+        print("* Performing permuted heat delta selection...")
     heat_permutations = permutations.permute_heat(gene2heat, index2gene.values(), num_permutations,
                                                   addtl_genes, num_cores)
     return get_deltas_from_heat_permutations(infmat, index2gene, heat_permutations, test_statistic,
                                              sizes, classic, num_cores, verbose)
 
 def get_deltas_for_mutations(args, infmat, index2gene, heat_params, verbose=0):
-    print "* Performing permuted mutation data delta selection..."
+    print("* Performing permuted mutation data delta selection...")
     index2gene = hnio.load_index(args.infmat_index_file)
 
     heat_permutations = permutations.generate_mutation_permutation_heat(

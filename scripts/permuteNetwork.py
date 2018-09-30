@@ -38,7 +38,8 @@ def permute_network( G, Q, numEdges, outputFile ):
     return swaps
 
 store = dict(maxSeen=-1)
-def permute_network_wrapper((G, Q, numEdges, outputFile, i, n)):
+def permute_network_wrapper(permute_network_wrapper_args):
+    (G, Q, numEdges, outputFile, i, n) = permute_network_wrapper_args
     swaps = permute_network( G, Q, numEdges, outputFile )
     store['maxSeen'] = max(store['maxSeen'], i)
     sys.stdout.write("\r{}/{}".format(store['maxSeen'], n))
@@ -48,7 +49,7 @@ def permute_network_wrapper((G, Q, numEdges, outputFile, i, n)):
 def run(args):
     # Load graph
     from hotnet2 import largest_component
-    print "* Loading edge list.."
+    print("* Loading edge list..")
     G = nx.Graph()
     with open(args.edgelist_file) as infile:
         G.add_edges_from([ l.rstrip().split()[:2] for l in infile ])
@@ -57,17 +58,17 @@ def run(args):
 
     # Report info about the graph and number of swaps
     Q = args.Q
-    print "\t- {} edges among {} nodes.".format(numEdges, numNodes)
-    print "\t- No. swaps to attempt = {}".format(Q*numEdges)
+    print("\t- {} edges among {} nodes.".format(numEdges, numNodes))
+    print("\t- No. swaps to attempt = {}".format(Q*numEdges))
 
     # Permute graph the prescribed number of times
-    print "* Creating permuted networks..."
+    print("* Creating permuted networks...")
     def outputFileName(i):
         return "{}/{}_edgelist_{}".format(args.output_dir, args.output_prefix, i+args.start_index)
 
     n = args.num_permutations
     if args.cores != 1:
-        cores = mp.cpu_count() if args.cores == -1 else min(args.cores, mp.cpu_count)
+        cores = mp.cpu_count() if args.cores == -1 else min(args.cores, mp.cpu_count())
         jobArgs = [ (G, Q, numEdges, outputFileName(i), i+args.start_index, n) for i in range(n) ]
         pool    = mp.Pool(cores)
         swaps = pool.map(permute_network_wrapper, jobArgs)
@@ -77,11 +78,10 @@ def run(args):
         swaps = [ permute_network_wrapper((G, Q, numEdges, outputFileName(i), i+args.start_index, n))
                   for i in range(n) ]
 
-    print
 
     # Report how many swaps were actually made
     avgSwaps = int(sum(swaps) / float(len(swaps)))
-    print "* Avg. No. Swaps Made: {}".format(avgSwaps)
+    print("* Avg. No. Swaps Made: {}".format(avgSwaps))
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))

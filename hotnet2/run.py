@@ -6,9 +6,9 @@ import sys, os, shutil
 import numpy as np
 
 # Load local modules
-import heat as hnheat, hotnet2 as hn, hnio, stats, permutations as p
-from delta import get_deltas_for_network, get_deltas_for_heat
-from constants import *
+from . import heat as hnheat, hotnet2 as hn, hnio, stats, permutations as p
+from .delta import get_deltas_for_network, get_deltas_for_heat
+from .constants import *
 
 def run_helper(args, infmat, full_index2gene, G, nname, pnp, heat, hname, addtl_genes, get_deltas_fn, infmat_name="PPR", max_cc_sizes=[5, 10, 15, 20], verbose=0):
     """Helper shared by runHotNet2 and runClassicHotNet.
@@ -30,9 +30,9 @@ def run_helper(args, infmat, full_index2gene, G, nname, pnp, heat, hname, addtl_
 
         # calculate significance (using all genes with heat scores)
         if verbose > 4:
-            print "* Performing permuted heat statistical significance..."
-            print "\t- Using no. of components >= k (k \\in",
-            print "[%s, %s]) as statistic" % (min(HN2_STATS_SIZES), max(HN2_STATS_SIZES))
+            print("* Performing permuted heat statistical significance...")
+            print("\t- Using no. of components >= k (k \\in")
+            print("[%s, %s]) as statistic" % (min(HN2_STATS_SIZES), max(HN2_STATS_SIZES)))
 
         heat_permutations = p.permute_heat(heat, full_index2gene.values(),
                                            args.heat_permutations, addtl_genes,

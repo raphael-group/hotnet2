@@ -57,9 +57,9 @@ def run(args):
         if set(expected) != set(actual):
             raise AssertionError("FAIL. Config {} did not produce the expected results.".format(config))
         
-        print "Config {}: OK".format(config)
+        print("Config {}: OK".format(config))
         
-    print "PASS. All config files produced the expected results."
+    print("PASS. All config files produced the expected results.")
         
 
 if __name__ == "__main__": 

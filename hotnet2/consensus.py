@@ -3,10 +3,10 @@
 import sys, os, networkx as nx, numpy
 from itertools import product, combinations
 from collections import defaultdict
-from run import run_helper, get_deltas_hotnet2
-from constants import *
-from heat import filter_heat, filter_heat_to_network_genes
-from permutations import permute_heat
+from .run import run_helper, get_deltas_hotnet2
+from .constants import *
+from .heat import filter_heat, filter_heat_to_network_genes
+from .permutations import permute_heat
 
 def count_consensus(consensus, sizes=HN2_STATS_SIZES):
     cc_sizes = [ len(d['core'] + d['expansion']) for d in consensus ]
@@ -41,7 +41,7 @@ def consensus_with_stats(args, networks, heats, verbose=0):
 
     # Summarize stats
     consensus_stats = dict()
-    for k, count in count_consensus(consensus).iteritems():
+    for k, count in count_consensus(consensus).items():
         empirical = [ permuted_count[k] for permuted_count in permuted_counts ]
         if np == 0:
             pval     = 1.
@@ -58,17 +58,18 @@ def consensus_run(args, networks, heats, verbose):
     single_runs = []
     for (infmat, indexToGene, G, nname, pnp), (heat, hname) in product(networks, heats):
         # Simple progress bar
-        if args.verbose > 0: print '\t-', nname, hname
+        if args.verbose > 0: 
+            print('\t-', nname, hname)
 
         # 1) Filter the heat scores
-        # 1a) Remove enes not in the network
+        # 1a) Remove genes not in the network
         heat = filter_heat_to_network_genes(heat, set(indexToGene.values()), verbose)
 
         # 1b) Genes with score 0 cannot be in output components, but are eligible for heat in permutations
         heat, addtl_genes = filter_heat(heat, None, False, 'There are ## genes with heat score 0')
 
         if args.verbose > 1:
-            print "\t\t- Loaded '%s' heat scores for %s genes" % (hname, len(heat))
+            print("\t\t- Loaded '%s' heat scores for %s genes" % (hname, len(heat)))
 
         result = run_helper(args, infmat, indexToGene, G, nname, pnp, heat, hname, addtl_genes, get_deltas_hotnet2, HN2_INFMAT_NAME, HN2_MAX_CC_SIZES, args.verbose)
         single_runs.append( (nname, hname, result) )
@@ -79,7 +80,8 @@ def consensus_run(args, networks, heats, verbose):
     return single_runs, consensus, linkers, auto_deltas
 
 def identify_consensus(single_runs, pval_threshold=0.01, min_cc_size=2, verbose=0):
-    if verbose > 0: print '* Constructing HotNet(2) consensus network...'
+    if verbose > 0: 
+        print('* Constructing HotNet(2) consensus network...')
 
     # Choose single runs and count the number of networks
     components, networks, auto_deltas = choose_deltas(single_runs, pval_threshold, min_cc_size, verbose)
@@ -88,11 +90,11 @@ def identify_consensus(single_runs, pval_threshold=0.01, min_cc_size=2, verbose=
     # Create the consensus graph
     edges = consensus_edges(components, networks)
     G = nx.Graph()
-    G.add_weighted_edges_from( (u, v, w) for (u, v), w in edges.iteritems() )
+    G.add_weighted_edges_from( (u, v, w) for (u, v), w in edges.items() )
 
     # Extract the connected components when restricted to edges in all networks.
     H = nx.Graph()
-    H.add_edges_from( (u, v) for (u, v), w in edges.iteritems() if w >= num_networks )
+    H.add_edges_from( (u, v) for (u, v), w in edges.items() if w >= num_networks )
     consensus = [ set(cc) for cc in nx.connected_components( H ) ]
     consensus_genes = set( g for cc in consensus for g in cc )
 
@@ -137,7 +139,7 @@ def choose_deltas(single_runs, pval_threshold, min_cc_size, verbose=0):
         # greater than or equal to the threshold, and we sort from smallest to largest.
         selected_result_statistics = sorted(result_statistics)[0]
         if verbose > 3:
-            print '\t- Selected delta = {} for {}...'.format(selected_result_statistics[1], directory)
+            print('\t- Selected delta = {} for {}...'.format(selected_result_statistics[1], directory))
 
         components.append(selected_result_statistics[2])
         auto_deltas.append(selected_result_statistics[1])
@@ -152,4 +154,4 @@ def consensus_edges(components, networks):
         for cc in ccs:
             for u, v in combinations(cc, 2):
                 edges_to_networks[(u, v)].add(network)
-    return dict( (edge, len(edge_networks)) for edge, edge_networks in edges_to_networks.iteritems() )
+    return dict( (edge, len(edge_networks)) for edge, edge_networks in edges_to_networks.items() )

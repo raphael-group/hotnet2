@@ -1,4 +1,4 @@
-import hnio
+from . import hnio
 from collections import defaultdict
 
 def generate_viz_json(results, edges, network_name, gene2heat, snvs, cnas, sampleToType, d_score, d_name):

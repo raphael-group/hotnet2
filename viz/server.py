@@ -65,7 +65,7 @@ def run( args ):
 							  num_subnetworks=num_subnetworks, data=data,
 							  is_consensus=is_consensus)
 
-				results.append( result )
+				results.append(result)
 		except IOError:
 			continue
 
@@ -85,7 +85,8 @@ def run( args ):
 	# Start server
 	app = tornado.web.Application(routes)
 	app.listen(args.port)
-	print 'Listening on port {}'.format(args.port)
+	print('Listening on port {}'.format(args.port))
 	tornado.ioloop.IOLoop.current().start()
 
-if __name__ == '__main__': run( get_parser().parse_args(sys.argv[1:]) )
+if __name__ == '__main__': 
+	run( get_parser().parse_args(sys.argv[1:]) )

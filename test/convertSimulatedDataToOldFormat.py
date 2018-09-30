@@ -36,7 +36,7 @@ for network_file in args.network_files:
 	f.close()
 	
 	# Output gene index
-	nodeToIndex = dict(zip(nodes, range(1, len(nodes)+1)))
+	nodeToIndex = dict(zip(nodes, list(range(1, len(nodes)+1))))
 	with open('{}/{}_index_genes'.format(original_dir, network_name), 'w') as OUT:
 		OUT.write('\n'.join([ '{} {}'.format(nodeToIndex[n], n) for n in nodes ]))
 

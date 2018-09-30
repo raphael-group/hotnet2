@@ -80,13 +80,13 @@ def run(args):
 
     # Run HotNet2 on each pair of network and heat files
     if args.verbose > 0:
-        print '* Running HotNet2 in consensus mode...'
+        print('* Running HotNet2 in consensus mode...')
 
     single_runs, consensus, linkers, auto_deltas, consensus_stats = consensus_with_stats(args, networks, heats)
 
     # Output the single runs
     if args.verbose > 0:
-        print '* Outputting results to file...'
+        print('* Outputting results to file...')
 
     params = vars(args)
     result_dirs = []
@@ -111,7 +111,7 @@ def run(args):
     # Create the visualization(s). This has to be after the consensus procedure
     # is run because we want to default to the auto-selected deltas.
     if args.verbose > 0:
-        print '* Generating and outputting visualization data...'
+        print('* Generating and outputting visualization data...')
 
     d_score = hnio.load_display_score_tsv(args.display_score_file) if args.display_score_file else None
     d_name = hnio.load_display_name_tsv(args.display_name_file) if args.display_name_file else dict()

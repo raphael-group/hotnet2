@@ -3,8 +3,8 @@
 # Load required modules
 import networkx as nx, numpy as np, h5py
 from scipy.linalg import inv, eigh
-import hnio
-from constants import *
+from . import hnio
+from .constants import *
 
 ################################################################################
 # HOTNET2 DIFFUSION (PAGE RANK)
@@ -12,7 +12,8 @@ from constants import *
 
 # Run the HotNet2 diffusion process on a given network
 def hotnet2_diffusion(G, nodes, beta, verbose):
-    if verbose > 1: print "* Creating HotNet2 diffusion matrix for beta=%s..." % beta
+    if verbose > 1: 
+        print("* Creating HotNet2 diffusion matrix for beta=%s..." % beta)
     W = nx.to_numpy_matrix( G , nodelist=nodes, dtype=np.float64 )
     W = np.asarray(W)
     W = W / W.sum(axis=0) # normalization step
@@ -27,7 +28,8 @@ def hotnet2_diffusion(G, nodes, beta, verbose):
 
 # Run the HotNet diffusion process on a given network
 def hotnet_diffusion(G, nodes, time, verbose):
-    if verbose > 1: print "* Creating HotNet diffusion matrix for time t=%s..." % time
+    if verbose > 1: 
+        print("* Creating HotNet diffusion matrix for time t=%s..." % time)
     L = nx.laplacian_matrix(G)
     Li = expm_eig( -time * L.todense() )
     return Li
@@ -47,24 +49,25 @@ def expm_eig(A):
 def save_diffusion_to_file( diffusion_type, diffusion_param, index_file, edge_file,
                             output_file, params=dict(), verbose=0):
     # Load the graph
-    if verbose > 0: print "* Loading PPI..."
+    if verbose > 0: 
+        print("* Loading PPI...")
     G = load_network_from_file( index_file, edge_file)
     if verbose > 0:
-        print "\t- Edges:", len(G.edges())
-        print "\t- Nodes:", len(G.nodes())
+        print("\t- Edges:", len(G.edges()))
+        print("\t- Nodes:", len(G.nodes()))
 
     # Remove self-loops and restrict to largest connected component
     if verbose > 0:
-        print "* Removing self-loops, multi-edges, and restricting to",
-        print "largest connected component..."
+        print("* Removing self-loops, multi-edges, and restricting to")
+        print("largest connected component...")
 
     G = largest_component(G)
     nodes = sorted(G.nodes())
     n = len(nodes)
 
     if verbose > 0:
-        print "\t- Largest CC Edges:", len( G.edges() )
-        print "\t- Largest CC Nodes:", len( G.nodes() )
+        print("\t- Largest CC Edges:", len( G.edges() ))
+        print("\t- Largest CC Nodes:", len( G.nodes() ))
 
     # Run the diffusion and output to file
     output = dict(edges=G.edges(), nodes=nodes)

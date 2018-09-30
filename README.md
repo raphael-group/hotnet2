@@ -1,26 +1,28 @@
 # HotNet2 #
 
+[![Build Status](https://api.travis-ci.org/raphael-group/hotnet2.svg?branch=master)](https://travis-ci.org/raphael-group/hotnet2?branch=master)
+
+HotNet2 is an algorithm for finding significantly altered subnetworks in a large gene interaction
+network. While originally developed for use with cancer mutation data, the current release also
+supports any application in which meaningful scores can be assigned to genes in the network.
+
+HotNet2 vs. Classic HotNet
+------------------------
+This distribution contains two related algorithms: the original HotNet algorithm "classic HotNet",
+and an updated version "HotNet2". For details on the two algorithms, please refer to the publications
+listed at the end of this README.
+
+In brief, HotNet2 uses a new heat diffusion kernel analogous to random walk with restart that better
+captures the local topology of the interaction network as compared to the general heat diffusion
+process used by classic HotNet. HotNet2 also uses an asymmetric influence score and different
+permutation testing and parameter selection procedures. Although classic HotNet is included for
+completeness, we recommend using HotNet2.
+
 HotNet2 identifies subnetworks of a protein-protein interaction network with more mutations ("heat") than expected.
 
 HotNet2 was developed by the [Raphael research group](http://compbio.cs.brown.edu/) at Brown University.
 
 ### Setup ###
-
-#### Requirements ####
-
-Latest tested version in parentheses:
-
-1. Python (2.7.12)
-
-    a. NumPy (1.12.1)
-
-    b. SciPy (0.19.0)
-    
-    c. NetworkX (1.11)
-    
-    d. h5py (2.7.0)
-
-2. gcc and gfortran (5.4.0)
 
 #### Python dependencies ####
 We recommend using [`virtualenv`](https://virtualenv.pypa.io/en/latest/) to install the Python requirements. After installing `virtualenv`, you can install the Python requirements for HotNet2 as follows:

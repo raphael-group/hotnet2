@@ -2,8 +2,8 @@
 from collections import defaultdict
 import multiprocessing as mp
 import networkx as nx
-import hotnet2 as hn
-import hnio
+from . import hotnet2 as hn
+from . import hnio
 
 strong_ccs = nx.strongly_connected_components
 
@@ -19,12 +19,14 @@ def num_components_min_size(G, sizes):
     cc_sizes = [len(cc) for cc in ccs]
     return [sum(1 for cc_size in cc_sizes if cc_size >= s) for s in sizes]
 
-def significance_wrapper((infmat, index2gene, heat_permutation, delta, sizes, directed)):
+def significance_wrapper(significance_wrapper_args):
+    (infmat, index2gene, heat_permutation, delta, sizes, directed) = significance_wrapper_args
     sim, index2gene = hn.similarity_matrix(infmat, index2gene, heat_permutation, directed)
     G = hn.weighted_graph(sim, index2gene, delta, directed)
     return num_components_min_size(G, sizes)
 
-def network_significance_wrapper((network_path, infmat_name, index2gene, heat, delta, sizes, directed)):
+def network_significance_wrapper(network_significance_wrapper_args):
+    (network_path, infmat_name, index2gene, heat, delta, sizes, directed) = network_significance_wrapper_args
     permuted_mat = np.asarray(hnio.load_hdf5(network_path)[infmat_name], dtype=np.float32)
     sim, index2gene = hn.similarity_matrix(permuted_mat, index2gene, heat, directed)
     G = hn.weighted_graph(sim, index2gene, delta, directed)

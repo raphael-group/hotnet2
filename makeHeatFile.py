@@ -119,7 +119,7 @@ def valid_cna_filter_thresh(string):
 
 def load_direct_heat(args):
     heat = hnio.load_heat_tsv(args.heat_file)
-    print "* Loading heat scores for %s genes" % len(heat)
+    print("* Loading heat scores for %s genes" % len(heat))
 
     #ensure that all heat scores are positive
     bad_genes = [gene for gene in heat if heat[gene] < 0]
@@ -127,8 +127,7 @@ def load_direct_heat(args):
         raise ValueError("ERROR: All gene heat scores must be non-negative. There are %s genes with\
                           negative heat scores: %s" % (len(bad_genes), bad_genes))
 
-    heat, _ = hnheat.filter_heat(heat, args.min_heat_score, True,
-                                 'Assigning score 0 to ## genes with score below %s' % args.min_heat_score)
+    heat, _ = hnheat.filter_heat(heat, args.min_heat_score, True, 'Assigning score 0 to ## genes with score below %s' % args.min_heat_score)
     return heat
 
 def load_mutation_heat(args):
@@ -138,7 +137,6 @@ def load_mutation_heat(args):
     cnas = hnio.load_cnas(args.cna_file, genes, samples) if args.cna_file else []
     if args.cna_filter_threshold:
         cnas = hnheat.filter_cnas(cnas, args.cna_filter_threshold)
-
     if not samples:
         samples = set([snv.sample for snv in snvs] + [cna.sample for cna in cnas])
     if not genes:
@@ -167,7 +165,8 @@ def run(args):
 
     output_file = open(args.output_file, 'w') if args.output_file else sys.stdout
     json.dump(output_dict, output_file, indent=4)
-    if (args.output_file): output_file.close()
+    if (args.output_file): 
+        output_file.close()
 
 if __name__ == "__main__":
     run(get_parser().parse_args(sys.argv[1:]))
