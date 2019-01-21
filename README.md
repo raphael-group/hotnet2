@@ -1,5 +1,9 @@
 # HotNet2 #
 
+**We have introduced a new method, Hierarchical HotNet, that improves on HotNet2.  As a result, HotNet2 is no longer actively updated.  Please see the Hierarchical HotNet [manuscript](https://academic.oup.com/bioinformatics/article/34/17/i972/5093236) and [GitHub repository](https://github.com/raphael-group/hierarchical-hotnet) for details.**
+
+___
+
 HotNet2 identifies subnetworks of a protein-protein interaction network with more mutations ("heat") than expected.
 
 HotNet2 was developed by the [Raphael research group](http://compbio.cs.brown.edu/) at Brown University.
