@@ -57,7 +57,7 @@ See [`paper/paper_commands.sh`](https://github.com/raphael-group/hotnet2/blob/ma
 
 After generating a heat file and the network files using the scripts above, use the `HotNet2.py` script to run HotNet2. The minimum arguments required for `HotNet2.py` are as follows:
 
-    python HotNet2.py -nf <network_file> -pnp <permuted_networks_path> -hf <heat_file> -o <output_directory>
+    ./HotNet2.py -nf <network_file> -pnp <permuted_networks_path> -hf <heat_file> -o <output_directory>
 
 See [`paper/paper_commands.sh`](https://github.com/raphael-group/hotnet2/blob/master/paper/paper_commands.sh) for an example of using the `HotNet2.py` scripts with outputs of the `makeHeatFile.py` and `makeNetworkFiles.py` scripts.
 

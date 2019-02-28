@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Load required modules
 import os, sys, multiprocessing as mp
